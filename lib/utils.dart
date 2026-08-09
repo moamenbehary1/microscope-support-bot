@@ -1,0 +1,85 @@
+import 'package:televerse/televerse.dart';
+import 'config.dart';
+
+class Utils {
+  // Simple state management (In-memory for current session state)
+  static final Map<int, UserMode> _userModes = {};
+  
+  // Track ongoing uploads for admins/contributors
+  // userId -> { 'action': 'upload', 'track': '', 'subject': '', 'type': '' }
+  static final Map<int, Map<String, dynamic>> uploadStates = {};
+
+  static UserMode getUserMode(int userId) {
+    return _userModes[userId] ?? UserMode.student;
+  }
+
+  static void setUserMode(int userId, UserMode mode) {
+    _userModes[userId] = mode;
+  }
+  
+  static void clearUploadState(int userId) {
+    uploadStates.remove(userId);
+  }
+
+  /// Generates a paginated inline keyboard.
+  /// [items] List of items to display.
+  /// [page] Current page (0-indexed).
+  /// [itemsPerPage] Defaults to 5.
+  /// [prefix] The callback data prefix (e.g., 'track_'). The item string will be appended.
+  /// [backData] Callback data for a 'Back' button, if any.
+  static InlineKeyboard paginateKeyboard(
+    List<String> items, {
+    required int page,
+    int itemsPerPage = 5,
+    required String prefix,
+    String? backData,
+  }) {
+    final keyboard = InlineKeyboard();
+    
+    int startIndex = page * itemsPerPage;
+    int endIndex = startIndex + itemsPerPage;
+    if (endIndex > items.length) endIndex = items.length;
+
+    for (int i = startIndex; i < endIndex; i++) {
+      keyboard.row().add(items[i], '$prefix${items[i]}');
+    }
+
+    final navRow = <InlineMenuData>[];
+    if (page > 0) {
+      navRow.add(InlineMenuData('⬅️ Prev', '${prefix}page_${page - 1}'));
+    }
+    if (endIndex < items.length) {
+      navRow.add(InlineMenuData('Next ➡️', '${prefix}page_${page + 1}'));
+    }
+    
+    if (navRow.isNotEmpty) {
+      final row = keyboard.row();
+      for (var item in navRow) {
+        row.add(item.text, item.data!);
+      }
+    }
+
+    if (backData != null) {
+      keyboard.row().add('🔙 Back', backData);
+    }
+
+    return keyboard;
+  }
+  
+  /// Helper to safely send broadcast messages with a delay
+  static Future<void> broadcast(Bot bot, List<int> userIds, String message) async {
+    int count = 0;
+    for (int id in userIds) {
+      try {
+        await bot.api.sendMessage(ChatID(id), message);
+        count++;
+        // Asynchronous delay to avoid Telegram rate limits (approx 30 msgs/sec limit)
+        await Future.delayed(Duration(milliseconds: 50));
+      } catch (e) {
+        // User might have blocked the bot, ignore
+        print('Failed to send to $id: $e');
+      }
+    }
+    print('Broadcast complete. Sent to $count users.');
+  }
+}

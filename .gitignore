@@ -1,0 +1,107 @@
+# =============================================================================
+# Dart / Flutter Backend - .gitignore
+# =============================================================================
+
+# -------------------------
+# CRITICAL: SECRETS & CREDENTIALS — NEVER COMMIT THESE
+# -------------------------
+
+# Local environment variables file (contains BOT_TOKEN, API keys, etc.)
+.env
+
+# Firebase service account and credential files
+firebase_credentials.json
+google-services.json
+GoogleService-Info.plist
+*-firebase-adminsdk-*.json
+service_account.json
+serviceAccountKey.json
+
+# Any generic JSON credential files
+*credentials*.json
+*secret*.json
+
+
+# -------------------------
+# Dart / Pub
+# -------------------------
+
+# Dart tool cache
+.dart_tool/
+
+# Pub package cache
+.packages
+
+# Pub lock file for applications (keep pubspec.lock for reproducible builds)
+# pubspec.lock  # <-- intentionally NOT ignoring this for a backend app
+
+# Build outputs
+build/
+
+# Dart analysis cache
+.analysis_driver/
+
+
+# -------------------------
+# IDE & Editor
+# -------------------------
+
+# VS Code
+.vscode/
+
+# JetBrains IDEs (IntelliJ, Android Studio, etc.)
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Vim swap files
+*.swp
+*.swo
+
+# macOS metadata
+.DS_Store
+
+# Windows thumbnail cache
+Thumbs.db
+desktop.ini
+
+
+# -------------------------
+# Compiled Outputs & Logs
+# -------------------------
+
+# Dart compiled output
+*.js
+*.js.map
+*.js_deps
+*.snapshot
+*.dill
+
+# Log files
+*.log
+logs/
+
+# Compiled native binaries
+bin/server
+bin/*.exe
+
+
+# -------------------------
+# Docker
+# -------------------------
+
+# Docker environment override files (if used)
+.env.docker
+docker-compose.override.yml
+
+
+# -------------------------
+# Miscellaneous
+# -------------------------
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/

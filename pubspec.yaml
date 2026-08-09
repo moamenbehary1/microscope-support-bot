@@ -1,0 +1,11 @@
+name: telegram_bot_cms
+description: Educational Telegram bot with CMS
+version: 1.0.0
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+dependencies:
+  televerse: ^1.10.4
+  dotenv: ^4.2.0
+  http: ^1.2.0
+dev_dependencies:
+  lints: ^3.0.0

@@ -1,3 +1,4 @@
+modules = ["dart-3.10"]
 [nix]
 channel = "stable-25_05"
 

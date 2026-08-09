@@ -25,20 +25,21 @@ RUN dart compile exe bin/telegram_bot_cms.dart -o bin/server
 
 # =============================================================================
 # Stage 2: Production Runtime
-# Use the minimal runtime image (no SDK) to keep the final image small and secure.
+# debian:slim includes the C runtime (glibc) required by Dart AOT binaries.
+# Much smaller than the full dart image, but more compatible than scratch.
 # =============================================================================
-FROM scratch AS runtime
+FROM debian:bookworm-slim AS runtime
+
+# Install CA certificates for HTTPS calls (Firebase, Telegram API)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy the compiled binary from the build stage
-COPY --from=build /runtime/ /
 COPY --from=build /app/bin/server /app/bin/server
 
-# Set the working directory (the app will look for .env relative to CWD)
+# Set the working directory
 WORKDIR /app
-
-# Expose no ports (this is a polling bot, not a webhook server)
-# If you switch to webhooks, uncomment and set the correct port:
-# EXPOSE 8080
 
 # Command to run the compiled bot executable
 CMD ["/app/bin/server"]

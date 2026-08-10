@@ -45,7 +45,7 @@ COPY --from=build /app/bin/server /app/bin/server
 COPY web/ web/
 
 # Expose the server port
-EXPOSE 8080
+EXPOSE 5000
 
 # Command to run the compiled bot executable
 CMD ["/app/bin/server"]

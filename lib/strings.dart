@@ -86,35 +86,35 @@ class S {
     },
 
     // ── Contribute request ──────────────────────────────────────────
-    'contribute_track_prompt': {
-      'ar': 'لتصبح مساهماً، اكتب اسم المسار الذي تريد المساهمة فيه:',
-      'en': 'To become a contributor, please type the Track name you want to contribute to:',
+    'contribute_name_prompt': {
+      'ar': 'تريد أن تصبح مساهماً؟ اكتب اسمك الكامل:',
+      'en': 'Want to become a contributor? Type your full name:',
     },
-    'contribute_subject_prompt': {
-      'ar': 'ممتاز! الآن اكتب اسم المادة التي تريد المساهمة فيها:',
-      'en': 'Great! Now type the Subject name you want to contribute to:',
+    'already_contributor_msg': {
+      'ar': 'أنت بالفعل مساهم! 🎉\nافتح لوحة التحكم من الزر أدناه.',
+      'en': 'You are already a contributor! 🎉\nOpen your dashboard with the button below.',
     },
     'contribute_request_sent': {
-      'ar': 'تم إرسال طلبك للمساهمة في {track} ← {subject} إلى الأدمن.',
-      'en': 'Your request to contribute to {track} → {subject} has been sent to admins.',
+      'ar': '✅ تم إرسال طلبك للمساهمة إلى الأدمن. سيتم إخطارك عند الموافقة.',
+      'en': '✅ Your contribution request has been sent. You will be notified upon approval.',
     },
     'admin_contrib_request': {
-      'ar': 'المستخدم {id} ({name}) يريد المساهمة في {track} ← {subject}',
-      'en': 'User {id} ({name}) wants to contribute to {track} → {subject}',
+      'ar': '📩 طلب مساهمة جديد!\nالمستخدم: {name}\nالمعرّف: {id}',
+      'en': '📩 New contributor request!\nUser: {name}\nID: {id}',
     },
     'btn_approve': {'ar': '✅ قبول', 'en': '✅ Approve'},
     'btn_reject': {'ar': '❌ رفض', 'en': '❌ Reject'},
     'contrib_approved_notif': {
-      'ar': '✅ تمت الموافقة على طلبك للمساهمة في {subject} ({track})!\nأرسل ملفاً لبدء المساهمة.',
-      'en': '✅ Your request to contribute to {subject} ({track}) has been APPROVED!\nSend a document to start contributing.',
+      'ar': '✅ تمت الموافقة على طلبك! أنت الآن مساهم.\nاستخدم /مساهم أو زر لوحة التحكم للبدء.',
+      'en': '✅ Your request has been APPROVED! You are now a contributor.\nUse /contributor or the dashboard button to start.',
     },
     'contrib_rejected_notif': {
       'ar': '❌ تم رفض طلبك للمساهمة.',
-      'en': '❌ Your request to contribute has been REJECTED.',
+      'en': '❌ Your contribution request has been REJECTED.',
     },
     'contrib_approved_admin': {
-      'ar': 'تمت الموافقة على {id} للمساهمة في {track} ← {subject}.',
-      'en': 'Approved {id} for {track} → {subject}.',
+      'ar': 'تمت الموافقة على {name} ({id}) كمساهم.',
+      'en': 'Approved {name} ({id}) as a contributor.',
     },
     'contrib_rejected_admin': {
       'ar': 'تم رفض طلب المساهمة للمستخدم {id}.',
@@ -139,8 +139,8 @@ class S {
       'en': 'Subject: {subject}\nSelect or add a Material Type:',
     },
     'upload_selected_type': {
-      'ar': 'النوع: {type}\nالآن اكتب اسم المادة:',
-      'en': 'Type: {type}\nNow, please type the Name of the Material:',
+      'ar': 'النوع: {type}\nأرسل ملفاتك الآن أو اضغط ✅ خلصت عند الانتهاء.',
+      'en': 'Type: {type}\nSend your files now or press ✅ Done when finished.',
     },
     'upload_enter_track': {
       'ar': 'اكتب اسم المسار الجديد:',
@@ -181,6 +181,40 @@ class S {
     'no_permission_upload': {
       'ar': '❌ ليس لديك صلاحية لرفع الملفات.',
       'en': '❌ You do not have permission to upload files.',
+    },
+    'btn_add_subject': {'ar': '➕ أضف مادة جديدة', 'en': '➕ Add New Subject'},
+    'contrib_add_subject_prompt': {
+      'ar': 'اختر المسار الذي تريد الإضافة إليه:',
+      'en': 'Choose a Track to add content to:',
+    },
+    'upload_collecting_files': {
+      'ar': 'أرسل ملفاتك الآن 📎\nيمكنك إرسال أكثر من ملف.\nاضغط ✅ خلصت عند الانتهاء.',
+      'en': 'Send your files now 📎\nYou can send multiple files.\nPress ✅ Done when finished.',
+    },
+    'upload_file_received_count': {
+      'ar': '✅ تم استلام الملف! الإجمالي: {count} ملف.\nاستمر في الإرسال أو اضغط ✅ خلصت.',
+      'en': '✅ File received! Total: {count} file(s).\nKeep sending or press ✅ Done.',
+    },
+    'upload_multi_success': {
+      'ar': '🎉 تم رفع {count} ملف بنجاح!\n📁 {subject} ← {track}\n📂 النوع: {type}',
+      'en': '🎉 Successfully uploaded {count} file(s)!\n📁 {subject} ← {track}\n📂 Type: {type}',
+    },
+    'upload_link_prompt': {
+      'ar': 'الصق الرابط هنا 🔗\n(يجب أن يبدأ بـ http:// أو https://)',
+      'en': 'Paste the link here 🔗\n(must start with http:// or https://)',
+    },
+    'upload_link_invalid': {
+      'ar': '❌ الرابط غير صالح. يجب أن يبدأ بـ http:// أو https://',
+      'en': '❌ Invalid link. It must start with http:// or https://',
+    },
+    'btn_done_uploading': {'ar': '✅ خلصت', 'en': '✅ Done'},
+    'upload_no_files': {
+      'ar': '❌ لم ترسل أي ملف! أرسل ملفاً أولاً.',
+      'en': '❌ No files sent! Please send a file first.',
+    },
+    'upload_no_subjects': {
+      'ar': '❌ لا توجد مواد في هذا المسار. تواصل مع الأدمن.',
+      'en': '❌ No subjects in this track. Contact admin.',
     },
     'btn_add_new_track': {'ar': '➕ إضافة مسار جديد', 'en': '➕ Add New Track'},
     'btn_add_new_subject': {

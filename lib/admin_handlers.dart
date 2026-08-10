@@ -287,11 +287,11 @@ void registerAdminHandlers(Bot bot) {
       msg += S.get('request_item', lang, {
         'id': id,
         'name': name,
-        'track': data['track'] ?? '',
-        'subject': data['subject'] ?? '',
+        'track': '',
+        'subject': '',
       });
       kb.row()
-        .add('✅ $id', 'approve_contrib:$id:${data['track']}:${data['subject']}')
+        .add('✅ $id', 'approve_contrib:$id')
         .add('❌ $id', 'reject_contrib:$id');
     });
 
@@ -351,35 +351,32 @@ void registerAdminHandlers(Bot bot) {
     await ctx.reply(S.get('replace_file_prompt', lang));
   });
 
-  // ── Approve / Reject contributors ─────────────────────────────────────
-  bot.callbackQuery(RegExp(r'^approve_contrib:(.*?):(.*?):(.*)'), (ctx) async {
+  // ── Approve / Reject contributors ──────────────────────────────────────────────
+  bot.callbackQuery(RegExp(r'^approve_contrib:(.*)'), (ctx) async {
     final data = ctx.callbackQuery?.data;
     if (data == null) return;
 
     final parts = data.split(':');
     final targetId = int.parse(parts[1]);
-    final track = parts[2];
-    final subject = parts[3];
 
     // Fetch contributor's name from the pending request
     final request = await FirebaseDb.getRequest(targetId);
-    final name = (request?['name'] as String?) ?? '';
+    final name = (request?['name'] as String?) ?? '$targetId';
 
-    await FirebaseDb.setContributor(targetId, track, subject, name: name);
+    await FirebaseDb.setContributor(targetId, name: name);
     await FirebaseDb.removeRequest(targetId);
 
     final adminLang = Utils.getUserLanguage(ctx.from?.id ?? 0);
     await ctx.editMessageText(
       S.get('contrib_approved_admin', adminLang,
-          {'id': '$targetId', 'track': track, 'subject': subject}),
+          {'id': '$targetId', 'name': name}),
     );
 
     try {
       final targetLang = Utils.getUserLanguage(targetId);
       await bot.api.sendMessage(
         ChatID(targetId),
-        S.get('contrib_approved_notif', targetLang,
-            {'subject': subject, 'track': track}),
+        S.get('contrib_approved_notif', targetLang),
       );
     } catch (_) {}
   });

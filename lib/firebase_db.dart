@@ -147,10 +147,9 @@ class FirebaseDb {
 
   // --- Contributors ---
 
-  static Future<void> setContributor(int userId, String track, String subject, {String name = ''}) async {
+  static Future<void> setContributor(int userId, {String name = ''}) async {
     await _put('/contributors/$userId', {
-      'track': track,
-      'subject': subject,
+      'approved': true,
       if (name.isNotEmpty) 'name': name,
     });
   }
@@ -290,10 +289,8 @@ class FirebaseDb {
   }
 
   // --- Contributor Requests ---
-  static Future<void> addRequest(int userId, String track, String subject, {String name = ''}) async {
+  static Future<void> addRequest(int userId, {String name = ''}) async {
     await _put('/requests/$userId', {
-      'track': track,
-      'subject': subject,
       'timestamp': DateTime.now().toIso8601String(),
       if (name.isNotEmpty) 'name': name,
     });

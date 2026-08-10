@@ -205,16 +205,26 @@ void registerStudentHandlers(Bot bot) {
       final fileType = material['file_type'] ?? 'document';
       final description = material['description'] as String? ?? '';
 
-      final inputFile = InputFile.fromFileId(fileId);
       String caption = S.get('here_is_material', lang,
           {'name': name, 'track': track, 'subject': subject, 'type': type});
       if (description.isNotEmpty) caption += '\n\n📝 $description';
 
-      if (fileType == 'photo') {
+      if (fileType == 'link') {
+        await ctx.reply('$caption\n\n🔗 $fileId');
+      } else if (fileType == 'photo') {
+        final inputFile = InputFile.fromFileId(fileId);
         await ctx.replyWithPhoto(inputFile, caption: caption);
       } else if (fileType == 'video') {
+        final inputFile = InputFile.fromFileId(fileId);
         await ctx.replyWithVideo(inputFile, caption: caption);
+      } else if (fileType == 'audio') {
+        final inputFile = InputFile.fromFileId(fileId);
+        await ctx.replyWithAudio(inputFile, caption: caption);
+      } else if (fileType == 'voice') {
+        final inputFile = InputFile.fromFileId(fileId);
+        await ctx.replyWithVoice(inputFile, caption: caption);
       } else {
+        final inputFile = InputFile.fromFileId(fileId);
         await ctx.replyWithDocument(inputFile, caption: caption);
       }
 
@@ -225,14 +235,24 @@ void registerStudentHandlers(Bot bot) {
     }
   });
 
-  // ── Request to Contribute ─────────────────────────────────────────────
+  // ── Request to Contribute ──────────────────────────────────────────────────
   bot.callbackQuery('req_contribute', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
     final lang = Utils.getUserLanguage(userId);
 
-    Utils.uploadStates[userId] = {'action': 'req_contribute_track'};
-    await ctx.reply(S.get('contribute_track_prompt', lang));
+    // If already a contributor, show dashboard button instead of request form
+    final isContrib = await FirebaseDb.isContributor(userId);
+    if (isContrib) {
+      final kb = InlineKeyboard().row()
+        .add(S.get('btn_my_dashboard', lang), 'contrib_dash');
+      await ctx.reply(S.get('already_contributor_msg', lang), replyMarkup: kb);
+      await ctx.answerCallbackQuery();
+      return;
+    }
+
+    Utils.uploadStates[userId] = {'action': 'req_contribute_name'};
+    await ctx.reply(S.get('contribute_name_prompt', lang));
     await ctx.answerCallbackQuery();
   });
 

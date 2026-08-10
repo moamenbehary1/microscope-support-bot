@@ -4,7 +4,18 @@ import 'utils.dart';
 import 'config.dart';
 import 'strings.dart';
 
+// Fixed material types shown in upload flow
+const _materialTypes = ['ملخص', 'شرح', 'فيديو', 'صوت', 'امتحانات', 'رابط'];
+
 void registerContributorAndUploadHandlers(Bot bot) {
+  // ── /مساهم command ───────────────────────────────────────────────────
+  bot.hears(RegExp(r'^/(مساهم|contributor)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    await _showContributorDashboard(ctx, userId, lang, isEdit: false);
+  });
+
   // ── Text input state machine ─────────────────────────────────────────
   bot.onText((ctx) async {
     final userId = ctx.from?.id;
@@ -15,6 +26,7 @@ void registerContributorAndUploadHandlers(Bot bot) {
 
     final lang = Utils.getUserLanguage(userId);
     final text = ctx.message?.text ?? '';
+    if (text.startsWith('/')) return; // ignore commands
 
     switch (state['action']) {
       // ---- Admin actions ------------------------------------------------
@@ -53,44 +65,30 @@ void registerContributorAndUploadHandlers(Bot bot) {
         Utils.clearUploadState(userId);
         break;
 
-      // ---- Contributor request ------------------------------------------
-      case 'req_contribute_track':
-        state['action'] = 'req_contribute_subject';
-        state['track'] = text;
-        await ctx.reply(S.get('contribute_subject_prompt', lang));
-        break;
-
-      case 'req_contribute_subject':
-        final track = state['track'] as String;
-        final subject = text;
+      // ---- Contributor request (name only) ---------------------------------
+      case 'req_contribute_name':
+        final fullName = text.trim().isNotEmpty
+            ? text.trim()
+            : '${ctx.from?.firstName ?? ''} ${ctx.from?.lastName ?? ''}'.trim();
         Utils.clearUploadState(userId);
 
-        // Store name from Telegram profile
-        final firstName = ctx.from?.firstName ?? '';
-        final lastName = ctx.from?.lastName ?? '';
-        final fullName = '$firstName $lastName'.trim();
+        await FirebaseDb.addRequest(userId, name: fullName);
+        await ctx.reply(S.get('contribute_request_sent', lang));
 
-        await FirebaseDb.addRequest(userId, track, subject, name: fullName);
-        await ctx.reply(S.get('contribute_request_sent', lang,
-            {'track': track, 'subject': subject}));
-
-        // Notify all admins — personalized per admin language
+        // Notify all admins
         final admins = await FirebaseDb.getAdmins();
         for (var adminId in admins) {
           try {
             final adminLang = Utils.getUserLanguage(adminId);
             final keyboard = InlineKeyboard()
               .row()
-              .add(S.get('btn_approve', adminLang),
-                  'approve_contrib:$userId:$track:$subject')
+              .add(S.get('btn_approve', adminLang), 'approve_contrib:$userId')
               .add(S.get('btn_reject', adminLang), 'reject_contrib:$userId');
             await bot.api.sendMessage(
               ChatID(adminId),
               S.get('admin_contrib_request', adminLang, {
                 'id': '$userId',
                 'name': fullName.isEmpty ? '$userId' : fullName,
-                'track': track,
-                'subject': subject,
               }),
               replyMarkup: keyboard,
             );
@@ -101,8 +99,8 @@ void registerContributorAndUploadHandlers(Bot bot) {
       // ---- Contact admin ------------------------------------------------
       case 'contact_admin':
         Utils.clearUploadState(userId);
-        final admins = await FirebaseDb.getAdmins();
-        for (var adminId in admins) {
+        final admins2 = await FirebaseDb.getAdmins();
+        for (var adminId in admins2) {
           try {
             final adminLang = Utils.getUserLanguage(adminId);
             await bot.api.sendMessage(
@@ -119,104 +117,77 @@ void registerContributorAndUploadHandlers(Bot bot) {
       case 'contrib_announce_msg':
         Utils.clearUploadState(userId);
         await ctx.reply(S.get('announce_sending', lang));
-        final users = await FirebaseDb.getAllUsers();
-        Utils.broadcast(bot, users, text);
+        final users2 = await FirebaseDb.getAllUsers();
+        Utils.broadcast(bot, users2, text);
         break;
 
-      // ---- Admin upload flow (new manual entry) ─────────────────────────
-      // This path is used when admin/contributor types a NEW track/subject/type
-      // by clicking "Add New" buttons. For keyboard-based selections, the flow
-      // goes directly to upload_admin_name via up_type callback.
+      // ---- Upload flow: new track / subject typed manually ─────────────
       case 'upload_admin_track':
         state['action'] = 'upload_admin_subject';
         state['track'] = text;
-        // BUG-FIXED: was incorrectly asking for 'type' instead of 'subject'
         await ctx.reply(S.get('upload_enter_subject', lang));
         break;
 
       case 'upload_admin_subject':
-        state['action'] = 'upload_admin_type';
+        final track = state['track'] as String? ?? '';
         state['subject'] = text;
-        await ctx.reply(S.get('upload_enter_type', lang));
+        state['action'] = 'wait_for_upload_type';
+
+        // Show fixed material types
+        final kb = InlineKeyboard();
+        for (var t in _materialTypes) {
+          kb.row().add(t, 'up_type:$t');
+        }
+        await ctx.reply(
+          S.get('upload_selected_track', lang, {'track': track}),
+          replyMarkup: kb,
+        );
         break;
 
-      case 'upload_admin_type':
-        state['action'] = 'upload_admin_name';
-        state['type'] = text;
-        await ctx.reply(S.get('upload_enter_name', lang));
-        break;
-
-      case 'upload_admin_name':
-        state['action'] = 'upload_admin_desc';
-        state['name'] = text;
-        await ctx.reply(S.get('upload_enter_desc', lang));
-        break;
-
-      case 'upload_admin_desc':
-        // Null-safe: fallback to empty string if any state value is missing
-        final track = (state['track'] as String?) ?? '';
-        final subject = (state['subject'] as String?) ?? '';
-        final type = (state['type'] as String?) ?? '';
-        final name = (state['name'] as String?) ?? '';
-        final fileId = (state['fileId'] as String?) ?? '';
-        final fileType = (state['fileType'] as String?) ?? 'document';
-        final desc = (text.toLowerCase() == 'skip' ||
-                text.toLowerCase() == 'تخطي')
-            ? ''
-            : text;
+      // ---- Link upload: user pastes URL --------------------------------
+      case 'contrib_upload_link':
+        final track2 = (state['track'] as String?) ?? '';
+        final subject2 = (state['subject'] as String?) ?? '';
+        final type2 = (state['type'] as String?) ?? 'رابط';
         Utils.clearUploadState(userId);
-        if (track.isEmpty || subject.isEmpty || type.isEmpty ||
-            name.isEmpty || fileId.isEmpty) {
-          await ctx.reply(S.get('upload_failed', lang));
+
+        final url = text.trim();
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          await ctx.reply(S.get('upload_link_invalid', lang));
           break;
         }
-        await _saveFileToDatabase(
-            bot, ctx, track, subject, type, name, fileId, fileType, userId,
-            description: desc);
-        break;
 
-      // NOTE: upload_contrib_* states below handle the legacy text-only path.
-      // The keyboard-based flow (which is the default) uses upload_admin_*
-      // states above for both admins and contributors.
-      case 'upload_contrib_type':
-        state['action'] = 'upload_contrib_name';
-        state['type'] = text;
-        await ctx.reply(S.get('upload_enter_name', lang));
-        break;
+        final linkName = url.length > 60 ? '${url.substring(0, 60)}…' : url;
+        final materialId = await FirebaseDb.addMaterial(track2, subject2, type2, {
+          'name': linkName,
+          'file_id': url,
+          'file_type': 'link',
+          'added_by': userId.toString(),
+        });
 
-      case 'upload_contrib_name':
-        state['action'] = 'upload_contrib_desc';
-        state['name'] = text;
-        await ctx.reply(S.get('upload_enter_desc', lang));
-        break;
-
-      case 'upload_contrib_desc':
-        final contribData = await FirebaseDb.getContributor(userId);
-        if (contribData == null) {
-          Utils.clearUploadState(userId);
-          return;
+        if (materialId != null) {
+          await FirebaseDb.addContributorMaterialRef(userId, materialId, {
+            'track': track2,
+            'subject': subject2,
+            'type': type2,
+            'name': linkName,
+          });
+          await ctx.reply(S.get('upload_multi_success', lang, {
+            'count': '1',
+            'subject': subject2,
+            'track': track2,
+            'type': type2,
+          }));
+        } else {
+          await ctx.reply(S.get('upload_failed', lang));
         }
-        final track = contribData['track'] as String;
-        final subject = contribData['subject'] as String;
-        final type = state['type'] as String;
-        final name = state['name'] as String;
-        final fileId = state['fileId'] as String;
-        final fileType = state['fileType'] as String? ?? 'document';
-        final desc = (text.toLowerCase() == 'skip' ||
-                text.toLowerCase() == 'تخطي')
-            ? ''
-            : text;
-        Utils.clearUploadState(userId);
-        await _saveFileToDatabase(
-            bot, ctx, track, subject, type, name, fileId, fileType, userId,
-            description: desc);
         break;
     }
   });
 
   // ── Upload track/subject/type keyboard callbacks ─────────────────────
 
-  bot.callbackQuery(RegExp(r'^up_track:(.*)'), (ctx) async {
+  bot.callbackQuery(RegExp(r'^up_track:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
 
@@ -224,13 +195,15 @@ void registerContributorAndUploadHandlers(Bot bot) {
     if (state == null || state['action'] != 'wait_for_upload_track') return;
 
     final lang = Utils.getUserLanguage(userId);
-    final track = ctx.callbackQuery!.data!.split(':')[1];
+    final data = ctx.callbackQuery!.data!;
+    final track = data.substring('up_track:'.length);
     state['track'] = track;
     state['action'] = 'wait_for_upload_subject';
 
     final subjects = await FirebaseDb.getSubjects(track);
     if (subjects.isEmpty) {
-      await ctx.editMessageText(S.get('upload_no_categories', lang));
+      await ctx.answerCallbackQuery(
+          text: S.get('upload_no_subjects', lang), showAlert: true);
       Utils.clearUploadState(userId);
       return;
     }
@@ -246,7 +219,7 @@ void registerContributorAndUploadHandlers(Bot bot) {
     );
   });
 
-  bot.callbackQuery(RegExp(r'^up_subj:(.*)'), (ctx) async {
+  bot.callbackQuery(RegExp(r'^up_subj:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
 
@@ -254,20 +227,14 @@ void registerContributorAndUploadHandlers(Bot bot) {
     if (state == null || state['action'] != 'wait_for_upload_subject') return;
 
     final lang = Utils.getUserLanguage(userId);
-    final subject = ctx.callbackQuery!.data!.split(':')[1];
+    final data = ctx.callbackQuery!.data!;
+    final subject = data.substring('up_subj:'.length);
     state['subject'] = subject;
     state['action'] = 'wait_for_upload_type';
 
-    final track = state['track'] as String;
-    final types = await FirebaseDb.getMaterialTypes(track, subject);
-    if (types.isEmpty) {
-      await ctx.editMessageText(S.get('upload_no_categories', lang));
-      Utils.clearUploadState(userId);
-      return;
-    }
-
+    // Show fixed material types
     final keyboard = InlineKeyboard();
-    for (var t in types) {
+    for (var t in _materialTypes) {
       keyboard.row().add(t, 'up_type:$t');
     }
 
@@ -277,7 +244,7 @@ void registerContributorAndUploadHandlers(Bot bot) {
     );
   });
 
-  bot.callbackQuery(RegExp(r'^up_type:(.*)'), (ctx) async {
+  bot.callbackQuery(RegExp(r'^up_type:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
 
@@ -285,16 +252,139 @@ void registerContributorAndUploadHandlers(Bot bot) {
     if (state == null || state['action'] != 'wait_for_upload_type') return;
 
     final lang = Utils.getUserLanguage(userId);
-    final type = ctx.callbackQuery!.data!.split(':')[1];
+    final data = ctx.callbackQuery!.data!;
+    final type = data.substring('up_type:'.length);
     state['type'] = type;
-    state['action'] = 'upload_admin_name';
+
+    // Move any pending single file into the files list
+    final pendingFile = state['pending_file'] as Map<String, dynamic>?;
+    final List<Map<String, dynamic>> files = [];
+    if (pendingFile != null) {
+      files.add(pendingFile);
+      state.remove('pending_file');
+    }
+    state['files'] = files;
+
+    if (type == 'رابط' || type.toLowerCase() == 'link') {
+      // Switch to link mode
+      state['action'] = 'contrib_upload_link';
+      await ctx.editMessageText(S.get('upload_link_prompt', lang));
+    } else {
+      state['action'] = 'collect_files';
+      final doneKb = InlineKeyboard().row()
+        .add(S.get('btn_done_uploading', lang), 'contrib_upload_done');
+
+      if (files.isNotEmpty) {
+        await ctx.editMessageText(
+          S.get('upload_file_received_count', lang, {'count': '${files.length}'}),
+          replyMarkup: doneKb,
+        );
+      } else {
+        await ctx.editMessageText(
+          S.get('upload_collecting_files', lang),
+          replyMarkup: doneKb,
+        );
+      }
+    }
+  });
+
+  // ── Add Subject button (from contributor dashboard) ───────────────────
+  bot.callbackQuery('contrib_add_subject', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+
+    final isContributor = await FirebaseDb.isContributor(userId);
+    final isAdmin = await FirebaseDb.isAdmin(userId);
+    if (!isContributor && !isAdmin) {
+      await ctx.answerCallbackQuery(
+          text: S.get('no_permission_upload', lang), showAlert: true);
+      return;
+    }
+
+    Utils.uploadStates[userId] = {
+      'action': 'wait_for_upload_track',
+    };
+
+    final tracks = await FirebaseDb.getTracks();
+    if (tracks.isEmpty) {
+      await ctx.answerCallbackQuery(
+          text: S.get('upload_no_categories', lang), showAlert: true);
+      Utils.clearUploadState(userId);
+      return;
+    }
+
+    final keyboard = InlineKeyboard();
+    for (var t in tracks) {
+      keyboard.row().add(t, 'up_track:$t');
+    }
 
     await ctx.editMessageText(
-      S.get('upload_selected_type', lang, {'type': type}),
+      S.get('contrib_add_subject_prompt', lang),
+      replyMarkup: keyboard,
     );
   });
 
-  // ── File upload handlers ─────────────────────────────────────────────
+  // ── Done uploading → save all collected files ─────────────────────────
+  bot.callbackQuery('contrib_upload_done', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+
+    final state = Utils.uploadStates[userId];
+    if (state == null || state['action'] != 'collect_files') {
+      await ctx.answerCallbackQuery();
+      return;
+    }
+
+    final track = (state['track'] as String?) ?? '';
+    final subject = (state['subject'] as String?) ?? '';
+    final type = (state['type'] as String?) ?? '';
+    final files = (state['files'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
+    Utils.clearUploadState(userId);
+    await ctx.answerCallbackQuery();
+
+    if (files.isEmpty) {
+      await ctx.editMessageText(S.get('upload_no_files', lang));
+      return;
+    }
+
+    int savedCount = 0;
+    for (int i = 0; i < files.length; i++) {
+      final file = files[i];
+      final fId = file['fileId'] as String;
+      final fType = file['fileType'] as String;
+      final autoName = files.length == 1 ? type : '$type ${i + 1}';
+
+      final backupFileId = await _backupFile(bot, fId, fType);
+      final matId = await FirebaseDb.addMaterial(track, subject, type, {
+        'name': autoName,
+        'file_id': backupFileId ?? fId,
+        'file_type': fType,
+        'added_by': userId.toString(),
+      });
+
+      if (matId != null) {
+        await FirebaseDb.addContributorMaterialRef(userId, matId, {
+          'track': track,
+          'subject': subject,
+          'type': type,
+          'name': autoName,
+        });
+        savedCount++;
+      }
+    }
+
+    await ctx.reply(S.get('upload_multi_success', lang, {
+      'count': '$savedCount',
+      'subject': subject,
+      'track': track,
+      'type': type,
+    }));
+  });
+
+  // ── File upload handlers (all types) ─────────────────────────────────
 
   bot.onDocument((ctx) async {
     final fileId = ctx.message?.document?.fileId;
@@ -311,50 +401,17 @@ void registerContributorAndUploadHandlers(Bot bot) {
     if (fileId != null) await _handleUploadFlow(bot, ctx, fileId, 'video');
   });
 
-  // ── Contributor Dashboard callbacks ──────────────────────────────────
-
-  Future<void> _showContributorDashboard(Context ctx, int userId, String lang) async {
-  final contribData = await FirebaseDb.getContributor(userId);
-  if (contribData == null) {
-    if (ctx.callbackQuery != null) {
-      await ctx.answerCallbackQuery(
-          text: S.get('no_permission_upload', lang), showAlert: true);
-    } else {
-      await ctx.reply(S.get('no_permission_upload', lang));
-    }
-    return;
-  }
-
-  final materials = await FirebaseDb.getContributorMaterials(userId);
-  final count = materials.length;
-
-  final kb = InlineKeyboard()
-    .row()
-    .add(S.get('btn_my_materials', lang), 'contrib_materials')
-    .add(S.get('btn_announce', lang), 'contrib_announce')
-    .row()
-    .add(S.get('btn_self_remove', lang), 'contrib_self_remove')
-    .row()
-    .add(S.get('btn_back', lang), 'back:tracks');
-
-  final msg = S.get('contrib_dashboard_title', lang, {
-    'count': '$count',
+  bot.onAudio((ctx) async {
+    final fileId = ctx.message?.audio?.fileId;
+    if (fileId != null) await _handleUploadFlow(bot, ctx, fileId, 'audio');
   });
 
-  if (ctx.callbackQuery != null) {
-    await ctx.editMessageText(
-      msg,
-      replyMarkup: kb,
-      parseMode: ParseMode.markdown,
-    );
-  } else {
-    await ctx.reply(
-      msg,
-      replyMarkup: kb,
-      parseMode: ParseMode.markdown,
-    );
-  }
-}
+  bot.onVoice((ctx) async {
+    final fileId = ctx.message?.voice?.fileId;
+    if (fileId != null) await _handleUploadFlow(bot, ctx, fileId, 'voice');
+  });
+
+  // ── Contributor Dashboard callbacks ──────────────────────────────────
 
   bot.callbackQuery('contrib_dash', (ctx) async {
     final userId = ctx.from?.id;
@@ -362,7 +419,6 @@ void registerContributorAndUploadHandlers(Bot bot) {
     final lang = Utils.getUserLanguage(userId);
     await _showContributorDashboard(ctx, userId, lang);
   });
-
 
   bot.callbackQuery('contrib_materials', (ctx) async {
     final userId = ctx.from?.id;
@@ -488,6 +544,54 @@ void registerContributorAndUploadHandlers(Bot bot) {
   });
 }
 
+// ── Private: show contributor dashboard ──────────────────────────────────
+
+Future<void> _showContributorDashboard(Context ctx, int userId, String lang,
+    {bool isEdit = true}) async {
+  final contribData = await FirebaseDb.getContributor(userId);
+  if (contribData == null) {
+    if (ctx.callbackQuery != null) {
+      await ctx.answerCallbackQuery(
+          text: S.get('no_permission_upload', lang), showAlert: true);
+    } else {
+      await ctx.reply(S.get('no_permission_upload', lang));
+    }
+    return;
+  }
+
+  final materials = await FirebaseDb.getContributorMaterials(userId);
+  final count = materials.length;
+
+  final kb = InlineKeyboard()
+    .row()
+    .add(S.get('btn_add_subject', lang), 'contrib_add_subject')
+    .row()
+    .add(S.get('btn_my_materials', lang), 'contrib_materials')
+    .add(S.get('btn_announce', lang), 'contrib_announce')
+    .row()
+    .add(S.get('btn_self_remove', lang), 'contrib_self_remove')
+    .row()
+    .add(S.get('btn_back', lang), 'back:tracks');
+
+  final msg = S.get('contrib_dashboard_title', lang, {
+    'count': '$count',
+  });
+
+  if (isEdit && ctx.callbackQuery != null) {
+    await ctx.editMessageText(
+      msg,
+      replyMarkup: kb,
+      parseMode: ParseMode.markdown,
+    );
+  } else {
+    await ctx.reply(
+      msg,
+      replyMarkup: kb,
+      parseMode: ParseMode.markdown,
+    );
+  }
+}
+
 // ── Private: handle incoming file (admin or contributor) ─────────────────
 
 Future<void> _handleUploadFlow(
@@ -498,9 +602,26 @@ Future<void> _handleUploadFlow(
 
   final isAdmin = await FirebaseDb.isAdmin(userId);
   final isModeAdmin = Utils.getUserMode(userId) == UserMode.admin;
+  final isContributor = await FirebaseDb.isContributor(userId);
 
-  // Replace existing file
   final state = Utils.uploadStates[userId];
+
+  // ── If currently collecting files, just add to the list ─────────────
+  if (state != null && state['action'] == 'collect_files') {
+    final files = (state['files'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    files.add({'fileId': fileId, 'fileType': fileType});
+    state['files'] = files;
+
+    final doneKb = InlineKeyboard().row()
+      .add(S.get('btn_done_uploading', lang), 'contrib_upload_done');
+    await ctx.reply(
+      S.get('upload_file_received_count', lang, {'count': '${files.length}'}),
+      replyMarkup: doneKb,
+    );
+    return;
+  }
+
+  // ── Replace existing file ────────────────────────────────────────────
   if (state != null && state['action'] == 'replace_file') {
     if (!isAdmin) return;
 
@@ -515,11 +636,11 @@ Future<void> _handleUploadFlow(
     return;
   }
 
-  if (isAdmin && isModeAdmin) {
+  // ── Start a new upload session ────────────────────────────────────────
+  if ((isAdmin && isModeAdmin) || isContributor) {
     Utils.uploadStates[userId] = {
       'action': 'wait_for_upload_track',
-      'fileId': fileId,
-      'fileType': fileType,
+      'pending_file': {'fileId': fileId, 'fileType': fileType},
     };
 
     final tracks = await FirebaseDb.getTracks();
@@ -534,40 +655,12 @@ Future<void> _handleUploadFlow(
       keyboard.row().add(t, 'up_track:$t');
     }
 
-    await ctx.reply(S.get('admin_file_received', lang), replyMarkup: keyboard);
+    final prompt = (isAdmin && isModeAdmin)
+        ? S.get('admin_file_received', lang)
+        : S.get('contrib_file_received', lang);
+    await ctx.reply(prompt, replyMarkup: keyboard);
   } else {
-    final contribData = await FirebaseDb.getContributor(userId);
-    if (contribData != null) {
-      final track = contribData['track'] as String;
-      final subject = contribData['subject'] as String;
-
-      Utils.uploadStates[userId] = {
-        'action': 'wait_for_upload_type',
-        'fileId': fileId,
-        'fileType': fileType,
-        'track': track,
-        'subject': subject,
-      };
-
-      final types = await FirebaseDb.getMaterialTypes(track, subject);
-      if (types.isEmpty) {
-        await ctx.reply(S.get('upload_no_categories', lang));
-        Utils.clearUploadState(userId);
-        return;
-      }
-
-      final keyboard = InlineKeyboard();
-      for (var t in types) {
-        keyboard.row().add(t, 'up_type:$t');
-      }
-
-      await ctx.reply(
-        S.get('contrib_file_received', lang, {'subject': subject}),
-        replyMarkup: keyboard,
-      );
-    } else {
-      await ctx.reply(S.get('no_permission_upload', lang));
-    }
+    await ctx.reply(S.get('no_permission_upload', lang));
   }
 }
 
@@ -586,6 +679,12 @@ Future<String?> _backupFile(Bot bot, String fileId, String fileType) async {
     } else if (fileType == 'video') {
       final msg = await bot.api.sendVideo(chatId, inputFile);
       return msg.video?.fileId ?? fileId;
+    } else if (fileType == 'audio') {
+      final msg = await bot.api.sendAudio(chatId, inputFile);
+      return msg.audio?.fileId ?? fileId;
+    } else if (fileType == 'voice') {
+      final msg = await bot.api.sendVoice(chatId, inputFile);
+      return msg.voice?.fileId ?? fileId;
     } else {
       final msg = await bot.api.sendDocument(chatId, inputFile);
       return msg.document?.fileId ?? fileId;
@@ -593,61 +692,5 @@ Future<String?> _backupFile(Bot bot, String fileId, String fileType) async {
   } catch (e) {
     print('Backup failed: $e');
     return fileId;
-  }
-}
-
-// ── Private: save file to database ───────────────────────────────────────
-
-Future<void> _saveFileToDatabase(
-  Bot bot,
-  Context ctx,
-  String track,
-  String subject,
-  String type,
-  String name,
-  String fileId,
-  String fileType,
-  int uploaderId, {
-  String description = '',
-}) async {
-  final lang = Utils.getUserLanguage(uploaderId);
-  final backupFileId = await _backupFile(bot, fileId, fileType);
-
-  final materialId = await FirebaseDb.addMaterial(track, subject, type, {
-    'name': name,
-    'file_id': backupFileId ?? fileId,
-    'file_type': fileType,
-    'added_by': uploaderId.toString(),
-    if (description.isNotEmpty) 'description': description,
-  });
-
-  if (materialId != null) {
-    // Add to contributor materials index
-    await FirebaseDb.addContributorMaterialRef(uploaderId, materialId, {
-      'track': track,
-      'subject': subject,
-      'type': type,
-      'name': name,
-      if (description.isNotEmpty) 'description': description,
-    });
-
-    final isAdmin = await FirebaseDb.isAdmin(uploaderId);
-    InlineKeyboard? kb;
-    if (isAdmin) {
-      kb = InlineKeyboard()
-        .row()
-        .add(S.get('btn_delete_item', lang),
-            'admin_del:$track:$subject:$type:$materialId')
-        .add(S.get('btn_replace_item', lang),
-            'admin_rep:$track:$subject:$type:$materialId');
-    }
-
-    await ctx.reply(
-      S.get('upload_saved', lang,
-          {'name': name, 'track': track, 'subject': subject, 'type': type}),
-      replyMarkup: kb,
-    );
-  } else {
-    await ctx.reply(S.get('upload_failed', lang));
   }
 }

@@ -10,7 +10,7 @@ import '../lib/firebase_db.dart';
 Future<void> startDummyServer(Bot bot) async {
   final port = int.tryParse(Platform.environment['PORT'] ?? '') ?? 5000;
   final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
-  print('Web server listening on port $port  →  http://localhost:$port');
+  print('Web server listening on all interfaces (0.0.0.0) on port $port');
 
   await for (final request in server) {
     try {

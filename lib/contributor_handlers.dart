@@ -313,42 +313,56 @@ void registerContributorAndUploadHandlers(Bot bot) {
 
   // ── Contributor Dashboard callbacks ──────────────────────────────────
 
+  Future<void> _showContributorDashboard(Context ctx, int userId, String lang) async {
+  final contribData = await FirebaseDb.getContributor(userId);
+  if (contribData == null) {
+    if (ctx.callbackQuery != null) {
+      await ctx.answerCallbackQuery(
+          text: S.get('no_permission_upload', lang), showAlert: true);
+    } else {
+      await ctx.reply(S.get('no_permission_upload', lang));
+    }
+    return;
+  }
+
+  final materials = await FirebaseDb.getContributorMaterials(userId);
+  final count = materials.length;
+
+  final kb = InlineKeyboard()
+    .row()
+    .add(S.get('btn_my_materials', lang), 'contrib_materials')
+    .add(S.get('btn_announce', lang), 'contrib_announce')
+    .row()
+    .add(S.get('btn_self_remove', lang), 'contrib_self_remove')
+    .row()
+    .add(S.get('btn_back', lang), 'back:tracks');
+
+  final msg = S.get('contrib_dashboard_title', lang, {
+    'count': '$count',
+  });
+
+  if (ctx.callbackQuery != null) {
+    await ctx.editMessageText(
+      msg,
+      replyMarkup: kb,
+      parseMode: ParseMode.markdown,
+    );
+  } else {
+    await ctx.reply(
+      msg,
+      replyMarkup: kb,
+      parseMode: ParseMode.markdown,
+    );
+  }
+}
+
   bot.callbackQuery('contrib_dash', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
     final lang = Utils.getUserLanguage(userId);
-
-    final contribData = await FirebaseDb.getContributor(userId);
-    if (contribData == null) {
-      await ctx.answerCallbackQuery(
-          text: S.get('no_permission_upload', lang), showAlert: true);
-      return;
-    }
-
-    final track = contribData['track'] as String;
-    final subject = contribData['subject'] as String;
-    final materials = await FirebaseDb.getContributorMaterials(userId);
-    final count = materials.length;
-
-    final kb = InlineKeyboard()
-      .row()
-      .add(S.get('btn_my_materials', lang), 'contrib_materials')
-      .add(S.get('btn_announce', lang), 'contrib_announce')
-      .row()
-      .add(S.get('btn_self_remove', lang), 'contrib_self_remove')
-      .row()
-      .add(S.get('btn_back', lang), 'back:tracks');
-
-    await ctx.editMessageText(
-      S.get('contrib_dashboard_title', lang, {
-        'track': track,
-        'subject': subject,
-        'count': '$count',
-      }),
-      replyMarkup: kb,
-      parseMode: ParseMode.markdown,
-    );
+    await _showContributorDashboard(ctx, userId, lang);
   });
+
 
   bot.callbackQuery('contrib_materials', (ctx) async {
     final userId = ctx.from?.id;

@@ -127,8 +127,8 @@ class S {
       'en': 'Admin Mode: File received.\nSelect or add a Track:',
     },
     'contrib_file_received': {
-      'ar': 'وضع المساهم: تم استلام الملف لـ {subject}.\nاختر أو أضف نوع المادة:',
-      'en': 'Contributor Mode: File received for {subject}.\nSelect or add a Material Type:',
+      'ar': 'وضع المساهم: تم استلام الملف.\nاختر أو أضف مساراً:',
+      'en': 'Contributor Mode: File received.\nSelect or add a Track:',
     },
     'upload_selected_track': {
       'ar': 'المسار: {track}\nاختر أو أضف مادة:',
@@ -206,8 +206,8 @@ class S {
 
     // ── Contributor Dashboard ───────────────────────────────────────
     'contrib_dashboard_title': {
-      'ar': '🎛️ *لوحة تحكم المساهم*\n\nالمسار: {track}\nالمادة: {subject}\nالمواد المرفوعة: {count}',
-      'en': '🎛️ *Contributor Dashboard*\n\nTrack: {track}\nSubject: {subject}\nMaterials uploaded: {count}',
+      'ar': '🎛️ *لوحة تحكم المساهم*\n\nالمواد المرفوعة: {count}',
+      'en': '🎛️ *Contributor Dashboard*\n\nMaterials uploaded: {count}',
     },
     'btn_my_materials': {'ar': '📋 موادي', 'en': '📋 My Materials'},
     'btn_announce': {

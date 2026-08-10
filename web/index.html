@@ -224,6 +224,61 @@ input::placeholder{color:var(--muted)}
 .bar-track{background:var(--border);border-radius:4px;height:6px;width:100px;flex-shrink:0}
 .bar-fill{height:100%;border-radius:4px;background:var(--primary);transition:width .4s}
 
+/* ── Tree View ── */
+.tree-root{display:flex;flex-direction:column;gap:4px}
+.tree-node{border-radius:8px;overflow:hidden}
+.tree-row{
+  display:flex;align-items:center;gap:8px;padding:9px 12px;
+  cursor:pointer;user-select:none;border-radius:8px;
+  transition:background .13s,border-color .13s;
+  border:1px solid transparent;
+}
+.tree-row:hover{background:var(--surface2);border-color:var(--border)}
+.tree-row.track-row{background:var(--surface);border-color:var(--border);font-weight:600}
+.tree-row.track-row:hover{border-color:var(--primary)}
+.tree-row.subject-row{margin-left:20px;background:rgba(99,102,241,.04);border-color:rgba(99,102,241,.12)}
+.tree-row.subject-row:hover{border-color:var(--primary)}
+.tree-row.type-row{margin-left:40px;background:rgba(34,197,94,.04);border-color:rgba(34,197,94,.12)}
+.tree-row.type-row:hover{border-color:var(--success)}
+.tree-material{
+  margin-left:60px;padding:7px 12px;border-radius:6px;
+  display:flex;align-items:center;gap:8px;
+  border:1px solid var(--border);background:var(--bg);
+  transition:border-color .13s;
+}
+.tree-material:hover{border-color:var(--border)}
+.tree-caret{
+  font-size:.7rem;color:var(--muted);min-width:14px;text-align:center;
+  transition:transform .18s
+}
+.tree-caret.open{transform:rotate(90deg)}
+.tree-icon{font-size:.9rem;min-width:18px;text-align:center}
+.tree-lbl{flex:1;font-size:.875rem;color:var(--text)}
+.tree-sub{font-size:.72rem;color:var(--muted);margin-left:4px}
+.tree-badge{
+  font-size:.65rem;padding:2px 7px;border-radius:12px;font-weight:600;
+  white-space:nowrap
+}
+.tree-children{display:none;flex-direction:column;gap:4px;margin-top:4px}
+.tree-children.open{display:flex}
+.tree-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .15s}
+.tree-row:hover .tree-actions,
+.tree-material:hover .tree-actions{opacity:1}
+.file-type-icon{font-size:.85rem;min-width:20px}
+.mat-name{flex:1;font-size:.82rem;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── Search bar ── */
+.tree-search{
+  display:flex;gap:10px;margin-bottom:16px
+}
+.tree-search input{
+  flex:1;padding:8px 14px;border-radius:8px;
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);font-size:.875rem;outline:none;
+  transition:border-color .15s
+}
+.tree-search input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+
 /* ── Responsive ── */
 @media(max-width:900px){.grid-4{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:620px){
@@ -234,6 +289,9 @@ input::placeholder{color:var(--muted)}
   .grid-4,.grid-2{grid-template-columns:1fr}
   #content{padding:16px}
   .live-pill{display:none}
+  .tree-material{margin-left:30px}
+  .tree-row.subject-row{margin-left:12px}
+  .tree-row.type-row{margin-left:24px}
 }
 </style>
 </head>
@@ -318,6 +376,9 @@ input::placeholder{color:var(--muted)}
 <script>
 'use strict';
 
+// Safely encode a string for use inside single-quoted onclick attributes
+function encodeStr(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
 /* ═══════════════════════════════════════════════
    Firebase REST Wrapper
 ═══════════════════════════════════════════════ */
@@ -383,6 +444,13 @@ const UI = {
 document.getElementById('m-ok').onclick=()=>UI.closeModal(true);
 document.getElementById('overlay').addEventListener('click',e=>{
   if(e.target===document.getElementById('overlay')) UI.closeModal();
+});
+// Handle custom type select inside modal
+document.getElementById('m-body').addEventListener('change', e=>{
+  if(e.target.id==='type-pick'){
+    const cust = document.getElementById('type-custom');
+    if(cust) cust.style.display = e.target.value==='__custom' ? 'block' : 'none';
+  }
 });
 
 /* ═══════════════════════════════════════════════
@@ -460,7 +528,7 @@ const App = {
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.getElementById(`pg-${s}`)?.classList.add('active');
     // reset curriculum drill
-    if(s==='curriculum') S.curriculum.path=[];
+    if(s==='curriculum'){ S.curriculum._filter=''; S.curriculum._data=null; }
     // refresh
     clearInterval(this.timer);
     this.load(s);
@@ -590,169 +658,283 @@ const S = {
     }
   },
 
-  /* ── Curriculum ── */
+  /* ── Curriculum (Tree View) ── */
   curriculum:{
-    path:[],
-    async load(){ await this.render(document.getElementById('pg-curriculum')); },
-    async render(pg){
-      const p=this.path;
-      const lvl=p.length; // 0=tracks,1=subjects,2=types,3=materials
-      const labels=['Track','Subject','Type','Material'];
-      const nextLbl=labels[lvl]||'Item';
-      const isLeaf=lvl>=3;
+    _data: null,
+    _filter: '',
+    _open: {},   // track which nodes are open
 
-      // Breadcrumb
-      const crumbHtml=[
-        `<span class="link" onclick="S.curriculum.goTo(0)">All Tracks</span>`
-      ].concat(p.map((c,i)=>
-        `<span class="sep">›</span>`+(i===p.length-1
-          ?`<span class="cur">${c.label}</span>`
-          :`<span class="link" onclick="S.curriculum.goTo(${i+1})">${c.label}</span>`)
-      )).join('');
-
-      let fbPath='/curriculum';
-      p.forEach(c=>fbPath+='/'+encodeURIComponent(c.key));
-
-      pg.innerHTML=`
+    async load(){
+      const pg = document.getElementById('pg-curriculum');
+      pg.innerHTML = `
         <div class="sec-head">
-          <h2>📚 Curriculum</h2>
-          ${!isLeaf?`<div class="actions">
-            <button class="btn btn-primary btn-sm" onclick="S.curriculum.addItem()">+ Add ${nextLbl}</button>
-          </div>`:''}
-        </div>
-        <div class="crumb">${crumbHtml}</div>
-        <div id="curr-list"><div class="loading-msg"><span class="spin"></span> Loading…</div></div>`;
-
-      let data=null;
-      try{ data=await FB.get(fbPath); }catch(e){
-        document.getElementById('curr-list').innerHTML=
-          `<div class="empty"><div class="ico">⚠️</div><p>${e.message}</p></div>`;
-        return;
-      }
-
-      // Normalise: remove _placeholder entries
-      let items=data?Object.entries(data).filter(([k])=>k!=='_placeholder'):[];
-      const list=document.getElementById('curr-list');
-
-      if(items.length===0){
-        list.innerHTML=`<div class="empty"><div class="ico">📂</div>
-          <p>No ${nextLbl.toLowerCase()}s yet.</p></div>`;
-        return;
-      }
-
-      list.innerHTML=`<div class="item-list">${items.map(([key,val])=>{
-        const name=isLeaf?(val?.name||key):key;
-        const sub=isLeaf
-          ?(val?.file_type?`${val.file_type}${val.description?' · '+String(val.description).substring(0,50):''}`:''  )
-          :`${Object.keys(val||{}).filter(k=>k!=='_placeholder').length} ${(labels[lvl+1]||'item').toLowerCase()}s`;
-        return `<div class="item-row${isLeaf?'':' click'}"
-          ${isLeaf?'':`onclick="S.curriculum.drillIn('${key.replace(/'/g,"\\'")}','${key.replace(/'/g,"\\'")}')"` }>
-          <div style="flex:1">
-            <div class="item-lbl">${name}</div>
-            ${sub?`<div class="item-sub">${sub}</div>`:''}
+          <h2>📚 Curriculum Tree</h2>
+          <div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="S.curriculum.refresh()" title="Refresh">🔄</button>
+            <button class="btn btn-primary btn-sm" onclick="S.curriculum.addTrack()">+ Add Track</button>
           </div>
-          ${!isLeaf?`<span class="chevron">›</span>`:''}
-          ${isLeaf?`<button class="btn btn-sm btn-icon" style="margin-right:4px;background:var(--bg);color:var(--text);border:1px solid var(--border)"
-            onclick="event.stopPropagation();S.curriculum.moveItem('${key.replace(/'/g,"\\'")}','${name.replace(/'/g,"\\'")}')"
-            title="Move">📦</button>`:''}
-          <button class="btn btn-danger btn-sm btn-icon"
-            onclick="event.stopPropagation();S.curriculum.deleteItem('${key.replace(/'/g,"\\'")}','${name.replace(/'/g,"\\'")}')"
-            title="Delete">🗑</button>
-        </div>`;
-      }).join('')}</div>`;
+        </div>
+        <div class="tree-search">
+          <input id="tree-q" placeholder="🔍  Search tracks, subjects, types…" oninput="S.curriculum.search(this.value)"/>
+        </div>
+        <div id="tree-root" class="tree-root"><div class="loading-msg"><span class="spin"></span> Loading…</div></div>`;
+
+      await this.fetchAndRender();
     },
 
-    drillIn(key,label){
-      this.path.push({key,label});
-      this.render(document.getElementById('pg-curriculum'));
+    async refresh(){
+      this._data = null;
+      await this.fetchAndRender();
+      UI.toast('Refreshed','info',1800);
     },
-    goTo(idx){
-      this.path=this.path.slice(0,idx);
-      this.render(document.getElementById('pg-curriculum'));
+
+    search(q){
+      this._filter = q.toLowerCase().trim();
+      this.renderTree();
     },
-    async addItem(){
-      const lvl=this.path.length;
-      const labels=['Track','Subject','Material Type'];
-      const lbl=labels[lvl]||'Item';
-      const name=await UI.prompt(`Add New ${lbl}`,`${lbl} name...`,`Add ${lbl}`);
-      if(!name) return;
-      let fbPath='/curriculum';
-      this.path.forEach(c=>fbPath+='/'+encodeURIComponent(c.key));
-      fbPath+='/'+encodeURIComponent(name);
+
+    async fetchAndRender(){
       try{
-        await FB.put(fbPath,{_placeholder:true});
-        UI.toast(`${lbl} "${name}" added!`,'success');
-        this.render(document.getElementById('pg-curriculum'));
-      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+        this._data = await FB.get('/curriculum');
+        this.renderTree();
+      } catch(e){
+        document.getElementById('tree-root').innerHTML =
+          `<div class="empty"><div class="ico">⚠️</div><p>${e.message}</p></div>`;
+      }
     },
-    async deleteItem(key,name){
-      const ok=await UI.modal(`Delete "${name}"?`,
-        `<p style="color:var(--dim);font-size:.875rem;line-height:1.6">
-          This will permanently delete <strong style="color:var(--text)">${name}</strong>
-          and all its contents (subjects, types, materials).
-        </p>`,'Delete',true);
-      if(!ok) return;
-      let fbPath='/curriculum';
-      this.path.forEach(c=>fbPath+='/'+encodeURIComponent(c.key));
-      fbPath+='/'+encodeURIComponent(key);
-      try{
-        await FB.del(fbPath);
-        UI.toast(`"${name}" deleted`,'success');
-        this.render(document.getElementById('pg-curriculum'));
-      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+
+    _fileIcon(type){
+      const t = (type||'').toLowerCase();
+      if(t==='video')   return '🎥';
+      if(t==='photo')   return '🖼️';
+      if(t==='audio' || t==='voice') return '🎤';
+      if(t==='link')    return '🔗';
+      return '📄';
     },
-    async moveItem(key, name){
-      // 1. Fetch entire curriculum tree to show options
-      let all;
-      try{ all = await FB.get('/curriculum'); }catch(e){ UI.toast('Failed to load tree: '+e.message,'error'); return; }
-      if(!all){ UI.toast('No curriculum found','error'); return; }
-      
-      // Build options
-      let opts = [];
-      Object.keys(all).filter(k=>k!=='_placeholder').forEach(tr=>{
-        Object.keys(all[tr]||{}).filter(k=>k!=='_placeholder').forEach(su=>{
-          Object.keys(all[tr][su]||{}).filter(k=>k!=='_placeholder').forEach(ty=>{
-            opts.push({track:tr, subject:su, type:ty});
+
+    renderTree(){
+      const root = document.getElementById('tree-root');
+      if(!root) return;
+      const data = this._data;
+      if(!data){ root.innerHTML='<div class="empty"><div class="ico">📂</div><p>No curriculum found.</p></div>'; return; }
+
+      const q = this._filter;
+      const tracks = Object.entries(data).filter(([k])=>k!=='_placeholder');
+      if(tracks.length===0){
+        root.innerHTML='<div class="empty"><div class="ico">📂</div><p>No tracks yet. Click <strong>+ Add Track</strong> to begin.</p></div>'; return;
+      }
+
+      let html = '';
+      let matchCount = 0;
+
+      for(const [tKey, tVal] of tracks){
+        if(!tVal || typeof tVal !== 'object') continue;
+        const subjects = Object.entries(tVal).filter(([k])=>k!=='_placeholder');
+        const tId = 'tr-'+tKey.replace(/[^a-z0-9]/gi,'_');
+        const tOpen = this._open[tId] ?? true; // tracks open by default
+
+        // filter: show track if name matches OR any child matches
+        const tMatch = !q || tKey.toLowerCase().includes(q);
+
+        // count materials in track
+        let tMatCount = 0;
+        subjects.forEach(([,sV])=>{
+          if(!sV) return;
+          Object.entries(sV).filter(([k])=>k!=='_placeholder').forEach(([,tyV])=>{
+            if(tyV) tMatCount += Object.keys(tyV).filter(k=>k!=='_placeholder').length;
           });
         });
-      });
 
-      if(opts.length===0){ UI.toast('No destination types available','error'); return; }
+        // Build subjects HTML
+        let subjHtml = '';
+        for(const [sKey, sVal] of subjects){
+          if(!sVal || typeof sVal !== 'object') continue;
+          const sMatch = !q || sKey.toLowerCase().includes(q) || tKey.toLowerCase().includes(q);
+          const sId = tId+'_s_'+sKey.replace(/[^a-z0-9]/gi,'_');
+          const sOpen = this._open[sId] ?? false;
+          const types = Object.entries(sVal).filter(([k])=>k!=='_placeholder');
 
-      let selHtml = '<select id="move-dest" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin-top:10px">';
-      opts.forEach((o,i)=>{
-        selHtml += `<option value="${i}">${o.track} › ${o.subject} › ${o.type}</option>`;
-      });
-      selHtml += '</select>';
+          let sMatCount = 0;
+          let typesHtml = '';
+          for(const [tyKey, tyVal] of types){
+            if(!tyVal || typeof tyVal !== 'object') continue;
+            const tyMatch = !q || tyKey.toLowerCase().includes(q) || sKey.toLowerCase().includes(q) || tKey.toLowerCase().includes(q);
+            const tyId = sId+'_t_'+tyKey.replace(/[^a-z0-9]/gi,'_');
+            const tyOpen = this._open[tyId] ?? false;
+            const mats = Object.entries(tyVal).filter(([k])=>k!=='_placeholder');
+            sMatCount += mats.length;
 
-      const ok = await UI.modal(`Move "${name}"`,
-        `<p style="color:var(--dim);font-size:.875rem">Select new destination:</p>${selHtml}`,'Move',false);
-      
-      if(!ok) return;
-      const selIdx = document.getElementById('move-dest').value;
-      const dest = opts[selIdx];
-      if(!dest) return;
+            if(!tyMatch && !mats.some(([,m])=>!q||(m?.name||'').toLowerCase().includes(q))) continue;
 
-      const oldPath = `/curriculum/${encodeURIComponent(this.path[0].key)}/${encodeURIComponent(this.path[1].key)}/${encodeURIComponent(this.path[2].key)}/${encodeURIComponent(key)}`;
-      const newPath = `/curriculum/${encodeURIComponent(dest.track)}/${encodeURIComponent(dest.subject)}/${encodeURIComponent(dest.type)}/${encodeURIComponent(key)}`;
-      
-      if(oldPath === newPath) return;
+            // Materials
+            let matsHtml = '';
+            for(const [mKey, mVal] of mats){
+              if(!mVal) continue;
+              const mName = mVal.name || mKey;
+              if(q && !mName.toLowerCase().includes(q) && !tyMatch) continue;
+              const fIco = this._fileIcon(mVal.file_type);
+              const ft = mVal.file_type || 'doc';
+              const eTrack = encodeStr(tKey), eSubj = encodeStr(sKey), eType = encodeStr(tyKey), eMat = encodeStr(mKey), eName = encodeStr(mName);
+              matsHtml += `<div class="tree-material">
+                <span class="file-type-icon">${fIco}</span>
+                <span class="mat-name" title="${mName}">${mName}</span>
+                <span class="tree-sub">${ft}</span>
+                <div class="tree-actions">
+                  <button class="btn btn-sm btn-icon" style="color:var(--danger);border-color:var(--danger);background:transparent"
+                    onclick="S.curriculum.deleteMat('${eTrack}','${eSubj}','${eType}','${eMat}','${eName}')" title="Delete">🗑</button>
+                </div>
+              </div>`;
+              matchCount++;
+            }
 
+            const eTyKey = encodeStr(tyKey), eTyLabel = encodeStr(tyKey);
+            typesHtml += `
+              <div class="tree-row type-row" onclick="S.curriculum.toggle('${tyId}')">
+                <span class="tree-caret${tyOpen?' open':''}" id="c-${tyId}">▶</span>
+                <span class="tree-icon">🏷️</span>
+                <span class="tree-lbl">${tyKey}</span>
+                <span class="tree-badge" style="background:rgba(34,197,94,.12);color:var(--success)">${mats.length}</span>
+                <div class="tree-actions">
+                  <button class="btn btn-sm btn-icon" style="color:var(--danger);border-color:var(--danger);background:transparent"
+                    onclick="event.stopPropagation();S.curriculum.deleteNode('${eTrack}','${eSubj}','${eTyKey}','${tyKey}')" title="Delete type">🗑</button>
+                </div>
+              </div>
+              <div class="tree-children${tyOpen?' open':''}" id="ch-${tyId}">
+                ${matsHtml||'<div style="margin-left:60px;padding:6px 0;color:var(--muted);font-size:.8rem">No materials</div>'}
+              </div>`;
+          }
+
+          if(!sMatch && !typesHtml) continue;
+
+          const eSKey = encodeStr(sKey);
+          subjHtml += `
+            <div class="tree-row subject-row" onclick="S.curriculum.toggle('${sId}')">
+              <span class="tree-caret${sOpen?' open':''}" id="c-${sId}">▶</span>
+              <span class="tree-icon">📋</span>
+              <span class="tree-lbl">${sKey}</span>
+              <span class="tree-badge" style="background:rgba(99,102,241,.12);color:var(--primary)">${sMatCount} mat</span>
+              <div class="tree-actions">
+                <button class="btn btn-sm btn-icon" style="color:var(--success);border-color:var(--success);background:transparent"
+                  onclick="event.stopPropagation();S.curriculum.addTypeToSubject('${encodeStr(tKey)}','${eSKey}')" title="Add Type">+🏷️</button>
+                <button class="btn btn-sm btn-icon" style="color:var(--danger);border-color:var(--danger);background:transparent"
+                  onclick="event.stopPropagation();S.curriculum.deleteNode('${encodeStr(tKey)}','${eSKey}',null,'${sKey}')" title="Delete subject">🗑</button>
+              </div>
+            </div>
+            <div class="tree-children${sOpen?' open':''}" id="ch-${sId}">
+              ${typesHtml||'<div style="margin-left:40px;padding:6px 0;color:var(--muted);font-size:.8rem">No types</div>'}
+              <div class="tree-row type-row" style="cursor:pointer;opacity:.7" onclick="event.stopPropagation();S.curriculum.addTypeToSubject('${encodeStr(tKey)}','${eSKey}')">
+                <span class="tree-caret" style="opacity:0">▶</span>
+                <span class="tree-icon">➕</span>
+                <span class="tree-lbl" style="color:var(--dim);font-size:.8rem">Add type…</span>
+              </div>
+            </div>`;
+        }
+
+        if(!tMatch && !subjHtml) continue;
+
+        const eTKey = encodeStr(tKey);
+        html += `
+          <div class="tree-node">
+            <div class="tree-row track-row" onclick="S.curriculum.toggle('${tId}')">
+              <span class="tree-caret${tOpen?' open':''}" id="c-${tId}">▶</span>
+              <span class="tree-icon">📁</span>
+              <span class="tree-lbl">${tKey}</span>
+              <span class="tree-badge" style="background:rgba(99,102,241,.12);color:var(--primary)">${tMatCount} materials</span>
+              <div class="tree-actions">
+                <button class="btn btn-sm btn-icon" style="color:var(--success);border-color:var(--success);background:transparent"
+                  onclick="event.stopPropagation();S.curriculum.addSubjectToTrack('${eTKey}')" title="Add Subject">+📋</button>
+                <button class="btn btn-sm btn-icon" style="color:var(--danger);border-color:var(--danger);background:transparent"
+                  onclick="event.stopPropagation();S.curriculum.deleteNode('${eTKey}',null,null,'${tKey}')" title="Delete track">🗑</button>
+              </div>
+            </div>
+            <div class="tree-children${tOpen?' open':''}" id="ch-${tId}">
+              ${subjHtml||'<div style="margin-left:20px;padding:6px 0;color:var(--muted);font-size:.8rem">No subjects</div>'}
+              <div class="tree-row subject-row" style="cursor:pointer;opacity:.7" onclick="event.stopPropagation();S.curriculum.addSubjectToTrack('${eTKey}')">
+                <span class="tree-caret" style="opacity:0">▶</span>
+                <span class="tree-icon">➕</span>
+                <span class="tree-lbl" style="color:var(--dim);font-size:.8rem">Add subject…</span>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      root.innerHTML = html || `<div class="empty"><div class="ico">🔍</div><p>No results for "${q}"</p></div>`;
+    },
+
+    toggle(id){
+      this._open[id] = !this._open[id];
+      const ch = document.getElementById('ch-'+id);
+      const cr = document.getElementById('c-'+id);
+      if(ch) ch.classList.toggle('open', !!this._open[id]);
+      if(cr) cr.classList.toggle('open', !!this._open[id]);
+    },
+
+    async addTrack(){
+      const name = await UI.prompt('Add New Track','Track name…','Add Track');
+      if(!name) return;
       try{
-        // Get old data
-        const oldData = await FB.get(oldPath);
-        if(!oldData) throw new Error('Material not found');
-        
-        // Put to new dest
-        await FB.put(newPath, oldData);
-        
-        // Delete old
-        await FB.del(oldPath);
-        
-        UI.toast(`Moved to ${dest.type}`,'success');
-        this.render(document.getElementById('pg-curriculum'));
-      }catch(e){ UI.toast('Failed to move: '+e.message,'error'); }
-    }
+        await FB.put(`/curriculum/${encodeURIComponent(name)}`,{_placeholder:true});
+        UI.toast(`Track "${name}" added!`,'success');
+        await this.fetchAndRender();
+      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
+
+    async addSubjectToTrack(track){
+      const name = await UI.prompt(`Add Subject to "${track}"`, 'Subject name…', 'Add Subject');
+      if(!name) return;
+      try{
+        await FB.put(`/curriculum/${encodeURIComponent(track)}/${encodeURIComponent(name)}`,{_placeholder:true});
+        UI.toast(`Subject "${name}" added!`,'success');
+        await this.fetchAndRender();
+      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
+
+    async addTypeToSubject(track, subject){
+      const types = ['ملخص','شرح','فيديو','صوت','امتحانات','رابط'];
+      const selHtml = `<select id="type-pick" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:.875rem">
+        ${types.map(t=>`<option>${t}</option>`).join('')}
+        <option value="__custom">Custom…</option>
+      </select>
+      <input id="type-custom" placeholder="Custom type name" style="display:none;width:100%;margin-top:8px;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text)" />`;
+      const ok = await UI.modal(`Add Material Type to "${subject}"`, selHtml, 'Add Type');
+      if(!ok) return;
+      const sel = document.getElementById('type-pick')?.value;
+      const cust = document.getElementById('type-custom')?.value?.trim();
+      const typeName = sel==='__custom' ? cust : sel;
+      if(!typeName){ UI.toast('No type name','error'); return; }
+      try{
+        await FB.put(`/curriculum/${encodeURIComponent(track)}/${encodeURIComponent(subject)}/${encodeURIComponent(typeName)}`,{_placeholder:true});
+        UI.toast(`Type "${typeName}" added!`,'success');
+        await this.fetchAndRender();
+      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
+
+    async deleteNode(track, subject, type, label){
+      const ok = await UI.modal(`Delete "${label}"?`,
+        `<p style="color:var(--dim);font-size:.875rem;line-height:1.6">
+          This will permanently delete <strong style="color:var(--text)">${label}</strong> and <em>all its contents</em>.
+        </p>`, 'Delete', true);
+      if(!ok) return;
+      let path = '/curriculum/'+encodeURIComponent(track);
+      if(subject) path += '/'+encodeURIComponent(subject);
+      if(type) path += '/'+encodeURIComponent(type);
+      try{
+        await FB.del(path);
+        UI.toast(`"${label}" deleted`,'success');
+        await this.fetchAndRender();
+      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
+
+    async deleteMat(track, subject, type, matId, name){
+      const ok = await UI.modal(`Delete "${name}"?`,
+        `<p style="color:var(--dim);font-size:.875rem">Permanently delete <strong>${name}</strong>?</p>`, 'Delete', true);
+      if(!ok) return;
+      try{
+        await FB.del(`/curriculum/${encodeURIComponent(track)}/${encodeURIComponent(subject)}/${encodeURIComponent(type)}/${encodeURIComponent(matId)}`);
+        UI.toast(`"${name}" deleted`,'success');
+        await this.fetchAndRender();
+      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
   },
 
   /* ── Admins ── */
@@ -925,41 +1107,35 @@ const S = {
               ${d.name&&d.name.trim()?d.name:'User '+id}
               <span style="color:var(--muted);font-size:.75rem;margin-left:6px">#${id}</span>
             </div>
-            <div class="item-sub">
-              Wants to contribute to
-              <strong style="color:var(--text)">${d.track||'—'}</strong> →
-              <strong style="color:var(--text)">${d.subject||'—'}</strong>
-            </div>
+            <div class="item-sub">Wants to become a contributor</div>
             ${d.timestamp?`<div class="item-sub" style="font-size:.7rem;margin-top:2px">
               ${new Date(d.timestamp).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>`:''}
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0">
             <button class="btn btn-success btn-sm"
-              onclick="S.requests.approve('${id}','${(d.name||'').replace(/'/g,"\\'")}','${(d.track||'').replace(/'/g,"\\'")}','${(d.subject||'').replace(/'/g,"\\'")}')">
+              onclick="S.requests.approve('${id}','${(d.name||'').replace(/'/g,"\\'")}')">  
               ✅ Approve
             </button>
             <button class="btn btn-danger btn-sm"
-              onclick="S.requests.reject('${id}','${(d.name||id).replace(/'/g,"\\'")}')">
+              onclick="S.requests.reject('${id}','${(d.name||id).replace(/'/g,"\\'")}')">  
               ❌ Reject
             </button>
           </div>
         </div>`).join('')}</div>`;
     },
-    async approve(id,name,track,subject){
+    async approve(id,name){
       const ok=await UI.modal('Approve Contributor?',
         `<p style="color:var(--dim);line-height:1.7">
-          Approve <strong style="color:var(--text)">${name||id}</strong> to contribute to<br>
-          <strong style="color:var(--primary)">${track} → ${subject}</strong>?
+          Approve <strong style="color:var(--text)">${name||id}</strong> as a contributor?
         </p>`,'✅ Approve');
       if(!ok) return;
       try{
         await Promise.all([
-          FB.put(`/contributors/${id}`,{track,subject,name}),
+          FB.put(`/contributors/${id}`,{approved:true,name}),
           FB.del(`/requests/${id}`)
         ]);
         UI.toast(`${name||id} approved!`,'success');
         document.getElementById(`rr-${id}`)?.remove();
-        // update badge
         const remaining=document.querySelectorAll('[id^="rr-"]').length;
         const badge=document.getElementById('req-badge');
         badge.textContent=remaining; badge.style.display=remaining>0?'':'none';

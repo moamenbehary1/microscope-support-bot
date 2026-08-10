@@ -240,6 +240,7 @@ input::placeholder{color:var(--muted)}
 .tree-row.subject-row:hover{border-color:var(--primary)}
 .tree-row.type-row{margin-left:40px;background:rgba(34,197,94,.04);border-color:rgba(34,197,94,.12)}
 .tree-row.type-row:hover{border-color:var(--success)}
+.tree-row.type-row.drag-over{background:rgba(34,197,94,.15);border-color:var(--success);border-style:dashed}
 .tree-material{
   margin-left:60px;padding:7px 12px;border-radius:6px;
   display:flex;align-items:center;gap:8px;
@@ -679,6 +680,26 @@ const S = {
         </div>
         <div id="tree-root" class="tree-root"><div class="loading-msg"><span class="spin"></span> Loading…</div></div>`;
 
+      const root = document.getElementById('tree-root');
+      root.addEventListener('dragover', e => {
+        const row = e.target.closest('.type-row[data-track]');
+        if(row){ e.preventDefault(); row.classList.add('drag-over'); }
+      });
+      root.addEventListener('dragleave', e => {
+        const row = e.target.closest('.type-row[data-track]');
+        if(row){ row.classList.remove('drag-over'); }
+      });
+      root.addEventListener('drop', e => {
+        const row = e.target.closest('.type-row[data-track]');
+        if(!row) return;
+        e.preventDefault();
+        row.classList.remove('drag-over');
+        if(e.dataTransfer.files && e.dataTransfer.files.length > 0){
+          const file = e.dataTransfer.files[0];
+          S.curriculum.uploadFile(row.dataset.track, row.dataset.subject, row.dataset.type, file);
+        }
+      });
+
       await this.fetchAndRender();
     },
 
@@ -794,7 +815,7 @@ const S = {
             }
 
             typesHtml += `
-              <div class="tree-row type-row" onclick="S.curriculum.toggle('${tyId}')">
+              <div class="tree-row type-row" onclick="S.curriculum.toggle('${tyId}')" data-track="${eTrack}" data-subject="${eSKey}" data-type="${eTyKey}">
                 <span class="tree-caret${tyOpen?' open':''}" id="c-${tyId}">▶</span>
                 <span class="tree-icon">🏷️</span>
                 <span class="tree-lbl">${tyKey}</span>
@@ -1039,6 +1060,39 @@ const S = {
         await this.fetchAndRender();
       }catch(e){ UI.toast('Failed: '+e.message,'error'); }
     },
+
+    async uploadFile(track, subject, type, file){
+      UI.toast(`Uploading ${file.name}...`, 'info', 60000);
+      try {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+          const base64 = reader.result;
+          const payload = {
+            track, subject, type,
+            file_name: file.name,
+            file_base64: base64
+          };
+          
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          
+          const json = await res.json();
+          if(json.success) {
+            UI.toast(`File "${file.name}" uploaded successfully!`, 'success');
+            await this.fetchAndRender();
+          } else {
+            UI.toast(`Upload failed: ${json.error}`, 'error');
+          }
+        };
+        reader.onerror = () => UI.toast('Failed to read file', 'error');
+      } catch(e) {
+        UI.toast('Upload Error: ' + e.message, 'error');
+      }
+    }
   },
 
   /* ── Admins ── */

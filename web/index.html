@@ -249,6 +249,7 @@ input::placeholder{color:var(--muted)}
     <div class="nav-item active" data-s="overview"><span class="icon">🏠</span>Overview</div>
     <div class="nav-item" data-s="curriculum"><span class="icon">📚</span>Curriculum</div>
     <div class="nav-item" data-s="admins"><span class="icon">👑</span>Admins</div>
+    <div class="nav-item" data-s="users"><span class="icon">👥</span>Users</div>
     <div class="nav-item" data-s="contributors"><span class="icon">🤝</span>Contributors</div>
     <div class="nav-item" data-s="requests">
       <span class="icon">📩</span>Requests
@@ -273,6 +274,7 @@ input::placeholder{color:var(--muted)}
     <div id="pg-overview"  class="page active"></div>
     <div id="pg-curriculum" class="page"></div>
     <div id="pg-admins"    class="page"></div>
+    <div id="pg-users"     class="page"></div>
     <div id="pg-contributors" class="page"></div>
     <div id="pg-requests"  class="page"></div>
     <div id="pg-analytics" class="page"></div>
@@ -762,7 +764,6 @@ const S = {
           <h2>👑 Admins</h2>
           <div class="actions">
             <button class="btn btn-primary btn-sm" onclick="S.admins.add()">+ Add Admin</button>
-            <button class="btn btn-danger btn-sm" style="margin-left:8px" onclick="S.admins.wipeUsers()">🗑 Wipe All Users</button>
           </div>
         </div>
         <div class="card tbl-wrap">
@@ -811,6 +812,28 @@ const S = {
         UI.toast(`Admin ${id} removed`,'success');
         this.load();
       }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    }
+  },
+
+  /* ── Users ── */
+  users:{
+    async load(){
+      const pg=document.getElementById('pg-users');
+      pg.innerHTML=`
+        <div class="sec-head">
+          <h2>👥 Users</h2>
+          <div class="actions">
+            <button class="btn btn-danger btn-sm" onclick="S.users.wipeUsers()">🗑 Wipe All Users</button>
+          </div>
+        </div>
+        <div class="card" style="padding:24px;text-align:center;color:var(--dim)">
+          <p>Total Registered Students: <strong id="us-total" style="color:var(--text);font-size:1.2rem">—</strong></p>
+          <p style="margin-top:8px;font-size:0.85rem">Only students are tracked here. Admins and Contributors have their own tabs.</p>
+        </div>`;
+
+      const users=await FB.get('/users').catch(()=>null);
+      const total=users?Object.keys(users).length:0;
+      document.getElementById('us-total').textContent=total;
     },
     async wipeUsers(){
       const ok=await UI.modal('Wipe All Users?',
@@ -819,6 +842,7 @@ const S = {
       try{
         await FB.del('/users');
         UI.toast('All users wiped successfully','success');
+        this.load();
         App.load('overview'); // to refresh user count
       }catch(e){ UI.toast('Failed to wipe: '+e.message,'error'); }
     }

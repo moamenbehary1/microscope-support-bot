@@ -6,7 +6,7 @@ import 'strings.dart';
 
 void registerAdminHandlers(Bot bot) {
   // ── Admin Keyboard Text Listeners ─────────────────────────────────────
-  bot.hears(RegExp(r'^(👑 لوحة الإدارة|👑 Admin Panel)$'), (ctx) async {
+  bot.hears(RegExp(r'(لوحة الإدارة|Admin Panel)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
     if (!(await FirebaseDb.isAdmin(userId))) return;
@@ -20,7 +20,7 @@ void registerAdminHandlers(Bot bot) {
     );
   });
 
-  bot.hears(RegExp(r'^(🎓 وضع الطالب|🎓 Student Mode)$'), (ctx) async {
+  bot.hears(RegExp(r'(وضع الطالب|Student Mode)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
     if (!(await FirebaseDb.isAdmin(userId))) return;
@@ -30,7 +30,7 @@ void registerAdminHandlers(Bot bot) {
     await ctx.reply(S.get('admin_switched_student', lang));
   });
 
-  bot.hears(RegExp(r'^(🔄 تحديث البوت|🔄 Restart Bot)$'), (ctx) async {
+  bot.hears(RegExp(r'(تحديث البوت|Restart Bot)'), (ctx) async {
     // Treat as /start
     final userId = ctx.from?.id;
     if (userId == null) return;

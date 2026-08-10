@@ -206,8 +206,8 @@ class S {
 
     // ── Contributor Dashboard ───────────────────────────────────────
     'contrib_dashboard_title': {
-      'ar': '🎛️ **لوحة تحكم المساهم**\n\nالمسار: {track}\nالمادة: {subject}\nالمواد المرفوعة: {count}',
-      'en': '🎛️ **Contributor Dashboard**\n\nTrack: {track}\nSubject: {subject}\nMaterials uploaded: {count}',
+      'ar': '🎛️ *لوحة تحكم المساهم*\n\nالمسار: {track}\nالمادة: {subject}\nالمواد المرفوعة: {count}',
+      'en': '🎛️ *Contributor Dashboard*\n\nTrack: {track}\nSubject: {subject}\nMaterials uploaded: {count}',
     },
     'btn_my_materials': {'ar': '📋 موادي', 'en': '📋 My Materials'},
     'btn_announce': {
@@ -223,8 +223,8 @@ class S {
       'en': 'You have not uploaded any materials yet.',
     },
     'contrib_my_materials_header': {
-      'ar': '📋 **موادك المرفوعة:**\n\n',
-      'en': '📋 **Your uploaded materials:**\n\n',
+      'ar': '📋 *موادك المرفوعة:*\n\n',
+      'en': '📋 *Your uploaded materials:*\n\n',
     },
     'contrib_material_item': {
       'ar': '• {name} ({type})\n',
@@ -251,8 +251,8 @@ class S {
 
     // ── Admin Dashboard ─────────────────────────────────────────────
     'admin_dashboard_title': {
-      'ar': '🛡️ **لوحة الأدمن**\n\nمرحباً بك في لوحة الإدارة.\n\n*(لإضافة مسارات/مواد جديدة، أرسل الملف مباشرة وأنت في وضع الأدمن)*',
-      'en': '🛡️ **Admin Dashboard**\n\nWelcome to the admin panel.\n\n*(To add new content, simply send the file directly while in Admin Mode)*',
+      'ar': '🛡️ *لوحة الأدمن*\n\nمرحباً بك في لوحة الإدارة.\n\n*(لإضافة مسارات/مواد جديدة، أرسل الملف مباشرة وأنت في وضع الأدمن)*',
+      'en': '🛡️ *Admin Dashboard*\n\nWelcome to the admin panel.\n\n*(To add new content, simply send the file directly while in Admin Mode)*',
     },
     'not_authorized': {
       'ar': '❌ غير مصرح لك باستخدام هذا الأمر.',
@@ -299,20 +299,20 @@ class S {
       'en': 'No pending requests found.',
     },
     'pending_requests_title': {
-      'ar': '📩 **طلبات المساهمة المعلقة:**\n\n',
-      'en': '📩 **Pending Contributor Requests:**\n\n',
+      'ar': '📩 *طلبات المساهمة المعلقة:*\n\n',
+      'en': '📩 *Pending Contributor Requests:*\n\n',
     },
     'request_item': {
       'ar': '• المستخدم {id} ({name}) يريد المساهمة في {track} ← {subject}\n',
       'en': '• User {id} ({name}) wants to contribute to {track} → {subject}\n',
     },
     'wipe_confirm_msg': {
-      'ar': '⚠️ تحذير: هذا سيحذف جميع **المسارات والمواد** نهائياً.\nهل أنت متأكد؟',
-      'en': '⚠️ Warning: This will permanently delete all **Tracks and Materials**.\nAre you sure?',
+      'ar': '⚠️ تحذير: هذا سيحذف جميع *المسارات والمواد* نهائياً.\nهل أنت متأكد؟',
+      'en': '⚠️ Warning: This will permanently delete all *Tracks and Materials*.\nAre you sure?',
     },
     'wipe_users_confirm_msg': {
-      'ar': '⚠️ تحذير: هذا سيحذف جميع **المستخدمين** نهائياً من قاعدة البيانات.\nهل أنت متأكد؟',
-      'en': '⚠️ Warning: This will permanently delete all **Users** from the database.\nAre you sure?',
+      'ar': '⚠️ تحذير: هذا سيحذف جميع *المستخدمين* نهائياً من قاعدة البيانات.\nهل أنت متأكد؟',
+      'en': '⚠️ Warning: This will permanently delete all *Users* from the database.\nAre you sure?',
     },
     'btn_wipe_confirm': {
       'ar': '⚠️ نعم، امسح البيانات',
@@ -336,8 +336,8 @@ class S {
       'en': '✅ Contributor has been removed successfully.',
     },
     'transfer_owner_prompt': {
-      'ar': '⚠️ **نقل الملكية** ⚠️\nأرسل الـ ID التيليجرام للأدمن الجديد:\n\n*ملاحظة: ستصبح أدمناً عادياً بعد هذا.*',
-      'en': '⚠️ **TRANSFER OWNERSHIP** ⚠️\nPlease send the Telegram ID of the new Super Admin:\n\n*Note: You will be demoted to a regular Admin after this.*',
+      'ar': '⚠️ *نقل الملكية* ⚠️\nأرسل الـ ID التيليجرام للأدمن الجديد:\n\n_ملاحظة: ستصبح أدمناً عادياً بعد هذا._',
+      'en': '⚠️ *TRANSFER OWNERSHIP* ⚠️\nPlease send the Telegram ID of the new Super Admin:\n\n_Note: You will be demoted to a regular Admin after this._',
     },
     'transfer_done': {
       'ar': '✅ تم نقل الملكية بنجاح إلى {id}.',
@@ -352,8 +352,8 @@ class S {
       'en': '❌ Invalid ID format.',
     },
     'stats_title': {
-      'ar': '📊 **إحصائيات**\n\nإجمالي المستخدمين: {total}\n\nأكثر المواد تحميلاً:\n',
-      'en': '📊 **Analytics Dashboard**\n\nTotal Users: {total}\n\nTop Materials:\n',
+      'ar': '📊 *إحصائيات*\n\nإجمالي المستخدمين: {total}\n\nأكثر المواد تحميلاً:\n',
+      'en': '📊 *Analytics Dashboard*\n\nTotal Users: {total}\n\nTop Materials:\n',
     },
     'super_admin_registered': {
       'ar': 'تم تسجيل الأدمن الأعلى.',

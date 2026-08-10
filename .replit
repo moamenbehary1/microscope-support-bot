@@ -1,4 +1,6 @@
 modules = ["dart-3.10"]
+build = "dart pub get"
+
 [nix]
 channel = "stable-25_05"
 

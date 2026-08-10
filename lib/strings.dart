@@ -266,7 +266,8 @@ class S {
     'btn_broadcast': {'ar': '📢 بث جماعي', 'en': '📢 Broadcast'},
     'btn_stats': {'ar': '📊 إحصائيات', 'en': '📊 Statistics'},
     'btn_requests': {'ar': '📩 الطلبات المعلقة', 'en': '📩 Pending Requests'},
-    'btn_wipe': {'ar': '🗑️ مسح قاعدة البيانات', 'en': '🗑️ Wipe Database'},
+    'btn_wipe': {'ar': '🗑️ مسح المناهج', 'en': '🗑️ Wipe Curriculum'},
+    'btn_wipe_users': {'ar': '🗑️ مسح كل المستخدمين', 'en': '🗑️ Wipe All Users'},
     'btn_rm_contrib': {'ar': '🚫 إزالة مساهم', 'en': '🚫 Remove Contributor'},
     'btn_transfer_owner': {'ar': '👑 نقل الملكية', 'en': '👑 Transfer Ownership'},
     'btn_back_to_dash': {
@@ -306,8 +307,12 @@ class S {
       'en': '• User {id} ({name}) wants to contribute to {track} → {subject}\n',
     },
     'wipe_confirm_msg': {
-      'ar': '⚠️ **تحذير** ⚠️\nهل أنت متأكد أنك تريد مسح جميع بيانات المناهج والتحليلات؟ لا يمكن التراجع عن هذا.',
-      'en': '⚠️ **WARNING** ⚠️\nAre you sure you want to wipe all curriculum and analytics data? This cannot be undone.',
+      'ar': '⚠️ تحذير: هذا سيحذف جميع **المسارات والمواد** نهائياً.\nهل أنت متأكد؟',
+      'en': '⚠️ Warning: This will permanently delete all **Tracks and Materials**.\nAre you sure?',
+    },
+    'wipe_users_confirm_msg': {
+      'ar': '⚠️ تحذير: هذا سيحذف جميع **المستخدمين** نهائياً من قاعدة البيانات.\nهل أنت متأكد؟',
+      'en': '⚠️ Warning: This will permanently delete all **Users** from the database.\nAre you sure?',
     },
     'btn_wipe_confirm': {
       'ar': '⚠️ نعم، امسح البيانات',
@@ -315,8 +320,8 @@ class S {
     },
     'btn_cancel_action': {'ar': 'لا، إلغاء', 'en': 'NO, CANCEL'},
     'wipe_done': {
-      'ar': '✅ تم مسح قاعدة البيانات بنجاح.',
-      'en': '✅ Database wiped successfully.',
+      'ar': '✅ تم الحذف بنجاح.',
+      'en': '✅ Wipe completed successfully.',
     },
     'select_contrib_to_remove': {
       'ar': 'اختر المساهم الذي تريد إزالته:',

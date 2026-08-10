@@ -312,4 +312,8 @@ class FirebaseDb {
   static Future<void> removeRequest(int userId) async {
     await _delete('/requests/$userId');
   }
+
+  static Future<void> wipeUsers() async {
+    await _delete('/users');
+  }
 }

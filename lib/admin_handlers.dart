@@ -164,6 +164,41 @@ void registerAdminHandlers(Bot bot) {
     await ctx.editMessageText(S.get('wipe_done', lang), replyMarkup: kb);
   });
 
+  bot.callbackQuery('dash_wipe_users', (ctx) async {
+    final userId = ctx.from?.id;
+    final lang = Utils.getUserLanguage(userId ?? 0);
+    final superAdminId = await FirebaseDb.getSuperAdmin();
+    if (userId == null || userId != superAdminId) {
+      await ctx.answerCallbackQuery(
+          text: S.get('only_super_admin', lang), showAlert: true);
+      return;
+    }
+
+    final kb = InlineKeyboard()
+      .row()
+      .add(S.get('btn_wipe_confirm', lang), 'dash_wipe_users_confirm')
+      .add(S.get('btn_cancel_action', lang), 'dash_back');
+
+    await ctx.editMessageText(
+      S.get('wipe_users_confirm_msg', lang),
+      replyMarkup: kb,
+      parseMode: ParseMode.markdown,
+    );
+  });
+
+  bot.callbackQuery('dash_wipe_users_confirm', (ctx) async {
+    final userId = ctx.from?.id;
+    final lang = Utils.getUserLanguage(userId ?? 0);
+    final superAdminId = await FirebaseDb.getSuperAdmin();
+    if (userId == null || userId != superAdminId) return;
+
+    await FirebaseDb.wipeUsers();
+    final kb = InlineKeyboard()
+      .row()
+      .add(S.get('btn_back_to_dash', lang), 'dash_back');
+    await ctx.editMessageText(S.get('wipe_done', lang), replyMarkup: kb);
+  });
+
   // ── Remove Contributor — show list instead of asking for ID ──────────
   bot.callbackQuery('dash_rm_contrib', (ctx) async {
     final userId = ctx.from?.id;
@@ -391,7 +426,9 @@ Future<InlineKeyboard> _buildAdminKeyboard(int userId, String lang) async {
     .add(S.get('btn_rm_contrib', lang), 'dash_rm_contrib');
 
   if (isSuperAdmin) {
-    keyboard.row().add(S.get('btn_transfer_owner', lang), 'dash_transfer_owner');
+    keyboard.row()
+      .add(S.get('btn_transfer_owner', lang), 'dash_transfer_owner')
+      .add(S.get('btn_wipe_users', lang), 'dash_wipe_users');
   }
 
   keyboard.row().add(S.get('btn_student_mode', lang), 'dash_student');

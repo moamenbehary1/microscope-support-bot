@@ -197,11 +197,16 @@ class FirebaseDb {
     return (data as Map<String, dynamic>).keys.where((k) => k != '_placeholder').toList();
   }
 
-  // Get materials for a type
+  // Get materials for a type (filters out _placeholder and non-Map entries)
   static Future<Map<String, dynamic>> getMaterials(String track, String subject, String type) async {
     final data = await _get('/curriculum/$track/$subject/$type');
     if (data == null) return {};
-    return data as Map<String, dynamic>;
+    final raw = data as Map<String, dynamic>;
+    // Filter out _placeholder entries and entries where value is not a Map
+    return Map.fromEntries(
+      raw.entries.where((e) =>
+        e.key != '_placeholder' && e.value is Map<String, dynamic>),
+    );
   }
 
   // Add material

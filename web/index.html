@@ -766,28 +766,31 @@ const S = {
 
             if(!tyMatch && !mats.some(([,m])=>!q||(m?.name||'').toLowerCase().includes(q))) continue;
 
+            // Pre-encode at this scope level so they're accessible in typesHtml template
+            const eTrack = encodeStr(tKey), eSubj = encodeStr(sKey);
+            const eTyKey = encodeStr(tyKey);
+
             // Materials
             let matsHtml = '';
             for(const [mKey, mVal] of mats){
-              if(!mVal) continue;
+              if(!mVal || typeof mVal !== 'object') continue;
               const mName = mVal.name || mKey;
               if(q && !mName.toLowerCase().includes(q) && !tyMatch) continue;
               const fIco = this._fileIcon(mVal.file_type);
               const ft = mVal.file_type || 'doc';
-              const eTrack = encodeStr(tKey), eSubj = encodeStr(sKey), eType = encodeStr(tyKey), eMat = encodeStr(mKey), eName = encodeStr(mName);
+              const eMat = encodeStr(mKey), eName = encodeStr(mName);
               matsHtml += `<div class="tree-material">
                 <span class="file-type-icon">${fIco}</span>
                 <span class="mat-name" title="${mName}">${mName}</span>
                 <span class="tree-sub">${ft}</span>
                 <div class="tree-actions">
                   <button class="btn btn-sm btn-icon" style="color:var(--danger);border-color:var(--danger);background:transparent"
-                    onclick="S.curriculum.deleteMat('${eTrack}','${eSubj}','${eType}','${eMat}','${eName}')" title="Delete">🗑</button>
+                    onclick="S.curriculum.deleteMat('${eTrack}','${eSubj}','${eTyKey}','${eMat}','${eName}')" title="Delete">🗑</button>
                 </div>
               </div>`;
               matchCount++;
             }
 
-            const eTyKey = encodeStr(tyKey), eTyLabel = encodeStr(tyKey);
             typesHtml += `
               <div class="tree-row type-row" onclick="S.curriculum.toggle('${tyId}')">
                 <span class="tree-caret${tyOpen?' open':''}" id="c-${tyId}">▶</span>
@@ -796,7 +799,7 @@ const S = {
                 <span class="tree-badge" style="background:rgba(34,197,94,.12);color:var(--success)">${mats.length}</span>
                 <div class="tree-actions">
                   <button class="btn btn-sm btn-icon" style="color:var(--danger);border-color:var(--danger);background:transparent"
-                    onclick="event.stopPropagation();S.curriculum.deleteNode('${eTrack}','${eSubj}','${eTyKey}','${tyKey}')" title="Delete type">🗑</button>
+                  onclick="event.stopPropagation();S.curriculum.deleteNode('${eTrack}','${eSubj}','${eTyKey}','${tyKey}')" title="Delete type">🗑</button>
                 </div>
               </div>
               <div class="tree-children${tyOpen?' open':''}" id="ch-${tyId}">

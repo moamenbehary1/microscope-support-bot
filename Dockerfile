@@ -35,11 +35,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# Set the working directory
+WORKDIR /app
+
 # Copy the compiled binary from the build stage
 COPY --from=build /app/bin/server /app/bin/server
 
-# Set the working directory
-WORKDIR /app
+# Copy the web dashboard files
+COPY web/ web/
 
 # Command to run the compiled bot executable
 CMD ["/app/bin/server"]

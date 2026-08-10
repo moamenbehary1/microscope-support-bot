@@ -784,6 +784,8 @@ const S = {
                 <span class="mat-name" title="${mName}">${mName}</span>
                 <span class="tree-sub">${ft}</span>
                 <div class="tree-actions">
+                  <button class="btn btn-sm btn-icon" style="color:var(--warning);border-color:var(--warning);background:transparent"
+                    onclick="S.curriculum.moveMat('${eTrack}','${eSubj}','${eTyKey}','${eMat}','${eName}')" title="Move">🚚</button>
                   <button class="btn btn-sm btn-icon" style="color:var(--danger);border-color:var(--danger);background:transparent"
                     onclick="S.curriculum.deleteMat('${eTrack}','${eSubj}','${eTyKey}','${eMat}','${eName}')" title="Delete">🗑</button>
                 </div>
@@ -926,6 +928,105 @@ const S = {
         UI.toast(`"${label}" deleted`,'success');
         await this.fetchAndRender();
       }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
+
+    async moveMat(track, subject, type, matId, name){
+      const data = this._data;
+      if(!data) return;
+
+      const tracks = Object.keys(data).filter(k=>k!=='_placeholder');
+      
+      const html = `
+        <div class="form-group">
+          <label>New Track</label>
+          <select id="move-track">
+            <option value="">-- Select Track --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>New Subject</label>
+          <select id="move-subj"><option value="">-- Select Subject --</option></select>
+        </div>
+        <div class="form-group">
+          <label>New Type</label>
+          <select id="move-type"><option value="">-- Select Type --</option></select>
+        </div>
+      `;
+
+      const modalPromise = UI.modal(`Move "${name}"`, html, 'Move');
+      
+      const selTrack = document.getElementById('move-track');
+      const selSubj = document.getElementById('move-subj');
+      const selType = document.getElementById('move-type');
+
+      tracks.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t; opt.textContent = t;
+        selTrack.appendChild(opt);
+      });
+
+      const updateSubj = () => {
+        const t = selTrack.value;
+        selSubj.innerHTML = '<option value="">-- Select Subject --</option>';
+        if(t && data[t]){
+          Object.keys(data[t]).filter(k=>k!=='_placeholder').forEach(s=>{
+            const opt = document.createElement('option');
+            opt.value = s; opt.textContent = s;
+            selSubj.appendChild(opt);
+          });
+        }
+        updateType();
+      };
+
+      const updateType = () => {
+        const t = selTrack.value;
+        const s = selSubj.value;
+        selType.innerHTML = '<option value="">-- Select Type --</option>';
+        if(t && s && data[t] && data[t][s]){
+          Object.keys(data[t][s]).filter(k=>k!=='_placeholder').forEach(ty=>{
+            const opt = document.createElement('option');
+            opt.value = ty; opt.textContent = ty;
+            selType.appendChild(opt);
+          });
+        }
+      };
+
+      selTrack.onchange = updateSubj;
+      selSubj.onchange = updateType;
+
+      selTrack.value = track;
+      updateSubj();
+      selSubj.value = subject;
+      updateType();
+      selType.value = type;
+
+      const ok = await modalPromise;
+      if(!ok) return;
+
+      const newT = selTrack.value;
+      const newS = selSubj.value;
+      const newTy = selType.value;
+
+      if(!newT || !newS || !newTy){
+        UI.toast('Please select all destination fields', 'error');
+        return;
+      }
+      
+      if(track===newT && subject===newS && type===newTy){
+        UI.toast('Destination is the same as current location', 'info');
+        return;
+      }
+
+      try {
+        const materialData = data[track][subject][type][matId];
+        await FB.del(`/curriculum/${encodeURIComponent(track)}/${encodeURIComponent(subject)}/${encodeURIComponent(type)}/${encodeURIComponent(matId)}`);
+        await FB.put(`/curriculum/${encodeURIComponent(newT)}/${encodeURIComponent(newS)}/${encodeURIComponent(newTy)}/${encodeURIComponent(matId)}`, materialData);
+        
+        UI.toast(`Moved "${name}" successfully`, 'success');
+        await this.fetchAndRender();
+      } catch(e) {
+        UI.toast('Failed to move: '+e.message, 'error');
+      }
     },
 
     async deleteMat(track, subject, type, matId, name){

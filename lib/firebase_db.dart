@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'config.dart';
+
 
 class FirebaseDb {
   static String get _baseUrl {
@@ -13,45 +15,91 @@ class FirebaseDb {
   static String get _authParam => '?auth=${Config.firebaseSecret}';
 
   static Future<dynamic> _get(String path) async {
-    final response = await http.get(Uri.parse('$_baseUrl$path.json$_authParam'));
-    if (response.statusCode == 200) {
-      if (response.body == 'null') return null;
-      return json.decode(response.body);
+    try {
+      final response = await http
+          .get(Uri.parse('$_baseUrl$path.json$_authParam'))
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        if (response.body == 'null') return null;
+        return json.decode(response.body);
+      }
+      print('[Firebase] GET $path failed: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      print('[Firebase] GET $path error: $e');
+      return null;
     }
-    return null;
   }
 
   static Future<bool> _put(String path, dynamic data) async {
-    final response = await http.put(
-      Uri.parse('$_baseUrl$path.json$_authParam'),
-      body: json.encode(data),
-    );
-    return response.statusCode == 200;
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$_baseUrl$path.json$_authParam'),
+            body: json.encode(data),
+          )
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode != 200) {
+        print('[Firebase] PUT $path failed: ${response.statusCode}');
+      }
+      return response.statusCode == 200;
+    } catch (e) {
+      print('[Firebase] PUT $path error: $e');
+      return false;
+    }
   }
 
   static Future<bool> _patch(String path, dynamic data) async {
-    final response = await http.patch(
-      Uri.parse('$_baseUrl$path.json$_authParam'),
-      body: json.encode(data),
-    );
-    return response.statusCode == 200;
+    try {
+      final response = await http
+          .patch(
+            Uri.parse('$_baseUrl$path.json$_authParam'),
+            body: json.encode(data),
+          )
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode != 200) {
+        print('[Firebase] PATCH $path failed: ${response.statusCode}');
+      }
+      return response.statusCode == 200;
+    } catch (e) {
+      print('[Firebase] PATCH $path error: $e');
+      return false;
+    }
   }
 
   static Future<bool> _delete(String path) async {
-    final response = await http.delete(Uri.parse('$_baseUrl$path.json$_authParam'));
-    return response.statusCode == 200;
+    try {
+      final response = await http
+          .delete(Uri.parse('$_baseUrl$path.json$_authParam'))
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode != 200) {
+        print('[Firebase] DELETE $path failed: ${response.statusCode}');
+      }
+      return response.statusCode == 200;
+    } catch (e) {
+      print('[Firebase] DELETE $path error: $e');
+      return false;
+    }
   }
 
   static Future<String?> _post(String path, dynamic data) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl$path.json$_authParam'),
-      body: json.encode(data),
-    );
-    if (response.statusCode == 200) {
-      final res = json.decode(response.body);
-      return res['name']; // Returns the generated ID
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl$path.json$_authParam'),
+            body: json.encode(data),
+          )
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final res = json.decode(response.body);
+        return res['name']; // Returns the generated ID
+      }
+      print('[Firebase] POST $path failed: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      print('[Firebase] POST $path error: $e');
+      return null;
     }
-    return null;
   }
 
   // --- Users & Admins ---

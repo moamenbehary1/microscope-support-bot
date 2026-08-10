@@ -74,17 +74,16 @@ void registerContributorAndUploadHandlers(Bot bot) {
         await ctx.reply(S.get('contribute_request_sent', lang,
             {'track': track, 'subject': subject}));
 
-        // Notify all admins
+        // Notify all admins — personalized per admin language
         final admins = await FirebaseDb.getAdmins();
-        final keyboard = InlineKeyboard()
-          .row()
-          .add(S.get('btn_approve', 'en'),
-              'approve_contrib:$userId:$track:$subject')
-          .add(S.get('btn_reject', 'en'), 'reject_contrib:$userId');
-
         for (var adminId in admins) {
           try {
             final adminLang = Utils.getUserLanguage(adminId);
+            final keyboard = InlineKeyboard()
+              .row()
+              .add(S.get('btn_approve', adminLang),
+                  'approve_contrib:$userId:$track:$subject')
+              .add(S.get('btn_reject', adminLang), 'reject_contrib:$userId');
             await bot.api.sendMessage(
               ChatID(adminId),
               S.get('admin_contrib_request', adminLang, {
@@ -124,11 +123,15 @@ void registerContributorAndUploadHandlers(Bot bot) {
         Utils.broadcast(bot, users, text);
         break;
 
-      // ---- Admin upload flow (new manual entry) -------------------------
+      // ---- Admin upload flow (new manual entry) ─────────────────────────
+      // This path is used when admin/contributor types a NEW track/subject/type
+      // by clicking "Add New" buttons. For keyboard-based selections, the flow
+      // goes directly to upload_admin_name via up_type callback.
       case 'upload_admin_track':
         state['action'] = 'upload_admin_subject';
         state['track'] = text;
-        await ctx.reply(S.get('upload_enter_type', lang));
+        // BUG-FIXED: was incorrectly asking for 'type' instead of 'subject'
+        await ctx.reply(S.get('upload_enter_subject', lang));
         break;
 
       case 'upload_admin_subject':
@@ -150,23 +153,31 @@ void registerContributorAndUploadHandlers(Bot bot) {
         break;
 
       case 'upload_admin_desc':
-        final track = state['track'] as String;
-        final subject = state['subject'] as String;
-        final type = state['type'] as String;
-        final name = state['name'] as String;
-        final fileId = state['fileId'] as String;
-        final fileType = state['fileType'] as String? ?? 'document';
+        // Null-safe: fallback to empty string if any state value is missing
+        final track = (state['track'] as String?) ?? '';
+        final subject = (state['subject'] as String?) ?? '';
+        final type = (state['type'] as String?) ?? '';
+        final name = (state['name'] as String?) ?? '';
+        final fileId = (state['fileId'] as String?) ?? '';
+        final fileType = (state['fileType'] as String?) ?? 'document';
         final desc = (text.toLowerCase() == 'skip' ||
                 text.toLowerCase() == 'تخطي')
             ? ''
             : text;
         Utils.clearUploadState(userId);
+        if (track.isEmpty || subject.isEmpty || type.isEmpty ||
+            name.isEmpty || fileId.isEmpty) {
+          await ctx.reply(S.get('upload_failed', lang));
+          break;
+        }
         await _saveFileToDatabase(
             bot, ctx, track, subject, type, name, fileId, fileType, userId,
             description: desc);
         break;
 
-      // ---- Contributor upload flow --------------------------------------
+      // NOTE: upload_contrib_* states below handle the legacy text-only path.
+      // The keyboard-based flow (which is the default) uses upload_admin_*
+      // states above for both admins and contributors.
       case 'upload_contrib_type':
         state['action'] = 'upload_contrib_name';
         state['type'] = text;

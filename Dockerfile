@@ -44,5 +44,8 @@ COPY --from=build /app/bin/server /app/bin/server
 # Copy the web dashboard files
 COPY web/ web/
 
+# Expose the server port
+EXPOSE 8080
+
 # Command to run the compiled bot executable
 CMD ["/app/bin/server"]

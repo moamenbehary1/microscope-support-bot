@@ -152,6 +152,43 @@ void registerContributorAndUploadHandlers(Bot bot) {
         );
         break;
 
+      // ---- Material name: contributor provides a name -----------------
+      case 'wait_for_upload_name':
+        state['material_name'] = text;
+        final type = state['type'] as String? ?? '';
+        
+        // Move any pending single file into the files list
+        final pendingFile = state['pending_file'] as Map<String, dynamic>?;
+        final List<Map<String, dynamic>> files = [];
+        if (pendingFile != null) {
+          files.add(pendingFile);
+          state.remove('pending_file');
+        }
+        state['files'] = files;
+
+        if (type == 'رابط' || type.toLowerCase() == 'link') {
+          // Switch to link mode
+          state['action'] = 'contrib_upload_link';
+          await ctx.reply(S.get('upload_link_prompt', lang));
+        } else {
+          state['action'] = 'collect_files';
+          final doneKb = InlineKeyboard().row()
+            .add(S.get('btn_done_uploading', lang), 'contrib_upload_done');
+
+          if (files.isNotEmpty) {
+            await ctx.reply(
+              S.get('upload_file_received_count', lang, {'count': '${files.length}'}),
+              replyMarkup: doneKb,
+            );
+          } else {
+            await ctx.reply(
+              S.get('upload_collecting_files', lang),
+              replyMarkup: doneKb,
+            );
+          }
+        }
+        break;
+
       // ---- Link upload: user pastes URL --------------------------------
       case 'contrib_upload_link':
         final track2 = (state['track'] as String?) ?? '';
@@ -166,8 +203,9 @@ void registerContributorAndUploadHandlers(Bot bot) {
         }
 
         final linkName = url.length > 60 ? '${url.substring(0, 60)}…' : url;
+        final materialName = (state['material_name'] as String?) ?? linkName;
         final materialId = await FirebaseDb.addMaterial(track2, subject2, type2, {
-          'name': linkName,
+          'name': materialName,
           'file_id': url,
           'file_type': 'link',
           'added_by': userId.toString(),
@@ -178,7 +216,7 @@ void registerContributorAndUploadHandlers(Bot bot) {
             'track': track2,
             'subject': subject2,
             'type': type2,
-            'name': linkName,
+            'name': materialName,
           });
           await ctx.reply(S.get('upload_multi_success', lang, {
             'count': '1',
@@ -272,37 +310,9 @@ void registerContributorAndUploadHandlers(Bot bot) {
     final data = ctx.callbackQuery!.data!;
     final type = data.substring('up_type:'.length);
     state['type'] = type;
+    state['action'] = 'wait_for_upload_name';
 
-    // Move any pending single file into the files list
-    final pendingFile = state['pending_file'] as Map<String, dynamic>?;
-    final List<Map<String, dynamic>> files = [];
-    if (pendingFile != null) {
-      files.add(pendingFile);
-      state.remove('pending_file');
-    }
-    state['files'] = files;
-
-    if (type == 'رابط' || type.toLowerCase() == 'link') {
-      // Switch to link mode
-      state['action'] = 'contrib_upload_link';
-      await ctx.editMessageText(S.get('upload_link_prompt', lang));
-    } else {
-      state['action'] = 'collect_files';
-      final doneKb = InlineKeyboard().row()
-        .add(S.get('btn_done_uploading', lang), 'contrib_upload_done');
-
-      if (files.isNotEmpty) {
-        await ctx.editMessageText(
-          S.get('upload_file_received_count', lang, {'count': '${files.length}'}),
-          replyMarkup: doneKb,
-        );
-      } else {
-        await ctx.editMessageText(
-          S.get('upload_collecting_files', lang),
-          replyMarkup: doneKb,
-        );
-      }
-    }
+    await ctx.editMessageText(S.get('upload_enter_name', lang));
   });
 
   // ── Add Subject button (from contributor dashboard) ───────────────────
@@ -372,7 +382,8 @@ void registerContributorAndUploadHandlers(Bot bot) {
       final file = files[i];
       final fId = file['fileId'] as String;
       final fType = file['fileType'] as String;
-      final autoName = files.length == 1 ? type : '$type ${i + 1}';
+      final materialName = (state['material_name'] as String?) ?? type;
+      final autoName = files.length == 1 ? materialName : '$materialName ${i + 1}';
 
       final backupFileId = await _backupFile(bot, fId, fType);
       final matId = await FirebaseDb.addMaterial(track, subject, type, {

@@ -220,6 +220,10 @@ class S {
       'ar': '❌ لا توجد أنواع في هذه المادة. تواصل مع الأدمن.',
       'en': '❌ No types in this subject. Contact admin.',
     },
+    'upload_enter_name': {
+      'ar': 'الرجاء إدخال اسم للمادة:',
+      'en': 'Please enter a name for this material:',
+    },
     'btn_add_new_track': {'ar': '➕ إضافة مسار جديد', 'en': '➕ Add New Track'},
     'btn_add_new_subject': {
       'ar': '➕ إضافة مادة جديدة',

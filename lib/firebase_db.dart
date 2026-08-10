@@ -181,21 +181,21 @@ class FirebaseDb {
   static Future<List<String>> getTracks() async {
     final data = await _get('/curriculum');
     if (data == null) return [];
-    return (data as Map<String, dynamic>).keys.toList();
+    return (data as Map<String, dynamic>).keys.where((k) => k != '_placeholder').toList();
   }
 
   // Get subjects for a track
   static Future<List<String>> getSubjects(String track) async {
     final data = await _get('/curriculum/$track');
     if (data == null) return [];
-    return (data as Map<String, dynamic>).keys.toList();
+    return (data as Map<String, dynamic>).keys.where((k) => k != '_placeholder').toList();
   }
 
   // Get material types for a subject
   static Future<List<String>> getMaterialTypes(String track, String subject) async {
     final data = await _get('/curriculum/$track/$subject');
     if (data == null) return [];
-    return (data as Map<String, dynamic>).keys.toList();
+    return (data as Map<String, dynamic>).keys.where((k) => k != '_placeholder').toList();
   }
 
   // Get materials for a type

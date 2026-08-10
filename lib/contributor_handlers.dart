@@ -229,12 +229,16 @@ void registerContributorAndUploadHandlers(Bot bot) {
     state['action'] = 'wait_for_upload_subject';
 
     final subjects = await FirebaseDb.getSubjects(track);
+    if (subjects.isEmpty) {
+      await ctx.editMessageText(S.get('upload_no_categories', lang));
+      Utils.clearUploadState(userId);
+      return;
+    }
+
     final keyboard = InlineKeyboard();
     for (var s in subjects) {
       keyboard.row().add(s, 'up_subj:$s');
     }
-    keyboard.row()
-        .add(S.get('btn_add_new_subject', lang), 'up_new:subject');
 
     await ctx.editMessageText(
       S.get('upload_selected_track', lang, {'track': track}),
@@ -256,11 +260,16 @@ void registerContributorAndUploadHandlers(Bot bot) {
 
     final track = state['track'] as String;
     final types = await FirebaseDb.getMaterialTypes(track, subject);
+    if (types.isEmpty) {
+      await ctx.editMessageText(S.get('upload_no_categories', lang));
+      Utils.clearUploadState(userId);
+      return;
+    }
+
     final keyboard = InlineKeyboard();
     for (var t in types) {
       keyboard.row().add(t, 'up_type:$t');
     }
-    keyboard.row().add(S.get('btn_add_new_type', lang), 'up_new:type');
 
     await ctx.editMessageText(
       S.get('upload_selected_subject', lang, {'subject': subject}),
@@ -283,28 +292,6 @@ void registerContributorAndUploadHandlers(Bot bot) {
     await ctx.editMessageText(
       S.get('upload_selected_type', lang, {'type': type}),
     );
-  });
-
-  bot.callbackQuery(RegExp(r'^up_new:(.*)'), (ctx) async {
-    final userId = ctx.from?.id;
-    if (userId == null) return;
-
-    final state = Utils.uploadStates[userId];
-    if (state == null) return;
-
-    final lang = Utils.getUserLanguage(userId);
-    final level = ctx.callbackQuery!.data!.split(':')[1];
-
-    if (level == 'track') {
-      state['action'] = 'upload_admin_track';
-      await ctx.editMessageText(S.get('upload_enter_track', lang));
-    } else if (level == 'subject') {
-      state['action'] = 'upload_admin_subject';
-      await ctx.editMessageText(S.get('upload_enter_subject', lang));
-    } else if (level == 'type') {
-      state['action'] = 'upload_admin_type';
-      await ctx.editMessageText(S.get('upload_enter_type_new', lang));
-    }
   });
 
   // ── File upload handlers ─────────────────────────────────────────────
@@ -522,12 +509,16 @@ Future<void> _handleUploadFlow(
     };
 
     final tracks = await FirebaseDb.getTracks();
+    if (tracks.isEmpty) {
+      await ctx.reply(S.get('upload_no_categories', lang));
+      Utils.clearUploadState(userId);
+      return;
+    }
+
     final keyboard = InlineKeyboard();
     for (var t in tracks) {
       keyboard.row().add(t, 'up_track:$t');
     }
-    keyboard.row()
-        .add(S.get('btn_add_new_track', lang), 'up_new:track');
 
     await ctx.reply(S.get('admin_file_received', lang), replyMarkup: keyboard);
   } else {
@@ -545,11 +536,16 @@ Future<void> _handleUploadFlow(
       };
 
       final types = await FirebaseDb.getMaterialTypes(track, subject);
+      if (types.isEmpty) {
+        await ctx.reply(S.get('upload_no_categories', lang));
+        Utils.clearUploadState(userId);
+        return;
+      }
+
       final keyboard = InlineKeyboard();
       for (var t in types) {
         keyboard.row().add(t, 'up_type:$t');
       }
-      keyboard.row().add(S.get('btn_add_new_type', lang), 'up_new:type');
 
       await ctx.reply(
         S.get('contrib_file_received', lang, {'subject': subject}),

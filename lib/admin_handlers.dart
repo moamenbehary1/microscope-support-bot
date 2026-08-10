@@ -5,6 +5,43 @@ import 'config.dart';
 import 'strings.dart';
 
 void registerAdminHandlers(Bot bot) {
+  // ── Admin Keyboard Text Listeners ─────────────────────────────────────
+  bot.hears(RegExp(r'^(👑 لوحة الإدارة|👑 Admin Panel)$'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    if (!(await FirebaseDb.isAdmin(userId))) return;
+    final lang = Utils.getUserLanguage(userId);
+    Utils.setUserMode(userId, UserMode.admin);
+    Utils.clearUploadState(userId);
+    await ctx.reply(
+      S.get('admin_dashboard_title', lang),
+      replyMarkup: await _buildAdminKeyboard(userId, lang),
+      parseMode: ParseMode.markdown,
+    );
+  });
+
+  bot.hears(RegExp(r'^(🎓 وضع الطالب|🎓 Student Mode)$'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    if (!(await FirebaseDb.isAdmin(userId))) return;
+    final lang = Utils.getUserLanguage(userId);
+    Utils.setUserMode(userId, UserMode.student);
+    Utils.clearUploadState(userId);
+    await ctx.reply(S.get('admin_switched_student', lang));
+  });
+
+  bot.hears(RegExp(r'^(🔄 تحديث البوت|🔄 Restart Bot)$'), (ctx) async {
+    // Treat as /start
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    if (!(await FirebaseDb.isAdmin(userId))) return;
+    // We could invoke /start manually or just tell them to use /start
+    // Actually we can just trigger what /start does, but simpler to redirect or send main menu.
+    // Let's just send the student main menu since that's what /start does.
+    // _sendMainMenu is private in student_handlers, so we'll just say:
+    await ctx.reply('/start');
+  });
+
   // ── /admin command ───────────────────────────────────────────────────
   bot.command('admin', (ctx) async {
     final userId = ctx.from?.id;

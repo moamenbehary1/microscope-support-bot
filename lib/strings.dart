@@ -13,7 +13,11 @@ class S {
       'ar': '✅ تم ضبط اللغة على العربية.',
       'en': '✅ Language set to English.',
     },
-
+    // ── Admin Reply Keyboard ──────────────────────────────────────────
+    'btn_admin_panel': {'ar': '👑 لوحة الإدارة', 'en': '👑 Admin Panel'},
+    'btn_student_mode': {'ar': '🎓 وضع الطالب', 'en': '🎓 Student Mode'},
+    'btn_restart_bot': {'ar': '🔄 تحديث البوت', 'en': '🔄 Restart Bot'},
+    
     // ── Welcome / Start ─────────────────────────────────────────────
     'welcome': {
       'ar': 'مرحباً بك في البوت التعليمي! 📚\nاختر المسار الذي تريده:',
@@ -140,7 +144,11 @@ class S {
     },
     'upload_enter_track': {
       'ar': 'اكتب اسم المسار الجديد:',
-      'en': 'Please type the name of the NEW Track:',
+      'en': 'Type the new Track name:',
+    },
+    'upload_no_categories': {
+      'ar': '❌ لا توجد أقسام متاحة حالياً. يجب على الأدمن إضافتها أولاً من لوحة التحكم.',
+      'en': '❌ No categories available. The admin must add them first from the dashboard.',
     },
     'upload_enter_subject': {
       'ar': 'اكتب اسم المادة الجديدة:',
@@ -261,7 +269,6 @@ class S {
     'btn_wipe': {'ar': '🗑️ مسح قاعدة البيانات', 'en': '🗑️ Wipe Database'},
     'btn_rm_contrib': {'ar': '🚫 إزالة مساهم', 'en': '🚫 Remove Contributor'},
     'btn_transfer_owner': {'ar': '👑 نقل الملكية', 'en': '👑 Transfer Ownership'},
-    'btn_student_mode': {'ar': '🎓 وضع الطالب', 'en': '🎓 Switch to Student Mode'},
     'btn_back_to_dash': {
       'ar': '🔙 رجوع للداش بورد',
       'en': '🔙 Back to Dashboard',

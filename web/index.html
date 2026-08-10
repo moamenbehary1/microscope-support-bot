@@ -650,6 +650,9 @@ const S = {
             ${sub?`<div class="item-sub">${sub}</div>`:''}
           </div>
           ${!isLeaf?`<span class="chevron">›</span>`:''}
+          ${isLeaf?`<button class="btn btn-sm btn-icon" style="margin-right:4px;background:var(--bg);color:var(--text);border:1px solid var(--border)"
+            onclick="event.stopPropagation();S.curriculum.moveItem('${key.replace(/'/g,"\\'")}','${name.replace(/'/g,"\\'")}')"
+            title="Move">📦</button>`:''}
           <button class="btn btn-danger btn-sm btn-icon"
             onclick="event.stopPropagation();S.curriculum.deleteItem('${key.replace(/'/g,"\\'")}','${name.replace(/'/g,"\\'")}')"
             title="Delete">🗑</button>
@@ -695,6 +698,58 @@ const S = {
         UI.toast(`"${name}" deleted`,'success');
         this.render(document.getElementById('pg-curriculum'));
       }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
+    async moveItem(key, name){
+      // 1. Fetch entire curriculum tree to show options
+      let all;
+      try{ all = await FB.get('/curriculum'); }catch(e){ UI.toast('Failed to load tree: '+e.message,'error'); return; }
+      if(!all){ UI.toast('No curriculum found','error'); return; }
+      
+      // Build options
+      let opts = [];
+      Object.keys(all).filter(k=>k!=='_placeholder').forEach(tr=>{
+        Object.keys(all[tr]||{}).filter(k=>k!=='_placeholder').forEach(su=>{
+          Object.keys(all[tr][su]||{}).filter(k=>k!=='_placeholder').forEach(ty=>{
+            opts.push({track:tr, subject:su, type:ty});
+          });
+        });
+      });
+
+      if(opts.length===0){ UI.toast('No destination types available','error'); return; }
+
+      let selHtml = '<select id="move-dest" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin-top:10px">';
+      opts.forEach((o,i)=>{
+        selHtml += `<option value="${i}">${o.track} › ${o.subject} › ${o.type}</option>`;
+      });
+      selHtml += '</select>';
+
+      const ok = await UI.modal(`Move "${name}"`,
+        `<p style="color:var(--dim);font-size:.875rem">Select new destination:</p>${selHtml}`,'Move',false);
+      
+      if(!ok) return;
+      const selIdx = document.getElementById('move-dest').value;
+      const dest = opts[selIdx];
+      if(!dest) return;
+
+      const oldPath = `/curriculum/${encodeURIComponent(this.path[0].key)}/${encodeURIComponent(this.path[1].key)}/${encodeURIComponent(this.path[2].key)}/${encodeURIComponent(key)}`;
+      const newPath = `/curriculum/${encodeURIComponent(dest.track)}/${encodeURIComponent(dest.subject)}/${encodeURIComponent(dest.type)}/${encodeURIComponent(key)}`;
+      
+      if(oldPath === newPath) return;
+
+      try{
+        // Get old data
+        const oldData = await FB.get(oldPath);
+        if(!oldData) throw new Error('Material not found');
+        
+        // Put to new dest
+        await FB.put(newPath, oldData);
+        
+        // Delete old
+        await FB.del(oldPath);
+        
+        UI.toast(`Moved to ${dest.type}`,'success');
+        this.render(document.getElementById('pg-curriculum'));
+      }catch(e){ UI.toast('Failed to move: '+e.message,'error'); }
     }
   },
 
@@ -707,6 +762,7 @@ const S = {
           <h2>👑 Admins</h2>
           <div class="actions">
             <button class="btn btn-primary btn-sm" onclick="S.admins.add()">+ Add Admin</button>
+            <button class="btn btn-danger btn-sm" style="margin-left:8px" onclick="S.admins.wipeUsers()">🗑 Wipe All Users</button>
           </div>
         </div>
         <div class="card tbl-wrap">
@@ -748,14 +804,24 @@ const S = {
     },
     async remove(id){
       const ok=await UI.modal('Remove Admin?',
-        `<p style="color:var(--dim)">Remove <strong style="color:var(--text)">${id}</strong> from admins?</p>`,
-        'Remove',true);
+        `<p style="color:var(--dim)">Are you sure you want to remove admin <strong>${id}</strong>?</p>`,'Remove',true);
       if(!ok) return;
       try{
         await FB.del(`/admins/${id}`);
         UI.toast(`Admin ${id} removed`,'success');
         this.load();
       }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
+    async wipeUsers(){
+      const ok=await UI.modal('Wipe All Users?',
+        `<p style="color:var(--danger)">⚠️ WARNING: This will permanently delete all student user data from the database. This cannot be undone.</p>`,'Wipe Users',true);
+      if(!ok) return;
+      try{
+        await FB.del('/users');
+        UI.toast('All users wiped successfully','success');
+        App.load('overview'); // to refresh user count
+      }catch(e){ UI.toast('Failed to wipe: '+e.message,'error'); }
+    }
     }
   },
 

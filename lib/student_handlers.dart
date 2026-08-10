@@ -26,8 +26,22 @@ void registerStudentHandlers(Bot bot) {
       }
     }
 
+    if (await FirebaseDb.isAdmin(userId)) {
+      final lang = Utils.getUserLanguage(userId);
+      await ctx.reply(
+        '⚙️',
+        replyMarkup: Keyboard()
+          .addText(S.get('btn_admin_panel', lang))
+          .addText(S.get('btn_student_mode', lang))
+          .row()
+          .addText(S.get('btn_restart_bot', lang))
+          .resized(),
+      );
+    }
+
     await _sendMainMenu(bot, ctx, userId);
   });
+
 
   // ── Language selection callbacks ─────────────────────────────────────
   bot.callbackQuery('lang_ar', (ctx) async {

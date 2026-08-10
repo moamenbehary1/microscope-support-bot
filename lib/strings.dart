@@ -216,6 +216,10 @@ class S {
       'ar': '❌ لا توجد مواد في هذا المسار. تواصل مع الأدمن.',
       'en': '❌ No subjects in this track. Contact admin.',
     },
+    'upload_no_types': {
+      'ar': '❌ لا توجد أنواع في هذه المادة. تواصل مع الأدمن.',
+      'en': '❌ No types in this subject. Contact admin.',
+    },
     'btn_add_new_track': {'ar': '➕ إضافة مسار جديد', 'en': '➕ Add New Track'},
     'btn_add_new_subject': {
       'ar': '➕ إضافة مادة جديدة',

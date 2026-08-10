@@ -130,12 +130,20 @@ void registerContributorAndUploadHandlers(Bot bot) {
 
       case 'upload_admin_subject':
         final track = state['track'] as String? ?? '';
-        state['subject'] = text;
+        final subject = text;
+        state['subject'] = subject;
         state['action'] = 'wait_for_upload_type';
 
-        // Show fixed material types
+        // Fetch dynamic material types
+        final types = await FirebaseDb.getMaterialTypes(track, subject);
+        if (types.isEmpty) {
+          await ctx.reply(S.get('upload_no_types', lang)); 
+          Utils.clearUploadState(userId);
+          break;
+        }
+
         final kb = InlineKeyboard();
-        for (var t in _materialTypes) {
+        for (var t in types) {
           kb.row().add(t, 'up_type:$t');
         }
         await ctx.reply(
@@ -229,12 +237,21 @@ void registerContributorAndUploadHandlers(Bot bot) {
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
     final subject = data.substring('up_subj:'.length);
+    final track = state['track'] as String? ?? '';
     state['subject'] = subject;
     state['action'] = 'wait_for_upload_type';
 
-    // Show fixed material types
+    // Fetch dynamic material types
+    final types = await FirebaseDb.getMaterialTypes(track, subject);
+    if (types.isEmpty) {
+      await ctx.answerCallbackQuery(
+          text: S.get('upload_no_types', lang), showAlert: true);
+      Utils.clearUploadState(userId);
+      return;
+    }
+
     final keyboard = InlineKeyboard();
-    for (var t in _materialTypes) {
+    for (var t in types) {
       keyboard.row().add(t, 'up_type:$t');
     }
 

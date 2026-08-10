@@ -65,6 +65,18 @@ class FirebaseDb {
     }
   }
 
+  static Future<String> getUserLanguage(int userId) async {
+    final data = await _get('/users/$userId');
+    if (data != null && data is Map && data.containsKey('language')) {
+      return data['language'] as String;
+    }
+    return '';
+  }
+
+  static Future<void> setUserLanguage(int userId, String lang) async {
+    await _patch('/users/$userId', {'language': lang});
+  }
+
   static Future<List<int>> getAdmins() async {
     final data = await _get('/admins');
     if (data == null) return [];
@@ -87,11 +99,19 @@ class FirebaseDb {
 
   // --- Contributors ---
 
-  static Future<void> setContributor(int userId, String track, String subject) async {
+  static Future<void> setContributor(int userId, String track, String subject, {String name = ''}) async {
     await _put('/contributors/$userId', {
       'track': track,
       'subject': subject,
+      if (name.isNotEmpty) 'name': name,
     });
+  }
+
+  /// Returns all contributors as Map<userId, {track, subject, name?}>
+  static Future<Map<String, dynamic>> getAllContributors() async {
+    final data = await _get('/contributors');
+    if (data == null) return {};
+    return data as Map<String, dynamic>;
   }
 
   static Future<Map<String, dynamic>?> getContributor(int userId) async {
@@ -140,6 +160,22 @@ class FirebaseDb {
   // Add material
   static Future<String?> addMaterial(String track, String subject, String type, Map<String, dynamic> materialData) async {
     return await _post('/curriculum/$track/$subject/$type', materialData);
+  }
+
+  // --- Contributor Materials Index ---
+
+  static Future<void> addContributorMaterialRef(int userId, String materialId, Map<String, dynamic> data) async {
+    await _put('/contributor_materials/$userId/$materialId', data);
+  }
+
+  static Future<Map<String, dynamic>> getContributorMaterials(int userId) async {
+    final data = await _get('/contributor_materials/$userId');
+    if (data == null) return {};
+    return data as Map<String, dynamic>;
+  }
+
+  static Future<void> removeContributorMaterialRef(int userId, String materialId) async {
+    await _delete('/contributor_materials/$userId/$materialId');
   }
 
   // Delete material
@@ -206,12 +242,17 @@ class FirebaseDb {
   }
 
   // --- Contributor Requests ---
-  static Future<void> addRequest(int userId, String track, String subject) async {
+  static Future<void> addRequest(int userId, String track, String subject, {String name = ''}) async {
     await _put('/requests/$userId', {
       'track': track,
       'subject': subject,
       'timestamp': DateTime.now().toIso8601String(),
+      if (name.isNotEmpty) 'name': name,
     });
+  }
+
+  static Future<Map<String, dynamic>?> getRequest(int userId) async {
+    return await _get('/requests/$userId');
   }
 
   static Future<Map<String, dynamic>> getPendingRequests() async {

@@ -4,7 +4,10 @@ import 'config.dart';
 class Utils {
   // Simple state management (In-memory for current session state)
   static final Map<int, UserMode> _userModes = {};
-  
+
+  // User language cache ('ar' | 'en')
+  static final Map<int, String> _userLanguages = {};
+
   // Track ongoing uploads for admins/contributors
   // userId -> { 'action': 'upload', 'track': '', 'subject': '', 'type': '' }
   static final Map<int, Map<String, dynamic>> uploadStates = {};
@@ -16,16 +19,35 @@ class Utils {
   static void setUserMode(int userId, UserMode mode) {
     _userModes[userId] = mode;
   }
-  
+
   static void clearUploadState(int userId) {
     uploadStates.remove(userId);
   }
+
+  // ── Language helpers ────────────────────────────────────────────────
+
+  /// Returns the cached language for [userId]. Defaults to 'en'.
+  static String getUserLanguage(int userId) {
+    return _userLanguages[userId] ?? 'en';
+  }
+
+  /// Caches the language preference for [userId].
+  static void setUserLanguage(int userId, String lang) {
+    _userLanguages[userId] = lang;
+  }
+
+  /// Returns true if a language has already been cached for [userId].
+  static bool hasLanguage(int userId) {
+    return _userLanguages.containsKey(userId);
+  }
+
+  // ── Pagination ──────────────────────────────────────────────────────
 
   /// Generates a paginated inline keyboard.
   /// [items] List of items to display.
   /// [page] Current page (0-indexed).
   /// [itemsPerPage] Defaults to 5.
-  /// [prefix] The callback data prefix (e.g., 'track_'). The item string will be appended.
+  /// [prefix] The callback data prefix (e.g., 'track:'). The item string will be appended.
   /// [backData] Callback data for a 'Back' button, if any.
   static InlineKeyboard paginateKeyboard(
     List<String> items, {
@@ -35,7 +57,7 @@ class Utils {
     String? backData,
   }) {
     final keyboard = InlineKeyboard();
-    
+
     int startIndex = page * itemsPerPage;
     int endIndex = startIndex + itemsPerPage;
     if (endIndex > items.length) endIndex = items.length;
@@ -51,7 +73,7 @@ class Utils {
     if (endIndex < items.length) {
       navRow.add(InlineMenuData('Next ➡️', '${prefix}page_${page + 1}'));
     }
-    
+
     if (navRow.isNotEmpty) {
       final row = keyboard.row();
       for (var item in navRow) {
@@ -65,7 +87,9 @@ class Utils {
 
     return keyboard;
   }
-  
+
+  // ── Broadcast ───────────────────────────────────────────────────────
+
   /// Helper to safely send broadcast messages with a delay
   static Future<void> broadcast(Bot bot, List<int> userIds, String message) async {
     int count = 0;

@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🔬 Microscope Bot — Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Reset ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;scroll-behavior:smooth}
+
+/* ── Tokens ── */
+:root{
+  --bg:#0d1117; --surface:#161c2a; --surface2:#1e2740; --border:#2a3550;
+  --primary:#6366f1; --primary-d:#4f46e5; --primary-glow:rgba(99,102,241,.25);
+  --success:#22c55e; --danger:#ef4444; --warning:#f59e0b;
+  --text:#e2e8f0; --dim:#94a3b8; --muted:#4a5568;
+  --r:8px; --sidebar:220px; --hdr:58px;
+}
+
+/* ── Layout ── */
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);
+  display:flex;min-height:100vh;overflow:hidden}
+
+#sidebar{
+  width:var(--sidebar);background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;left:0;top:0;bottom:0;z-index:10;
+  transition:transform .2s
+}
+#main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+#header{
+  height:var(--hdr);background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 24px;gap:12px;
+  position:sticky;top:0;z-index:9
+}
+#content{flex:1;padding:28px;overflow-y:auto;max-height:calc(100vh - var(--hdr))}
+
+/* ── Sidebar ── */
+.brand{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
+.brand h1{font-size:1.05rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.brand small{font-size:.72rem;color:var(--dim);margin-top:2px;display:block}
+.nav-items{padding:6px 0;flex:1}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 16px;
+  cursor:pointer;color:var(--dim);font-size:.855rem;font-weight:500;
+  transition:all .15s;border-left:2px solid transparent;user-select:none
+}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--surface2);color:var(--primary);border-left-color:var(--primary)}
+.nav-item .icon{font-size:1rem;min-width:20px;text-align:center}
+.nav-sep{height:1px;background:var(--border);margin:6px 0}
+.sidebar-foot{padding:12px;border-top:1px solid var(--border)}
+#req-badge{
+  margin-left:auto;background:rgba(245,158,11,.18);color:var(--warning);
+  border:1px solid rgba(245,158,11,.3);border-radius:20px;padding:1px 7px;
+  font-size:.68rem;font-weight:700;display:none
+}
+
+/* ── Header ── */
+.status-dot{
+  width:9px;height:9px;border-radius:50%;background:var(--muted);
+  flex-shrink:0;transition:all .4s
+}
+.status-dot.online{background:var(--success);box-shadow:0 0 7px var(--success)}
+.status-dot.offline{background:var(--danger)}
+#status-lbl{font-size:.8rem;color:var(--dim)}
+.live-pill{
+  margin-left:auto;background:rgba(34,197,94,.1);color:var(--success);
+  border:1px solid rgba(34,197,94,.25);border-radius:20px;padding:3px 11px;
+  font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap
+}
+.page{display:none}
+.page.active{display:block}
+
+/* ── Stat cards ── */
+.grid{display:grid;gap:16px}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:20px;display:flex;flex-direction:column;gap:6px;
+  transition:border-color .2s,box-shadow .2s
+}
+.stat-card:hover{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary-glow)}
+.stat-ico{font-size:1.5rem}
+.stat-lbl{font-size:.7rem;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+.stat-val{font-size:2rem;font-weight:700;color:var(--text);line-height:1.1}
+
+/* ── Card / Panel ── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:20px
+}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.sec-head h2{font-size:1.1rem;font-weight:600}
+.sec-head .actions{margin-left:auto;display:flex;gap:8px}
+
+/* ── Buttons ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;padding:7px 14px;
+  border-radius:6px;font-size:.82rem;font-weight:500;cursor:pointer;
+  border:1px solid transparent;transition:all .15s;white-space:nowrap;
+  font-family:inherit;text-decoration:none
+}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-d)}
+.btn-danger{background:transparent;color:var(--danger);border-color:var(--danger)}
+.btn-danger:hover{background:var(--danger);color:#fff}
+.btn-success{background:transparent;color:var(--success);border-color:var(--success)}
+.btn-success:hover{background:var(--success);color:#fff}
+.btn-ghost{background:transparent;color:var(--dim);border-color:var(--border)}
+.btn-ghost:hover{border-color:var(--dim);color:var(--text)}
+.btn-sm{padding:4px 10px;font-size:.75rem}
+.btn-icon{padding:5px 8px;font-size:.85rem;line-height:1}
+
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{
+  text-align:left;font-size:.68rem;font-weight:700;color:var(--dim);
+  text-transform:uppercase;letter-spacing:.08em;
+  padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface)
+}
+td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:.855rem;color:var(--dim);vertical-align:middle}
+td strong{color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.018)}
+
+/* ── Form ── */
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+label{font-size:.78rem;color:var(--dim);font-weight:500}
+input,select{
+  background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  padding:9px 12px;color:var(--text);font-size:.875rem;font-family:inherit;
+  outline:none;transition:border-color .15s;width:100%
+}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+input::placeholder{color:var(--muted)}
+
+/* ── Breadcrumb ── */
+.crumb{display:flex;align-items:center;gap:5px;font-size:.8rem;color:var(--dim);margin-bottom:16px;flex-wrap:wrap}
+.crumb span.link{cursor:pointer;transition:color .15s;padding:2px 4px;border-radius:4px}
+.crumb span.link:hover{color:var(--primary);background:var(--primary-glow)}
+.crumb span.cur{color:var(--text);font-weight:500}
+.crumb .sep{color:var(--muted)}
+
+/* ── Item rows ── */
+.item-list{display:flex;flex-direction:column;gap:8px}
+.item-row{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:13px 16px;display:flex;align-items:center;gap:12px;
+  transition:border-color .15s,transform .1s
+}
+.item-row:hover{border-color:var(--border)}
+.item-row.click{cursor:pointer}
+.item-row.click:hover{border-color:var(--primary);transform:translateX(2px)}
+.item-lbl{color:var(--text);font-weight:500;flex:1;font-size:.9rem}
+.item-sub{font-size:.75rem;color:var(--dim);margin-top:3px}
+.chevron{color:var(--muted);font-size:1rem}
+
+/* ── Badge ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:600;white-space:nowrap}
+.badge-p{background:rgba(99,102,241,.15);color:var(--primary)}
+.badge-s{background:rgba(34,197,94,.15);color:var(--success)}
+.badge-w{background:rgba(245,158,11,.15);color:var(--warning)}
+.badge-d{background:rgba(239,68,68,.15);color:var(--danger)}
+
+/* ── Empty state ── */
+.empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty .ico{font-size:2.5rem;margin-bottom:12px}
+.empty p{font-size:.875rem}
+
+/* ── Spinner ── */
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border);
+  border-top-color:var(--primary);border-radius:50%;animation:rot .6s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.loading-msg{text-align:center;padding:32px;color:var(--muted);font-size:.875rem}
+
+/* ── Toast ── */
+#toasts{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:999}
+.toast{
+  padding:12px 18px;border-radius:8px;font-size:.855rem;font-weight:500;
+  display:flex;align-items:center;gap:8px;
+  animation:tslide .25s ease;min-width:220px;max-width:360px;
+  box-shadow:0 4px 24px rgba(0,0,0,.5)
+}
+.toast.ok{background:#14532d;color:#86efac;border:1px solid #166534}
+.toast.err{background:#450a0a;color:#fca5a5;border:1px solid #7f1d1d}
+.toast.info{background:#1e1b4b;color:#a5b4fc;border:1px solid #312e81}
+@keyframes tslide{from{transform:translateX(20px);opacity:0}to{transform:none;opacity:1}}
+
+/* ── Modal ── */
+#overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:100;
+  align-items:center;justify-content:center;padding:20px
+}
+#overlay.show{display:flex}
+.mbox{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:28px;width:100%;max-width:440px
+}
+.mbox h3{font-size:1rem;font-weight:600;margin-bottom:18px}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+/* ── Setup screen ── */
+#setup{
+  display:none;position:fixed;inset:0;background:var(--bg);z-index:200;
+  align-items:center;justify-content:center;padding:20px
+}
+#setup.show{display:flex}
+.sbox{
+  width:100%;max-width:420px;background:var(--surface);
+  border:1px solid var(--border);border-radius:16px;padding:36px 32px
+}
+.sbox h2{font-size:1.4rem;font-weight:700;margin-bottom:6px}
+.sbox p{color:var(--dim);font-size:.855rem;margin-bottom:24px;line-height:1.6}
+
+/* ── Bar chart ── */
+.bar-track{background:var(--border);border-radius:4px;height:6px;width:100px;flex-shrink:0}
+.bar-fill{height:100%;border-radius:4px;background:var(--primary);transition:width .4s}
+
+/* ── Responsive ── */
+@media(max-width:900px){.grid-4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){
+  :root{--sidebar:0px}
+  #sidebar{transform:translateX(-220px);width:220px}
+  #sidebar.open{transform:none;box-shadow:4px 0 40px rgba(0,0,0,.6)}
+  #main{margin-left:0}
+  .grid-4,.grid-2{grid-template-columns:1fr}
+  #content{padding:16px}
+  .live-pill{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ─── Sidebar ─── -->
+<nav id="sidebar">
+  <div class="brand">
+    <h1>🔬 Bot Panel</h1>
+    <small>Admin Dashboard</small>
+  </div>
+  <div class="nav-items" id="nav-menu">
+    <div class="nav-item active" data-s="overview"><span class="icon">🏠</span>Overview</div>
+    <div class="nav-item" data-s="curriculum"><span class="icon">📚</span>Curriculum</div>
+    <div class="nav-item" data-s="admins"><span class="icon">👑</span>Admins</div>
+    <div class="nav-item" data-s="contributors"><span class="icon">🤝</span>Contributors</div>
+    <div class="nav-item" data-s="requests">
+      <span class="icon">📩</span>Requests
+      <span id="req-badge"></span>
+    </div>
+    <div class="nav-sep"></div>
+    <div class="nav-item" data-s="analytics"><span class="icon">📊</span>Analytics</div>
+  </div>
+  <div class="sidebar-foot">
+    <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="App.openSettings()">⚙️ Settings</button>
+  </div>
+</nav>
+
+<!-- ─── Main ─── -->
+<div id="main">
+  <div id="header">
+    <div class="status-dot" id="sdot"></div>
+    <span id="status-lbl">Checking...</span>
+    <span class="live-pill">⚡ Changes are instant</span>
+  </div>
+  <div id="content">
+    <div id="pg-overview"  class="page active"></div>
+    <div id="pg-curriculum" class="page"></div>
+    <div id="pg-admins"    class="page"></div>
+    <div id="pg-contributors" class="page"></div>
+    <div id="pg-requests"  class="page"></div>
+    <div id="pg-analytics" class="page"></div>
+  </div>
+</div>
+
+<!-- ─── Setup ─── -->
+<div id="setup">
+  <div class="sbox">
+    <h2>🔬 Connect Dashboard</h2>
+    <p>Enter your Firebase credentials once. They'll be stored in your browser for next visits.</p>
+    <div class="form-group">
+      <label>Firebase Database URL</label>
+      <input id="su-url" type="text" placeholder="https://your-project-default-rtdb.firebaseio.com/">
+    </div>
+    <div class="form-group">
+      <label>Firebase Database Secret</label>
+      <input id="su-sec" type="password" placeholder="your-legacy-secret">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="App.saveSetup()">
+      Connect →
+    </button>
+  </div>
+</div>
+
+<!-- ─── Modal ─── -->
+<div id="overlay">
+  <div class="mbox">
+    <h3 id="m-title">—</h3>
+    <div id="m-body"></div>
+    <div class="mfoot">
+      <button class="btn btn-ghost" onclick="UI.closeModal(false)">Cancel</button>
+      <button class="btn btn-primary" id="m-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Toasts ─── -->
+<div id="toasts"></div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════
+   Firebase REST Wrapper
+═══════════════════════════════════════════════ */
+const FB = {
+  url:'', secret:'',
+  init(u,s){ this.url=u.replace(/\/$/,''); this.secret=s; },
+  async req(method, path, data){
+    const u=`${this.url}${path}.json?auth=${this.secret}`;
+    const o={method, headers:{}};
+    if(data!==undefined){ o.headers['Content-Type']='application/json'; o.body=JSON.stringify(data); }
+    const res=await fetch(u,o);
+    if(!res.ok && res.status!==200) throw new Error(`Firebase ${res.status}`);
+    const txt=await res.text();
+    return txt==='null'?null:JSON.parse(txt);
+  },
+  get: p       => FB.req('GET',p),
+  put: (p,d)   => FB.req('PUT',p,d),
+  patch:(p,d)  => FB.req('PATCH',p,d),
+  del: p       => FB.req('DELETE',p,null),
+  post:(p,d)   => FB.req('POST',p,d),
+};
+
+/* ═══════════════════════════════════════════════
+   UI Helpers
+═══════════════════════════════════════════════ */
+const UI = {
+  toast(msg, type='info', ms=3500){
+    const el=document.createElement('div');
+    el.className=`toast ${type==='success'?'ok':type==='error'?'err':'info'}`;
+    const ico={success:'✅',error:'❌',info:'ℹ️'}[type]||'•';
+    el.innerHTML=`<span>${ico}</span><span>${msg}</span>`;
+    document.getElementById('toasts').appendChild(el);
+    setTimeout(()=>el.remove(),ms);
+  },
+
+  _res:null,
+  modal(title, html, okLabel='Confirm', danger=false){
+    document.getElementById('m-title').textContent=title;
+    document.getElementById('m-body').innerHTML=html;
+    const ok=document.getElementById('m-ok');
+    ok.textContent=okLabel;
+    ok.className=danger?'btn btn-danger':'btn btn-primary';
+    document.getElementById('overlay').classList.add('show');
+    return new Promise(r=>{ this._res=r; });
+  },
+  closeModal(val=false){
+    document.getElementById('overlay').classList.remove('show');
+    if(this._res){ this._res(val); this._res=null; }
+  },
+  prompt(title, placeholder, okLabel='OK'){
+    const id='pi'+Date.now();
+    return this.modal(title,
+      `<div class="form-group"><input id="${id}" placeholder="${placeholder}" autocomplete="off"/></div>`,
+      okLabel
+    ).then(ok=>{
+      if(!ok) return null;
+      const v=document.getElementById(id)?.value?.trim();
+      return v||null;
+    });
+  },
+};
+
+document.getElementById('m-ok').onclick=()=>UI.closeModal(true);
+document.getElementById('overlay').addEventListener('click',e=>{
+  if(e.target===document.getElementById('overlay')) UI.closeModal();
+});
+
+/* ═══════════════════════════════════════════════
+   App Controller
+═══════════════════════════════════════════════ */
+const App = {
+  cur:'overview',
+  timer:null,
+
+  init(){
+    // Try server-injected credentials first
+    const injUrl='{{FB_URL}}';
+    const injSec='{{FB_SECRET}}';
+    const hasInjected = injUrl && !injUrl.startsWith('{{');
+
+    if(hasInjected){
+      FB.init(injUrl, injSec);
+      this.start();
+    } else {
+      const lsUrl=localStorage.getItem('fb_url');
+      const lsSec=localStorage.getItem('fb_secret');
+      if(lsUrl&&lsSec){ FB.init(lsUrl,lsSec); this.start(); }
+      else document.getElementById('setup').classList.add('show');
+    }
+
+    // Nav
+    document.querySelectorAll('.nav-item[data-s]').forEach(el=>{
+      el.addEventListener('click',()=>this.setSection(el.dataset.s));
+    });
+  },
+
+  saveSetup(){
+    const url=document.getElementById('su-url').value.trim();
+    const sec=document.getElementById('su-sec').value.trim();
+    if(!url||!sec){ UI.toast('Both fields required','error'); return; }
+    localStorage.setItem('fb_url',url);
+    localStorage.setItem('fb_secret',sec);
+    FB.init(url,sec);
+    document.getElementById('setup').classList.remove('show');
+    this.start();
+  },
+
+  openSettings(){
+    UI.modal('⚙️ Settings',
+      `<div class="form-group"><label>Firebase URL</label>
+       <input id="se-url" value="${FB.url}" placeholder="https://..."/></div>
+       <div class="form-group"><label>Firebase Secret</label>
+       <input id="se-sec" type="password" value="${FB.secret}" placeholder="..."/></div>`,
+      'Save'
+    ).then(ok=>{
+      if(!ok) return;
+      const u=document.getElementById('se-url')?.value?.trim();
+      const s=document.getElementById('se-sec')?.value?.trim();
+      if(u&&s){
+        localStorage.setItem('fb_url',u);
+        localStorage.setItem('fb_secret',s);
+        FB.init(u,s);
+        UI.toast('Saved ✓','success');
+        this.load(this.cur);
+      }
+    });
+  },
+
+  start(){
+    this.setSection('overview');
+    this.startStatus();
+  },
+
+  setSection(s){
+    this.cur=s;
+    // nav active
+    document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+    document.querySelector(`.nav-item[data-s="${s}"]`)?.classList.add('active');
+    // pages
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById(`pg-${s}`)?.classList.add('active');
+    // reset curriculum drill
+    if(s==='curriculum') S.curriculum.path=[];
+    // refresh
+    clearInterval(this.timer);
+    this.load(s);
+    this.timer=setInterval(()=>this.load(s), 8000);
+  },
+
+  async load(s){
+    try{ await S[s]?.load(); }
+    catch(e){
+      console.error(s,e);
+      const pg=document.getElementById(`pg-${s}`);
+      if(pg) pg.innerHTML=`<div class="empty"><div class="ico">⚠️</div>
+        <p>Failed to load section.<br><small style="color:var(--muted)">${e.message}</small></p></div>`;
+    }
+  },
+
+  startStatus(){
+    const tick=async()=>{
+      const dot=document.getElementById('sdot');
+      const lbl=document.getElementById('status-lbl');
+      try{
+        const r=await fetch('/health',{signal:AbortSignal.timeout?AbortSignal.timeout(4000):undefined});
+        if(r.ok){ dot.className='status-dot online'; lbl.textContent='Bot Online'; }
+        else throw new Error();
+      }catch{
+        dot.className='status-dot offline';
+        lbl.textContent='Bot Offline';
+      }
+    };
+    tick();
+    setInterval(tick,5000);
+  }
+};
+
+/* ═══════════════════════════════════════════════
+   Sections
+═══════════════════════════════════════════════ */
+const S = {
+
+  /* ── Overview ── */
+  overview:{
+    async load(){
+      const pg=document.getElementById('pg-overview');
+      pg.innerHTML=`
+        <div class="sec-head"><h2>🏠 Overview</h2></div>
+        <div class="grid grid-4" id="ov-stats">
+          ${[0,1,2,3].map(()=>`<div class="stat-card">
+            <span class="stat-ico">…</span>
+            <span class="stat-lbl">Loading</span>
+            <span class="stat-val">—</span>
+          </div>`).join('')}
+        </div>
+        <div style="height:20px"></div>
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="sec-head" style="margin-bottom:12px">
+              <h2 style="font-size:.95rem">📩 Pending Requests</h2>
+              <div class="actions"><button class="btn btn-sm btn-primary" onclick="App.setSection('requests')">View All</button></div>
+            </div>
+            <div id="ov-req"><div class="loading-msg"><span class="spin"></span></div></div>
+          </div>
+          <div class="card">
+            <div class="sec-head" style="margin-bottom:12px">
+              <h2 style="font-size:.95rem">📊 Top Materials</h2>
+            </div>
+            <div id="ov-top"><div class="loading-msg"><span class="spin"></span></div></div>
+          </div>
+        </div>`;
+
+      const [users,curriculum,contributors,requests,analytics]=await Promise.all([
+        FB.get('/users').catch(()=>null),
+        FB.get('/curriculum').catch(()=>null),
+        FB.get('/contributors').catch(()=>null),
+        FB.get('/requests').catch(()=>null),
+        FB.get('/analytics/top_accessed').catch(()=>null),
+      ]);
+
+      const uCnt=users?Object.keys(users).length:0;
+      const cCnt=contributors?Object.keys(contributors).length:0;
+      const rCnt=requests?Object.keys(requests).length:0;
+      let mCnt=0;
+      if(curriculum) Object.values(curriculum).forEach(t=>
+        Object.values(t||{}).forEach(su=>
+          Object.values(su||{}).forEach(ty=>mCnt+=Object.keys(ty||{}).length)));
+
+      // badge
+      const badge=document.getElementById('req-badge');
+      badge.textContent=rCnt;
+      badge.style.display=rCnt>0?'':'none';
+
+      document.getElementById('ov-stats').innerHTML=`
+        <div class="stat-card"><span class="stat-ico">👤</span><span class="stat-lbl">Users</span><span class="stat-val">${uCnt}</span></div>
+        <div class="stat-card"><span class="stat-ico">📄</span><span class="stat-lbl">Materials</span><span class="stat-val">${mCnt}</span></div>
+        <div class="stat-card"><span class="stat-ico">🤝</span><span class="stat-lbl">Contributors</span><span class="stat-val">${cCnt}</span></div>
+        <div class="stat-card"><span class="stat-ico">📩</span><span class="stat-lbl">Requests</span><span class="stat-val">${rCnt}</span></div>`;
+
+      // Requests preview
+      const reqEl=document.getElementById('ov-req');
+      if(!requests||rCnt===0){
+        reqEl.innerHTML=`<div class="empty" style="padding:20px"><div class="ico">✅</div><p>No pending requests</p></div>`;
+      } else {
+        reqEl.innerHTML=Object.entries(requests).slice(0,4).map(([id,d])=>`
+          <div class="item-row" style="margin-bottom:8px">
+            <div style="flex:1">
+              <div class="item-lbl" style="font-size:.855rem">${d.name||'User '+id}</div>
+              <div class="item-sub">${d.track||'—'} → ${d.subject||'—'}</div>
+            </div>
+            <span class="badge badge-w">Pending</span>
+          </div>`).join('');
+      }
+
+      // Top materials
+      const topEl=document.getElementById('ov-top');
+      if(!analytics||Object.keys(analytics).length===0){
+        topEl.innerHTML=`<div class="empty" style="padding:20px"><div class="ico">📊</div><p>No data yet</p></div>`;
+      } else {
+        const sorted=Object.values(analytics).sort((a,b)=>b.count-a.count).slice(0,5);
+        const max=sorted[0].count||1;
+        topEl.innerHTML=sorted.map((m,i)=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--muted);font-weight:700;width:18px;text-align:center">${i+1}</span>
+            <span style="flex:1;color:var(--text);font-size:.85rem">${m.name||'—'}</span>
+            <div class="bar-track"><div class="bar-fill" style="width:${Math.round(m.count/max*100)}%"></div></div>
+            <span class="badge badge-p">${m.count}</span>
+          </div>`).join('');
+      }
+    }
+  },
+
+  /* ── Curriculum ── */
+  curriculum:{
+    path:[],
+    async load(){ await this.render(document.getElementById('pg-curriculum')); },
+    async render(pg){
+      const p=this.path;
+      const lvl=p.length; // 0=tracks,1=subjects,2=types,3=materials
+      const labels=['Track','Subject','Type','Material'];
+      const nextLbl=labels[lvl]||'Item';
+      const isLeaf=lvl>=3;
+
+      // Breadcrumb
+      const crumbHtml=[
+        `<span class="link" onclick="S.curriculum.goTo(0)">All Tracks</span>`
+      ].concat(p.map((c,i)=>
+        `<span class="sep">›</span>`+(i===p.length-1
+          ?`<span class="cur">${c.label}</span>`
+          :`<span class="link" onclick="S.curriculum.goTo(${i+1})">${c.label}</span>`)
+      )).join('');
+
+      let fbPath='/curriculum';
+      p.forEach(c=>fbPath+='/'+encodeURIComponent(c.key));
+
+      pg.innerHTML=`
+        <div class="sec-head">
+          <h2>📚 Curriculum</h2>
+          ${!isLeaf?`<div class="actions">
+            <button class="btn btn-primary btn-sm" onclick="S.curriculum.addItem()">+ Add ${nextLbl}</button>
+          </div>`:''}
+        </div>
+        <div class="crumb">${crumbHtml}</div>
+        <div id="curr-list"><div class="loading-msg"><span class="spin"></span> Loading…</div></div>`;
+
+      let data=null;
+      try{ data=await FB.get(fbPath); }catch(e){
+        document.getElementById('curr-list').innerHTML=
+          `<div class="empty"><div class="ico">⚠️</div><p>${e.message}</p></div>`;
+        return;
+      }
+
+      // Normalise: remove _placeholder entries
+      let items=data?Object.entries(data).filter(([k])=>k!=='_placeholder'):[];
+      const list=document.getElementById('curr-list');
+
+      if(items.length===0){
+        list.innerHTML=`<div class="empty"><div class="ico">📂</div>
+          <p>No ${nextLbl.toLowerCase()}s yet.</p></div>`;
+        return;
+      }
+
+      list.innerHTML=`<div class="item-list">${items.map(([key,val])=>{
+        const name=isLeaf?(val?.name||key):key;
+        const sub=isLeaf
+          ?(val?.file_type?`${val.file_type}${val.description?' · '+String(val.description).substring(0,50):''}`:''  )
+          :`${Object.keys(val||{}).filter(k=>k!=='_placeholder').length} ${(labels[lvl+1]||'item').toLowerCase()}s`;
+        return `<div class="item-row${isLeaf?'':' click'}"
+          ${isLeaf?'':`onclick="S.curriculum.drillIn('${key.replace(/'/g,"\\'")}','${key.replace(/'/g,"\\'")}')"` }>
+          <div style="flex:1">
+            <div class="item-lbl">${name}</div>
+            ${sub?`<div class="item-sub">${sub}</div>`:''}
+          </div>
+          ${!isLeaf?`<span class="chevron">›</span>`:''}
+          <button class="btn btn-danger btn-sm btn-icon"
+            onclick="event.stopPropagation();S.curriculum.deleteItem('${key.replace(/'/g,"\\'")}','${name.replace(/'/g,"\\'")}')"
+            title="Delete">🗑</button>
+        </div>`;
+      }).join('')}</div>`;
+    },
+
+    drillIn(key,label){
+      this.path.push({key,label});
+      this.render(document.getElementById('pg-curriculum'));
+    },
+    goTo(idx){
+      this.path=this.path.slice(0,idx);
+      this.render(document.getElementById('pg-curriculum'));
+    },
+    async addItem(){
+      const lvl=this.path.length;
+      const labels=['Track','Subject','Material Type'];
+      const lbl=labels[lvl]||'Item';
+      const name=await UI.prompt(`Add New ${lbl}`,`${lbl} name...`,`Add ${lbl}`);
+      if(!name) return;
+      let fbPath='/curriculum';
+      this.path.forEach(c=>fbPath+='/'+encodeURIComponent(c.key));
+      fbPath+='/'+encodeURIComponent(name);
+      try{
+        await FB.put(fbPath,{_placeholder:true});
+        UI.toast(`${lbl} "${name}" added!`,'success');
+        this.render(document.getElementById('pg-curriculum'));
+      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
+    async deleteItem(key,name){
+      const ok=await UI.modal(`Delete "${name}"?`,
+        `<p style="color:var(--dim);font-size:.875rem;line-height:1.6">
+          This will permanently delete <strong style="color:var(--text)">${name}</strong>
+          and all its contents (subjects, types, materials).
+        </p>`,'Delete',true);
+      if(!ok) return;
+      let fbPath='/curriculum';
+      this.path.forEach(c=>fbPath+='/'+encodeURIComponent(c.key));
+      fbPath+='/'+encodeURIComponent(key);
+      try{
+        await FB.del(fbPath);
+        UI.toast(`"${name}" deleted`,'success');
+        this.render(document.getElementById('pg-curriculum'));
+      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    }
+  },
+
+  /* ── Admins ── */
+  admins:{
+    async load(){
+      const pg=document.getElementById('pg-admins');
+      pg.innerHTML=`
+        <div class="sec-head">
+          <h2>👑 Admins</h2>
+          <div class="actions">
+            <button class="btn btn-primary btn-sm" onclick="S.admins.add()">+ Add Admin</button>
+          </div>
+        </div>
+        <div class="card tbl-wrap">
+          <table>
+            <thead><tr><th>User ID</th><th>Role</th><th style="text-align:right">Action</th></tr></thead>
+            <tbody id="adm-body"><tr><td colspan="3" class="loading-msg"><span class="spin"></span></td></tr></tbody>
+          </table>
+        </div>`;
+
+      const [admins,superA]=await Promise.all([
+        FB.get('/admins').catch(()=>null),
+        FB.get('/super_admin').catch(()=>null),
+      ]);
+      const superId=String(superA?.id||'');
+      const tb=document.getElementById('adm-body');
+      if(!admins||Object.keys(admins).length===0){
+        tb.innerHTML=`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px">No admins found</td></tr>`;
+        return;
+      }
+      tb.innerHTML=Object.keys(admins).map(id=>`<tr>
+        <td><strong>${id}</strong></td>
+        <td>${id===superId
+          ?`<span class="badge badge-w">👑 Super Admin</span>`
+          :`<span class="badge badge-p">Admin</span>`}</td>
+        <td style="text-align:right">${id!==superId
+          ?`<button class="btn btn-danger btn-sm" onclick="S.admins.remove('${id}')">Remove</button>`
+          :''}</td>
+      </tr>`).join('');
+    },
+    async add(){
+      const id=await UI.prompt('Add Admin','Telegram User ID (numbers only)','Add Admin');
+      if(!id) return;
+      if(!/^\d+$/.test(id)){ UI.toast('Numbers only','error'); return; }
+      try{
+        await FB.put(`/admins/${id}`,true);
+        UI.toast(`Admin ${id} added!`,'success');
+        this.load();
+      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
+    async remove(id){
+      const ok=await UI.modal('Remove Admin?',
+        `<p style="color:var(--dim)">Remove <strong style="color:var(--text)">${id}</strong> from admins?</p>`,
+        'Remove',true);
+      if(!ok) return;
+      try{
+        await FB.del(`/admins/${id}`);
+        UI.toast(`Admin ${id} removed`,'success');
+        this.load();
+      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    }
+  },
+
+  /* ── Contributors ── */
+  contributors:{
+    async load(){
+      const pg=document.getElementById('pg-contributors');
+      pg.innerHTML=`
+        <div class="sec-head"><h2>🤝 Contributors</h2></div>
+        <div class="card tbl-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Track</th><th>Subject</th><th style="text-align:right">Action</th></tr></thead>
+            <tbody id="ctr-body"><tr><td colspan="5" class="loading-msg"><span class="spin"></span></td></tr></tbody>
+          </table>
+        </div>`;
+
+      const contributors=await FB.get('/contributors').catch(()=>null);
+      const tb=document.getElementById('ctr-body');
+      if(!contributors||Object.keys(contributors).length===0){
+        tb.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">No contributors</td></tr>`;
+        return;
+      }
+      tb.innerHTML=Object.entries(contributors).map(([id,d])=>`<tr>
+        <td><strong>${id}</strong></td>
+        <td>${d.name||`<span style="color:var(--muted)">—</span>`}</td>
+        <td><span class="badge badge-p">${d.track||'—'}</span></td>
+        <td>${d.subject||'—'}</td>
+        <td style="text-align:right">
+          <button class="btn btn-danger btn-sm" onclick="S.contributors.remove('${id}','${(d.name||id).replace(/'/g,"\\'")}')">
+            Remove
+          </button>
+        </td>
+      </tr>`).join('');
+    },
+    async remove(id,name){
+      const ok=await UI.modal('Remove Contributor?',
+        `<p style="color:var(--dim)">Remove <strong style="color:var(--text)">${name}</strong> as contributor?<br>
+        <small>Their uploaded materials will remain in the curriculum.</small></p>`,
+        'Remove',true);
+      if(!ok) return;
+      try{
+        await FB.del(`/contributors/${id}`);
+        UI.toast(`${name} removed`,'success');
+        this.load();
+      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    }
+  },
+
+  /* ── Requests ── */
+  requests:{
+    async load(){
+      const pg=document.getElementById('pg-requests');
+      pg.innerHTML=`
+        <div class="sec-head">
+          <h2>📩 Pending Requests</h2>
+          <div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="S.requests.load()">🔄 Refresh</button>
+          </div>
+        </div>
+        <div id="req-list"><div class="loading-msg"><span class="spin"></span> Loading…</div></div>`;
+
+      const requests=await FB.get('/requests').catch(()=>null);
+      const badge=document.getElementById('req-badge');
+      const list=document.getElementById('req-list');
+
+      const cnt=requests?Object.keys(requests).length:0;
+      badge.textContent=cnt; badge.style.display=cnt>0?'':'none';
+
+      if(!requests||cnt===0){
+        list.innerHTML=`<div class="empty"><div class="ico">✅</div><p>No pending requests. All clear!</p></div>`;
+        return;
+      }
+
+      list.innerHTML=`<div class="item-list">${Object.entries(requests).map(([id,d])=>`
+        <div class="item-row" id="rr-${id}">
+          <div style="flex:1">
+            <div class="item-lbl">
+              ${d.name&&d.name.trim()?d.name:'User '+id}
+              <span style="color:var(--muted);font-size:.75rem;margin-left:6px">#${id}</span>
+            </div>
+            <div class="item-sub">
+              Wants to contribute to
+              <strong style="color:var(--text)">${d.track||'—'}</strong> →
+              <strong style="color:var(--text)">${d.subject||'—'}</strong>
+            </div>
+            ${d.timestamp?`<div class="item-sub" style="font-size:.7rem;margin-top:2px">
+              ${new Date(d.timestamp).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>`:''}
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button class="btn btn-success btn-sm"
+              onclick="S.requests.approve('${id}','${(d.name||'').replace(/'/g,"\\'")}','${(d.track||'').replace(/'/g,"\\'")}','${(d.subject||'').replace(/'/g,"\\'")}')">
+              ✅ Approve
+            </button>
+            <button class="btn btn-danger btn-sm"
+              onclick="S.requests.reject('${id}','${(d.name||id).replace(/'/g,"\\'")}')">
+              ❌ Reject
+            </button>
+          </div>
+        </div>`).join('')}</div>`;
+    },
+    async approve(id,name,track,subject){
+      const ok=await UI.modal('Approve Contributor?',
+        `<p style="color:var(--dim);line-height:1.7">
+          Approve <strong style="color:var(--text)">${name||id}</strong> to contribute to<br>
+          <strong style="color:var(--primary)">${track} → ${subject}</strong>?
+        </p>`,'✅ Approve');
+      if(!ok) return;
+      try{
+        await Promise.all([
+          FB.put(`/contributors/${id}`,{track,subject,name}),
+          FB.del(`/requests/${id}`)
+        ]);
+        UI.toast(`${name||id} approved!`,'success');
+        document.getElementById(`rr-${id}`)?.remove();
+        // update badge
+        const remaining=document.querySelectorAll('[id^="rr-"]').length;
+        const badge=document.getElementById('req-badge');
+        badge.textContent=remaining; badge.style.display=remaining>0?'':'none';
+        if(remaining===0) this.load();
+      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
+    async reject(id,name){
+      const ok=await UI.modal('Reject Request?',
+        `<p style="color:var(--dim)">Reject <strong style="color:var(--text)">${name}</strong>'s request?</p>`,
+        'Reject',true);
+      if(!ok) return;
+      try{
+        await FB.del(`/requests/${id}`);
+        UI.toast('Request rejected','success');
+        document.getElementById(`rr-${id}`)?.remove();
+        const remaining=document.querySelectorAll('[id^="rr-"]').length;
+        const badge=document.getElementById('req-badge');
+        badge.textContent=remaining; badge.style.display=remaining>0?'':'none';
+        if(remaining===0) this.load();
+      }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    }
+  },
+
+  /* ── Analytics ── */
+  analytics:{
+    async load(){
+      const pg=document.getElementById('pg-analytics');
+      pg.innerHTML=`<div class="sec-head"><h2>📊 Analytics</h2></div>
+        <div class="loading-msg"><span class="spin"></span> Loading…</div>`;
+
+      const [analytics,users]=await Promise.all([
+        FB.get('/analytics/top_accessed').catch(()=>null),
+        FB.get('/users').catch(()=>null),
+      ]);
+
+      const uCnt=users?Object.keys(users).length:0;
+      const sorted=analytics?Object.values(analytics).sort((a,b)=>b.count-a.count):[];
+      const total=sorted.reduce((s,m)=>s+m.count,0);
+      const max=sorted[0]?.count||1;
+
+      pg.innerHTML=`
+        <div class="sec-head"><h2>📊 Analytics</h2></div>
+        <div class="grid grid-4" style="margin-bottom:20px">
+          <div class="stat-card"><span class="stat-ico">👤</span><span class="stat-lbl">Total Users</span><span class="stat-val">${uCnt}</span></div>
+          <div class="stat-card"><span class="stat-ico">📄</span><span class="stat-lbl">Tracked Materials</span><span class="stat-val">${sorted.length}</span></div>
+          <div class="stat-card"><span class="stat-ico">👁️</span><span class="stat-lbl">Total Views</span><span class="stat-val">${total}</span></div>
+          <div class="stat-card"><span class="stat-ico">🏆</span><span class="stat-lbl">Most Viewed</span>
+            <span class="stat-val" style="font-size:${sorted[0]?.name?.length>10?'.85rem':'1.1rem'}">${sorted[0]?.name||'—'}</span></div>
+        </div>
+        <div class="card">
+          <div style="font-weight:600;margin-bottom:16px">Top Accessed Materials</div>
+          ${sorted.length===0
+            ?`<div class="empty"><div class="ico">📊</div><p>No access data yet</p></div>`
+            :`<div class="tbl-wrap"><table>
+                <thead><tr><th>#</th><th>Material</th><th>Views</th><th style="min-width:140px">Popularity</th></tr></thead>
+                <tbody>${sorted.slice(0,20).map((m,i)=>{
+                  const pct=Math.round(m.count/max*100);
+                  return `<tr>
+                    <td style="color:var(--muted);font-weight:700;width:32px">${i+1}</td>
+                    <td><strong>${m.name||'—'}</strong></td>
+                    <td><span class="badge badge-p">${m.count}</span></td>
+                    <td>
+                      <div class="bar-track" style="width:100%">
+                        <div class="bar-fill" style="width:${pct}%"></div>
+                      </div>
+                    </td>
+                  </tr>`;}).join('')}</tbody>
+              </table></div>`
+          }
+        </div>`;
+    }
+  }
+};
+
+/* ── Boot ── */
+document.addEventListener('DOMContentLoaded',()=>App.init());
+</script>
+</body>
+</html>

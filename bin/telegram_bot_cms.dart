@@ -100,6 +100,14 @@ Future<void> main() async {
 
   // Error handling
   bot.onError((err) {
+    if (err is BotError) {
+      final error = err.error;
+      if (error is TelegramException &&
+          error.description != null &&
+          error.description!.contains('message is not modified')) {
+        return; // Ignore this harmless error
+      }
+    }
     print('Bot Error: $err');
   });
 

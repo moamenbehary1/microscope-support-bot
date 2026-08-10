@@ -26,7 +26,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=5000 dart run bin/telegram_bot_cms.dart"
+args = "dart pub get && PORT=5000 dart run bin/telegram_bot_cms.dart"
 waitForPort = 5000
 
 [[ports]]

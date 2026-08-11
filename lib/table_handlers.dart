@@ -36,31 +36,6 @@ void registerTableHandlers(Bot bot) {
     await ctx.editMessageText('الرجاء إدخال اسم للجدول الجديد:\n(مثلاً: جدول الفصل الدراسي الأول)', replyMarkup: InlineKeyboard().row().add('🔙 رجوع', 'table_dash'));
   });
 
-  bot.onText((ctx) async {
-    final userId = ctx.from?.id;
-    if (userId == null) return;
-    final state = Utils.tableCreationStates[userId];
-    if (state == null) return;
-
-    final text = ctx.message?.text ?? '';
-    if (text.startsWith('/')) return;
-
-    if (state['step'] == 'name') {
-      state['name'] = text;
-      state['step'] = 'track';
-      
-      final tracks = await FirebaseDb.getTracks();
-      if (tracks.isEmpty) {
-        await ctx.reply('لا يوجد فرق دراسية متاحة حالياً.');
-        Utils.tableCreationStates.remove(userId);
-        return;
-      }
-      
-      final keyboard = Utils.paginateKeyboard(tracks, page: 0, prefix: 'tab_track:', backData: 'table_dash');
-      await ctx.reply('تم حفظ الاسم: $text\n\nاختر الفرقة الدراسية (Track):', replyMarkup: keyboard);
-    }
-  });
-
   bot.callbackQuery(RegExp(r'^tab_track:page_(\d+)'), (ctx) async {
     final userId = ctx.from?.id;
     final data = ctx.callbackQuery?.data;
@@ -224,6 +199,33 @@ void registerTableHandlers(Bot bot) {
     await ctx.answerCallbackQuery(text: 'تم حذف جميع الجداول.');
     await FirebaseDb.deleteAllTables(userId);
     await _showTableDashboard(ctx, userId, edit: true);
+  });
+}
+
+void registerTableTextHandler(Bot bot) {
+  bot.onText((ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final state = Utils.tableCreationStates[userId];
+    if (state == null) return;
+
+    final text = ctx.message?.text ?? '';
+    if (text.startsWith('/')) return;
+
+    if (state['step'] == 'name') {
+      state['name'] = text;
+      state['step'] = 'track';
+      
+      final tracks = await FirebaseDb.getTracks();
+      if (tracks.isEmpty) {
+        await ctx.reply('لا يوجد فرق دراسية متاحة حالياً.');
+        Utils.tableCreationStates.remove(userId);
+        return;
+      }
+      
+      final keyboard = Utils.paginateKeyboard(tracks, page: 0, prefix: 'tab_track:', backData: 'table_dash');
+      await ctx.reply('تم حفظ الاسم: $text\n\nاختر الفرقة الدراسية (Track):', replyMarkup: keyboard);
+    }
   });
 }
 

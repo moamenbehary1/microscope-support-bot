@@ -192,9 +192,13 @@ Future<void> main() async {
 
   // Register Handlers
   registerStudentHandlers(bot);
+  registerTableHandlers(bot);
   registerAdminHandlers(bot);
   registerContributorAndUploadHandlers(bot);
-  registerTableHandlers(bot);
+  
+  // Register generic text/upload handlers at the end to prevent blocking commands
+  registerContributorUploadHandlers(bot);
+  registerTableTextHandler(bot);
 
   print('Bot is polling...');
   bot.start();

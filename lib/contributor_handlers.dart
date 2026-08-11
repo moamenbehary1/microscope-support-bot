@@ -15,7 +15,9 @@ void registerContributorAndUploadHandlers(Bot bot) {
     final lang = Utils.getUserLanguage(userId);
     await _showContributorDashboard(ctx, userId, lang, isEdit: false);
   });
+}
 
+void registerContributorUploadHandlers(Bot bot) {
   // ── Text input state machine ─────────────────────────────────────────
   bot.onText((ctx) async {
     final userId = ctx.from?.id;

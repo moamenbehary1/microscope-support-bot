@@ -443,7 +443,7 @@ const Auth = {
         const ok = await Auth._verifyId(decoded);
         if(ok){
           Auth._currentId = decoded;
-          sessionStorage.setItem('auth_id', decoded);
+          // We intentionally do NOT use sessionStorage so it asks for ID every time the page is closed/refreshed
           const clean = window.location.pathname;
           history.replaceState(null,'',clean);
           return true;
@@ -452,13 +452,8 @@ const Auth = {
       Auth._showLogin('Invalid or expired access link.');
       return false;
     }
-    // 2) Check session
-    const sid = sessionStorage.getItem('auth_id');
-    if(sid){
-      const ok = await Auth._verifyId(sid);
-      if(ok){ Auth._currentId = sid; return true; }
-    }
-    // 3) Show login
+    
+    // 2) Show login (No session storage used)
     Auth._showLogin();
     return false;
   },
@@ -480,7 +475,6 @@ const Auth = {
     const ok = await Auth._verifyId(id);
     if(ok){
       Auth._currentId = id;
-      sessionStorage.setItem('auth_id', id);
       document.getElementById('login-screen').classList.remove('show');
       btn.disabled = false;
       btn.textContent = '🔑 Enter Dashboard';
@@ -494,7 +488,6 @@ const Auth = {
   },
 
   logout(){
-    sessionStorage.removeItem('auth_id');
     Auth._currentId = null;
     location.reload();
   },

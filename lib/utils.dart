@@ -91,11 +91,15 @@ class Utils {
   // ── Broadcast ───────────────────────────────────────────────────────
 
   /// Helper to safely send broadcast messages with a delay
-  static Future<void> broadcast(Bot bot, List<int> userIds, String message) async {
+  static Future<void> broadcast(Bot mainBot, List<int> userIds, String message) async {
+    // Create a separate bot instance for broadcasting so we don't 
+    // congest the main bot's HTTP client, which can cause LongPolling conflicts.
+    final broadcastBot = Bot(Config.botToken);
+
     int count = 0;
     for (int id in userIds) {
       try {
-        await bot.api.sendMessage(ChatID(id), message);
+        await broadcastBot.api.sendMessage(ChatID(id), message);
         count++;
         // Asynchronous delay to avoid Telegram rate limits (approx 30 msgs/sec limit)
         await Future.delayed(Duration(milliseconds: 50));

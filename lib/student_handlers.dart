@@ -300,7 +300,6 @@ Future<void> _sendMainMenuNew(Bot bot, Context ctx, int userId) async {
   if (isContrib) {
     keyboard.row().add(S.get('btn_my_dashboard', lang), 'contrib_dash');
   }
-  keyboard.row().add('📅 جدولي الدراسي', 'table_dash');
   keyboard.row().add(S.get('btn_contribute', lang), 'req_contribute');
   keyboard.row().add(S.get('btn_contact_admin', lang), 'contact_admin');
   
@@ -330,7 +329,6 @@ Future<void> _sendMainMenu(Bot bot, Context ctx, int userId) async {
   if (isContrib) {
     keyboard.row().add(S.get('btn_my_dashboard', lang), 'contrib_dash');
   }
-  keyboard.row().add('📅 جدولي الدراسي', 'table_dash');
   keyboard.row().add(S.get('btn_contribute', lang), 'req_contribute');
   keyboard.row().add(S.get('btn_contact_admin', lang), 'contact_admin');
   

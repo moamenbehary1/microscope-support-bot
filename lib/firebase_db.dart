@@ -145,6 +145,11 @@ class FirebaseDb {
     return admins.contains(userId);
   }
 
+  static Future<bool> isBanned(int userId) async {
+    final data = await _get('/banned_users/$userId');
+    return data != null && data == true;
+  }
+
   // --- Contributors ---
 
   static Future<void> setContributor(int userId, {String name = ''}) async {

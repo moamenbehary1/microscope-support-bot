@@ -1463,6 +1463,64 @@ const S = {
       const users=await FB.get('/users').catch(()=>null);
       const total=users?Object.keys(users).length:0;
       document.getElementById('us-total').textContent=total;
+
+      const card = document.createElement('div');
+      card.innerHTML = `
+        <div class="sec-head" style="margin-top:40px">
+          <h2>🚫 Banned Users</h2>
+          <div class="actions">
+            <button class="btn btn-primary btn-sm" onclick="S.users.banUser()">+ Ban User</button>
+          </div>
+        </div>
+        <div class="card tbl-wrap">
+          <table>
+            <thead><tr><th>User ID</th><th style="text-align:right">Action</th></tr></thead>
+            <tbody id="banned-body"><tr><td colspan="2" class="loading-msg"><span class="spin"></span></td></tr></tbody>
+          </table>
+        </div>
+      `;
+      pg.appendChild(card);
+      this.loadBanned();
+    },
+    async loadBanned(){
+      const tb = document.getElementById('banned-body');
+      if(!tb) return;
+      tb.innerHTML = \`<tr><td colspan="2" class="loading-msg"><span class="spin"></span></td></tr>\`;
+      try {
+        const banned = await FB.get('/banned_users').catch(()=>null);
+        if(!banned || Object.keys(banned).length === 0){
+          tb.innerHTML = \`<tr><td colspan="2" style="text-align:center;color:var(--muted);padding:24px">No banned users</td></tr>\`;
+          return;
+        }
+        tb.innerHTML = Object.keys(banned).map(id => \`<tr>
+          <td><strong>\${id}</strong></td>
+          <td style="text-align:right">
+            <button class="btn btn-ghost btn-sm" onclick="S.users.unbanUser('\${id}')">Unban</button>
+          </td>
+        </tr>\`).join('');
+      } catch(e) {
+        tb.innerHTML = \`<tr><td colspan="2" style="text-align:center;color:var(--danger);padding:24px">Error loading banned users</td></tr>\`;
+      }
+    },
+    async banUser(){
+      const id = await UI.prompt('Ban User', 'Enter Telegram ID to ban', 'Ban');
+      if(!id) return;
+      if(!/^\\d+$/.test(id)){ UI.toast('Numbers only','error'); return; }
+      if(id === Auth.getCurrentId() || id === SUPER_ADMIN_ID){ UI.toast('Cannot ban yourself or Super Admin','error'); return; }
+      try {
+        await FB.put(\`/banned_users/\${id}\`, true);
+        UI.toast(\`User \${id} banned\`, 'success');
+        this.loadBanned();
+      } catch(e) { UI.toast('Failed: '+e.message, 'error'); }
+    },
+    async unbanUser(id){
+      const ok = await UI.modal('Unban User?', \`<p style="color:var(--dim)">Unban user <strong>\${id}</strong>?</p>\`, 'Unban', false);
+      if(!ok) return;
+      try {
+        await FB.del(\`/banned_users/\${id}\`);
+        UI.toast(\`User \${id} unbanned\`, 'success');
+        this.loadBanned();
+      } catch(e) { UI.toast('Failed: '+e.message, 'error'); }
     },
     async wipeUsers(){
       const ok=await UI.modal('Wipe All Users?',

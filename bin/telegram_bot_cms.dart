@@ -179,6 +179,17 @@ Future<void> main() async {
     print('Bot Error: $err');
   });
 
+  // Ban check middleware
+  bot.use((ctx, next) async {
+    final id = ctx.from?.id;
+    if (id != null) {
+      if (await FirebaseDb.isBanned(id)) {
+        return; // Ignore all updates from banned users
+      }
+    }
+    await next();
+  });
+
   // Register Handlers
   registerStudentHandlers(bot);
   registerAdminHandlers(bot);

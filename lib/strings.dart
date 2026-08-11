@@ -20,8 +20,16 @@ class S {
     
     // ── Welcome / Start ─────────────────────────────────────────────
     'welcome': {
-      'ar': 'مرحباً بك في البوت التعليمي! 📚\nاختر المسار الذي تريده:',
-      'en': 'Welcome to the Educational Bot! 📚\nPlease select a track to begin:',
+      'ar': 'مرحباً بك في البوت التعليمي! 📚\nاختر من القائمة بالأسفل:',
+      'en': 'Welcome to the Educational Bot! 📚\nPlease select from the menu below:',
+    },
+    'departments': {
+      'ar': 'اختر المسار الذي تريده:',
+      'en': 'Please select a track to begin:',
+    },
+    'btn_departments': {
+      'ar': '🏢 الأقسام (Departments)',
+      'en': '🏢 Departments',
     },
     'btn_contribute': {
       'ar': 'المساهمة بمواد 🤝',

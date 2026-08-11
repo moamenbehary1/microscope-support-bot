@@ -88,6 +88,50 @@ class Utils {
     if (backData != null) {
       keyboard.row().add('🔙 Back', backData);
     }
+    return keyboard;
+  }
+
+  /// Generates a paginated inline keyboard for key-value items (e.g. materials).
+  /// [items] List of MapEntries where key is ID and value is Display Name.
+  /// [page] Current page (0-indexed).
+  /// [itemsPerPage] Defaults to 5.
+  /// [prefix] The callback data prefix (e.g., 'mat:'). The ID will be appended.
+  /// [backData] Callback data for a 'Back' button, if any.
+  static InlineKeyboard paginateMapKeyboard(
+    List<MapEntry<String, String>> items, {
+    required int page,
+    int itemsPerPage = 5,
+    required String prefix,
+    String? backData,
+  }) {
+    final keyboard = InlineKeyboard();
+
+    int startIndex = page * itemsPerPage;
+    int endIndex = startIndex + itemsPerPage;
+    if (endIndex > items.length) endIndex = items.length;
+
+    for (int i = startIndex; i < endIndex; i++) {
+      keyboard.row().add(items[i].value, '$prefix${items[i].key}');
+    }
+
+    final navRow = <InlineMenuData>[];
+    if (page > 0) {
+      navRow.add(InlineMenuData('⬅️ Prev', '${prefix}page_${page - 1}'));
+    }
+    if (endIndex < items.length) {
+      navRow.add(InlineMenuData('Next ➡️', '${prefix}page_${page + 1}'));
+    }
+
+    if (navRow.isNotEmpty) {
+      final row = keyboard.row();
+      for (var item in navRow) {
+        row.add(item.text, item.data!);
+      }
+    }
+
+    if (backData != null) {
+      keyboard.row().add('🔙 Back', backData);
+    }
 
     return keyboard;
   }

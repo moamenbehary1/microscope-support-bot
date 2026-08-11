@@ -74,8 +74,16 @@ void registerStudentHandlers(Bot bot) {
     await ctx.editMessageText(S.get('lang_prompt', 'en'), replyMarkup: kb);
   });
 
-  // ── back:tracks — return to main track list ──────────────────────────
-  bot.callbackQuery('back:tracks', (ctx) async {
+  // ── back:main — return to main menu ──────────────────────────
+  bot.callbackQuery('back:main', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    await ctx.answerCallbackQuery();
+    await _sendMainMenuNew(bot, ctx, userId, isEdit: true);
+  });
+
+  // ── show_departments — show paginated list of tracks ─────────────────
+  bot.callbackQuery('show_departments', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
     await ctx.answerCallbackQuery();
@@ -85,25 +93,13 @@ void registerStudentHandlers(Bot bot) {
     InlineKeyboard keyboard;
     if (tracks.isEmpty) {
       keyboard = InlineKeyboard()
-        ..row().add(S.get('no_tracks', lang), 'ignore');
+        ..row().add(S.get('no_tracks', lang), 'ignore')
+        ..row().add('🔙 Back', 'back:main');
     } else {
-      keyboard = Utils.paginateKeyboard(tracks, page: 0, prefix: 'track:');
+      keyboard = Utils.paginateKeyboard(tracks, page: 0, prefix: 'track:', backData: 'back:main');
     }
 
-    final isContrib = await FirebaseDb.isContributor(userId);
-    if (isContrib) {
-      keyboard.row().add(S.get('btn_my_dashboard', lang), 'contrib_dash');
-    }
-    keyboard.row().add(S.get('btn_contribute', lang), 'req_contribute');
-    keyboard.row().add(S.get('btn_contact_admin', lang), 'contact_admin');
-    
-    if (Config.whatsappSupportNumber.isNotEmpty) {
-      keyboard.row().addUrl(S.get('btn_whatsapp_support', lang), 'https://wa.me/${Config.whatsappSupportNumber}');
-    }
-
-    keyboard.row().add(S.get('btn_change_lang', lang), 'change_lang');
-
-    await ctx.editMessageText(S.get('welcome', lang), replyMarkup: keyboard);
+    await ctx.editMessageText(S.get('departments', lang), replyMarkup: keyboard);
   });
 
   // ── ignore (no-op button) ─────────────────────────────────────────────
@@ -120,15 +116,22 @@ void registerStudentHandlers(Bot bot) {
     if (data == null || userId == null) return;
 
     final track = data.split(':')[1];
-    if (track.startsWith('page_')) return; // pagination placeholder
-
     final lang = Utils.getUserLanguage(userId);
+    
+    if (track.startsWith('page_')) {
+      final page = int.parse(track.split('_')[1]);
+      final tracks = await FirebaseDb.getTracks();
+      final keyboard = Utils.paginateKeyboard(tracks, page: page, prefix: 'track:', backData: 'back:main');
+      await ctx.editMessageText(S.get('departments', lang), replyMarkup: keyboard);
+      return;
+    }
+
     final subjects = await FirebaseDb.getSubjects(track);
     final keyboard = Utils.paginateKeyboard(
       subjects,
       page: 0,
       prefix: 'subj:$track:',
-      backData: 'back:tracks',
+      backData: 'show_departments',
     );
 
     await ctx.editMessageText(
@@ -146,8 +149,16 @@ void registerStudentHandlers(Bot bot) {
     final parts = data.split(':');
     final track = parts[1];
     final subject = parts[2];
-
     final lang = Utils.getUserLanguage(userId);
+
+    if (subject.startsWith('page_')) {
+      final page = int.parse(subject.split('_')[1]);
+      final subjects = await FirebaseDb.getSubjects(track);
+      final keyboard = Utils.paginateKeyboard(subjects, page: page, prefix: 'subj:$track:', backData: 'show_departments');
+      await ctx.editMessageText(S.get('selected_track', lang, {'track': track}), replyMarkup: keyboard);
+      return;
+    }
+
     final types = await FirebaseDb.getMaterialTypes(track, subject);
     final keyboard = Utils.paginateKeyboard(
       types,
@@ -172,16 +183,25 @@ void registerStudentHandlers(Bot bot) {
     final track = parts[1];
     final subject = parts[2];
     final type = parts[3];
-
     final lang = Utils.getUserLanguage(userId);
-    final materials = await FirebaseDb.getMaterials(track, subject, type);
-    final keyboard = InlineKeyboard();
 
-    for (var mId in materials.keys) {
-      final name = materials[mId]['name'];
-      keyboard.row().add(name, 'mat:$track:$subject:$type:$mId');
+    if (type.startsWith('page_')) {
+      final page = int.parse(type.split('_')[1]);
+      final types = await FirebaseDb.getMaterialTypes(track, subject);
+      final keyboard = Utils.paginateKeyboard(types, page: page, prefix: 'type:$track:$subject:', backData: 'track:$track');
+      await ctx.editMessageText(S.get('selected_subject', lang, {'subject': subject}), replyMarkup: keyboard);
+      return;
     }
-    keyboard.row().add(S.get('btn_back', lang), 'subj:$track:$subject');
+
+    final materials = await FirebaseDb.getMaterials(track, subject, type);
+    final itemsList = materials.entries.map((e) => MapEntry(e.key, e.value['name'].toString())).toList();
+    
+    final keyboard = Utils.paginateMapKeyboard(
+      itemsList,
+      page: 0,
+      prefix: 'mat:$track:$subject:$type:',
+      backData: 'subj:$track:$subject',
+    );
 
     await ctx.editMessageText(
       S.get('materials_list', lang, {'type': type}),
@@ -200,8 +220,17 @@ void registerStudentHandlers(Bot bot) {
     final subject = parts[2];
     final type = parts[3];
     final materialId = parts[4];
-
     final lang = Utils.getUserLanguage(userId);
+
+    if (materialId.startsWith('page_')) {
+      final page = int.parse(materialId.split('_')[1]);
+      final materials = await FirebaseDb.getMaterials(track, subject, type);
+      final itemsList = materials.entries.map((e) => MapEntry(e.key, e.value['name'].toString())).toList();
+      final keyboard = Utils.paginateMapKeyboard(itemsList, page: page, prefix: 'mat:$track:$subject:$type:', backData: 'subj:$track:$subject');
+      await ctx.editMessageText(S.get('materials_list', lang, {'type': type}), replyMarkup: keyboard);
+      return;
+    }
+
     final material = await FirebaseDb.getMaterial(track, subject, type, materialId);
 
     if (material != null) {
@@ -283,18 +312,12 @@ Future<void> _sendLanguageSelection(Context ctx) async {
   await ctx.reply(S.get('lang_prompt', 'en'), replyMarkup: kb);
 }
 
-/// Sends a new main-menu message (after language was just picked via callback).
-Future<void> _sendMainMenuNew(Bot bot, Context ctx, int userId) async {
+/// Sends a new main-menu message (after language was just picked via callback or back).
+Future<void> _sendMainMenuNew(Bot bot, Context ctx, int userId, {bool isEdit = false}) async {
   final lang = Utils.getUserLanguage(userId);
-  final tracks = await FirebaseDb.getTracks();
+  final keyboard = InlineKeyboard();
 
-  InlineKeyboard keyboard;
-  if (tracks.isEmpty) {
-    keyboard = InlineKeyboard()
-      ..row().add(S.get('no_tracks', lang), 'ignore');
-  } else {
-    keyboard = Utils.paginateKeyboard(tracks, page: 0, prefix: 'track:');
-  }
+  keyboard.row().add(S.get('btn_departments', lang), 'show_departments');
 
   final isContrib = await FirebaseDb.isContributor(userId);
   if (isContrib) {
@@ -309,34 +332,14 @@ Future<void> _sendMainMenuNew(Bot bot, Context ctx, int userId) async {
   
   keyboard.row().add(S.get('btn_change_lang', lang), 'change_lang');
 
-  await ctx.reply(S.get('welcome', lang), replyMarkup: keyboard);
+  if (isEdit) {
+    await ctx.editMessageText(S.get('welcome', lang), replyMarkup: keyboard);
+  } else {
+    await ctx.reply(S.get('welcome', lang), replyMarkup: keyboard);
+  }
 }
 
 /// Sends a new main-menu message from a /start command.
 Future<void> _sendMainMenu(Bot bot, Context ctx, int userId) async {
-  final lang = Utils.getUserLanguage(userId);
-  final tracks = await FirebaseDb.getTracks();
-
-  InlineKeyboard keyboard;
-  if (tracks.isEmpty) {
-    keyboard = InlineKeyboard()
-      ..row().add(S.get('no_tracks', lang), 'ignore');
-  } else {
-    keyboard = Utils.paginateKeyboard(tracks, page: 0, prefix: 'track:');
-  }
-
-  final isContrib = await FirebaseDb.isContributor(userId);
-  if (isContrib) {
-    keyboard.row().add(S.get('btn_my_dashboard', lang), 'contrib_dash');
-  }
-  keyboard.row().add(S.get('btn_contribute', lang), 'req_contribute');
-  keyboard.row().add(S.get('btn_contact_admin', lang), 'contact_admin');
-  
-  if (Config.whatsappSupportNumber.isNotEmpty) {
-    keyboard.row().addUrl(S.get('btn_whatsapp_support', lang), 'https://wa.me/${Config.whatsappSupportNumber}');
-  }
-  
-  keyboard.row().add(S.get('btn_change_lang', lang), 'change_lang');
-
-  await ctx.reply(S.get('welcome', lang), replyMarkup: keyboard);
+  await _sendMainMenuNew(bot, ctx, userId, isEdit: false);
 }

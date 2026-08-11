@@ -196,9 +196,22 @@ Future<void> main() async {
   registerAdminHandlers(bot);
   registerContributorAndUploadHandlers(bot);
   
-  // Register generic text/upload handlers at the end to prevent blocking commands
+  // Register generic file upload handlers
   registerContributorUploadHandlers(bot);
-  registerTableTextHandler(bot);
+
+  // Centralized Text Handler for state machines to prevent routing conflicts
+  bot.onText((ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final text = ctx.message?.text ?? '';
+    if (text.startsWith('/')) return; // Ignore commands
+
+    if (Utils.tableCreationStates.containsKey(userId)) {
+      await handleTableText(ctx, bot);
+    } else if (Utils.uploadStates.containsKey(userId)) {
+      await handleUploadText(ctx, bot);
+    }
+  });
 
   print('Bot is polling...');
   bot.start();

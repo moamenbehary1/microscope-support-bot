@@ -17,267 +17,266 @@ void registerContributorAndUploadHandlers(Bot bot) {
   });
 }
 
-void registerContributorUploadHandlers(Bot bot) {
-  // ── Text input state machine ─────────────────────────────────────────
-  bot.onText((ctx) async {
-    final userId = ctx.from?.id;
-    if (userId == null) return;
+Future<void> handleUploadText(Context ctx, Bot bot) async {
+  final userId = ctx.from?.id;
+  if (userId == null) return;
 
-    final state = Utils.uploadStates[userId];
-    if (state == null) return;
+  final state = Utils.uploadStates[userId];
+  if (state == null) return;
 
-    final lang = Utils.getUserLanguage(userId);
-    final text = ctx.message?.text ?? '';
-    if (text.startsWith('/')) return; // ignore commands
+  final lang = Utils.getUserLanguage(userId);
+  final text = ctx.message?.text ?? '';
+  if (text.startsWith('/')) return; // ignore commands
 
-    switch (state['action']) {
-      // ---- Admin actions ------------------------------------------------
-      case 'add_admin_id':
-        final targetId = int.tryParse(text);
-        if (targetId != null) {
-          await FirebaseDb.addAdmin(targetId);
-          await ctx.reply(S.get('admin_added', lang, {'id': '$targetId'}));
-        } else {
-          await ctx.reply(S.get('invalid_id', lang));
-        }
-        Utils.clearUploadState(userId);
-        break;
+  switch (state['action']) {
+    // ---- Admin actions ------------------------------------------------
+    case 'add_admin_id':
+      final targetId = int.tryParse(text);
+      if (targetId != null) {
+        await FirebaseDb.addAdmin(targetId);
+        await ctx.reply(S.get('admin_added', lang, {'id': '$targetId'}));
+      } else {
+        await ctx.reply(S.get('invalid_id', lang));
+      }
+      Utils.clearUploadState(userId);
+      break;
 
-      case 'broadcast_msg':
-        await ctx.reply(S.get('broadcasting', lang));
-        final users = await FirebaseDb.getAllUsers();
-        Utils.broadcast(bot, users, text);
-        Utils.clearUploadState(userId);
-        break;
+    case 'broadcast_msg':
+      await ctx.reply(S.get('broadcasting', lang));
+      final users = await FirebaseDb.getAllUsers();
+      Utils.broadcast(bot, users, text);
+      Utils.clearUploadState(userId);
+      break;
 
-      case 'transfer_owner_id':
-        final targetId = int.tryParse(text);
-        if (targetId != null) {
-          await FirebaseDb.setSuperAdmin(targetId);
-          await ctx.reply(
-              S.get('transfer_done', lang, {'id': '$targetId'}));
-          try {
-            final targetLang = Utils.getUserLanguage(targetId);
-            await bot.api.sendMessage(
-                ChatID(targetId), S.get('transfer_notif', targetLang));
-          } catch (_) {}
-        } else {
-          await ctx.reply(S.get('invalid_id', lang));
-        }
-        Utils.clearUploadState(userId);
-        break;
-
-      // ---- Admin actions ------------------------------------------------
-      case 'reply_user_id':
-        final targetId = int.tryParse(text);
-        if (targetId != null) {
-          state['action'] = 'reply_user_msg';
-          state['target_id'] = targetId;
-          await ctx.reply(S.get('enter_reply_message', lang));
-        } else {
-          await ctx.reply(S.get('invalid_id', lang));
-          Utils.clearUploadState(userId);
-        }
-        break;
-
-      case 'reply_user_msg':
-        final targetId = state['target_id'] as int;
+    case 'transfer_owner_id':
+      final targetId = int.tryParse(text);
+      if (targetId != null) {
+        await FirebaseDb.setSuperAdmin(targetId);
+        await ctx.reply(
+            S.get('transfer_done', lang, {'id': '$targetId'}));
         try {
           final targetLang = Utils.getUserLanguage(targetId);
           await bot.api.sendMessage(
-            ChatID(targetId),
-            S.get('admin_reply_msg', targetLang, {'msg': text}),
-          );
-          await ctx.reply(S.get('reply_sent_success', lang));
-        } catch (e) {
-          await ctx.reply(S.get('reply_sent_failed', lang));
-        }
+              ChatID(targetId), S.get('transfer_notif', targetLang));
+        } catch (_) {}
+      } else {
+        await ctx.reply(S.get('invalid_id', lang));
+      }
+      Utils.clearUploadState(userId);
+      break;
+
+    // ---- Admin actions ------------------------------------------------
+    case 'reply_user_id':
+      final targetId = int.tryParse(text);
+      if (targetId != null) {
+        state['action'] = 'reply_user_msg';
+        state['target_id'] = targetId;
+        await ctx.reply(S.get('enter_reply_message', lang));
+      } else {
+        await ctx.reply(S.get('invalid_id', lang));
         Utils.clearUploadState(userId);
-        break;
+      }
+      break;
 
-      // ---- Contributor request (name only) ---------------------------------
-      case 'req_contribute_name':
-        final fullName = text.trim().isNotEmpty
-            ? text.trim()
-            : '${ctx.from?.firstName ?? ''} ${ctx.from?.lastName ?? ''}'.trim();
-        Utils.clearUploadState(userId);
-
-        await FirebaseDb.addRequest(userId, name: fullName);
-        await ctx.reply(S.get('contribute_request_sent', lang));
-
-        // Notify all admins
-        final admins = await FirebaseDb.getAdmins();
-        final Map<String, dynamic> msgIds = {};
-        for (var adminId in admins) {
-          try {
-            final adminLang = Utils.getUserLanguage(adminId);
-            final keyboard = InlineKeyboard()
-              .row()
-              .add(S.get('btn_approve', adminLang), 'approve_contrib:$userId')
-              .add(S.get('btn_reject', adminLang), 'reject_contrib:$userId');
-            final msg = await bot.api.sendMessage(
-              ChatID(adminId),
-              S.get('admin_contrib_request', adminLang, {
-                'id': '$userId',
-                'name': fullName.isEmpty ? '$userId' : fullName,
-              }),
-              replyMarkup: keyboard,
-            );
-            msgIds[adminId.toString()] = msg.messageId;
-          } catch (_) {}
-        }
-        await FirebaseDb.updateRequestMessageIds(userId, msgIds);
-        break;
-
-      // ---- Contact admin ------------------------------------------------
-      case 'contact_admin':
-        Utils.clearUploadState(userId);
-        
-        // Save to Firebase
-        await FirebaseDb.addFeedback(userId, text);
-        
-        final admins2 = await FirebaseDb.getAdmins();
-        for (var adminId in admins2) {
-          try {
-            final adminLang = Utils.getUserLanguage(adminId);
-            await bot.api.sendMessage(
-              ChatID(adminId),
-              S.get('new_feedback', adminLang,
-                  {'id': '$userId', 'msg': text}),
-            );
-          } catch (_) {}
-        }
-        await ctx.reply(S.get('contact_admin_sent', lang));
-        break;
-
-      // ---- Contributor announcement broadcast --------------------------
-      case 'contrib_announce_msg':
-        Utils.clearUploadState(userId);
-        await ctx.reply(S.get('announce_sending', lang));
-        final users2 = await FirebaseDb.getAllUsers();
-        Utils.broadcast(bot, users2, text);
-        break;
-
-      // ---- Upload flow: new track / subject typed manually ─────────────
-      case 'upload_admin_track':
-        state['action'] = 'upload_admin_subject';
-        state['track'] = text;
-        await ctx.reply(S.get('upload_enter_subject', lang));
-        break;
-
-      case 'upload_admin_subject':
-        final track = state['track'] as String? ?? '';
-        final subject = text;
-        state['subject'] = subject;
-        state['action'] = 'wait_for_upload_type';
-
-        // Fetch dynamic material types
-        final types = await FirebaseDb.getMaterialTypes(track, subject);
-        if (types.isEmpty) {
-          await ctx.reply(S.get('upload_no_types', lang)); 
-          Utils.clearUploadState(userId);
-          break;
-        }
-
-        final kb = InlineKeyboard();
-        for (var t in types) {
-          kb.row().add(t, 'up_type:$t');
-        }
-        await ctx.reply(
-          S.get('upload_selected_track', lang, {'track': track}),
-          replyMarkup: kb,
+    case 'reply_user_msg':
+      final targetId = state['target_id'] as int;
+      try {
+        final targetLang = Utils.getUserLanguage(targetId);
+        await bot.api.sendMessage(
+          ChatID(targetId),
+          S.get('admin_reply_msg', targetLang, {'msg': text}),
         );
-        break;
+        await ctx.reply(S.get('reply_sent_success', lang));
+      } catch (e) {
+        await ctx.reply(S.get('reply_sent_failed', lang));
+      }
+      Utils.clearUploadState(userId);
+      break;
 
-      // ---- Material name: contributor provides a name -----------------
-      case 'wait_for_upload_name':
-        state['material_name'] = text;
-        final type = state['type'] as String? ?? '';
-        
-        // Move any pending single file into the files list
-        final pendingFile = state['pending_file'] as Map<String, dynamic>?;
-        final List<Map<String, dynamic>> files = [];
-        if (pendingFile != null) {
-          files.add(pendingFile);
-          state.remove('pending_file');
-        }
-        state['files'] = files;
+    // ---- Contributor request (name only) ---------------------------------
+    case 'req_contribute_name':
+      final fullName = text.trim().isNotEmpty
+          ? text.trim()
+          : '${ctx.from?.firstName ?? ''} ${ctx.from?.lastName ?? ''}'.trim();
+      Utils.clearUploadState(userId);
 
-        if (type == 'رابط' || type.toLowerCase() == 'link') {
-          // Switch to link mode
-          state['action'] = 'contrib_upload_link';
-          await ctx.reply(S.get('upload_link_prompt', lang));
-        } else {
-          state['action'] = 'collect_files';
-          final doneKb = InlineKeyboard().row()
-            .add(S.get('btn_done_uploading', lang), 'contrib_upload_done');
+      await FirebaseDb.addRequest(userId, name: fullName);
+      await ctx.reply(S.get('contribute_request_sent', lang));
 
-          if (files.isNotEmpty) {
-            await ctx.reply(
-              S.get('upload_file_received_count', lang, {'count': '${files.length}'}),
-              replyMarkup: doneKb,
-            );
-          } else {
-            await ctx.reply(
-              S.get('upload_collecting_files', lang),
-              replyMarkup: doneKb,
-            );
-          }
-        }
-        break;
+      // Notify all admins
+      final admins = await FirebaseDb.getAdmins();
+      final Map<String, dynamic> msgIds = {};
+      for (var adminId in admins) {
+        try {
+          final adminLang = Utils.getUserLanguage(adminId);
+          final keyboard = InlineKeyboard()
+            .row()
+            .add(S.get('btn_approve', adminLang), 'approve_contrib:$userId')
+            .add(S.get('btn_reject', adminLang), 'reject_contrib:$userId');
+          final msg = await bot.api.sendMessage(
+            ChatID(adminId),
+            S.get('admin_contrib_request', adminLang, {
+              'id': '$userId',
+              'name': fullName.isEmpty ? '$userId' : fullName,
+            }),
+            replyMarkup: keyboard,
+          );
+          msgIds[adminId.toString()] = msg.messageId;
+        } catch (_) {}
+      }
+      await FirebaseDb.updateRequestMessageIds(userId, msgIds);
+      break;
 
-      // ---- Link upload: user pastes URL --------------------------------
-      case 'contrib_upload_link':
-        final track2 = (state['track'] as String?) ?? '';
-        final subject2 = (state['subject'] as String?) ?? '';
-        final type2 = (state['type'] as String?) ?? 'رابط';
+    // ---- Contact admin ------------------------------------------------
+    case 'contact_admin':
+      Utils.clearUploadState(userId);
+      
+      // Save to Firebase
+      await FirebaseDb.addFeedback(userId, text);
+      
+      final admins2 = await FirebaseDb.getAdmins();
+      for (var adminId in admins2) {
+        try {
+          final adminLang = Utils.getUserLanguage(adminId);
+          await bot.api.sendMessage(
+            ChatID(adminId),
+            S.get('new_feedback', adminLang,
+                {'id': '$userId', 'msg': text}),
+          );
+        } catch (_) {}
+      }
+      await ctx.reply(S.get('contact_admin_sent', lang));
+      break;
+
+    // ---- Contributor announcement broadcast --------------------------
+    case 'contrib_announce_msg':
+      Utils.clearUploadState(userId);
+      await ctx.reply(S.get('announce_sending', lang));
+      final users2 = await FirebaseDb.getAllUsers();
+      Utils.broadcast(bot, users2, text);
+      break;
+
+    // ---- Upload flow: new track / subject typed manually ─────────────
+    case 'upload_admin_track':
+      state['action'] = 'upload_admin_subject';
+      state['track'] = text;
+      await ctx.reply(S.get('upload_enter_subject', lang));
+      break;
+
+    case 'upload_admin_subject':
+      final track = state['track'] as String? ?? '';
+      final subject = text;
+      state['subject'] = subject;
+      state['action'] = 'wait_for_upload_type';
+
+      // Fetch dynamic material types
+      final types = await FirebaseDb.getMaterialTypes(track, subject);
+      if (types.isEmpty) {
+        await ctx.reply(S.get('upload_no_types', lang)); 
         Utils.clearUploadState(userId);
+        break;
+      }
 
-        final url = text.trim();
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-          await ctx.reply(S.get('upload_link_invalid', lang));
-          break;
+      final kb = InlineKeyboard();
+      for (var t in types) {
+        kb.row().add(t, 'up_type:$t');
+      }
+      await ctx.reply(
+        S.get('upload_selected_track', lang, {'track': track}),
+        replyMarkup: kb,
+      );
+      break;
+
+    // ---- Material name: contributor provides a name -----------------
+    case 'wait_for_upload_name':
+      state['material_name'] = text;
+      final type = state['type'] as String? ?? '';
+      
+      // Move any pending single file into the files list
+      final pendingFile = state['pending_file'] as Map<String, dynamic>?;
+      final List<Map<String, dynamic>> files = [];
+      if (pendingFile != null) {
+        files.add(pendingFile);
+        state.remove('pending_file');
+      }
+      state['files'] = files;
+
+      if (type == 'رابط' || type.toLowerCase() == 'link') {
+        // Switch to link mode
+        state['action'] = 'contrib_upload_link';
+        await ctx.reply(S.get('upload_link_prompt', lang));
+      } else {
+        state['action'] = 'collect_files';
+        final doneKb = InlineKeyboard().row()
+          .add(S.get('btn_done_uploading', lang), 'contrib_upload_done');
+
+        if (files.isNotEmpty) {
+          await ctx.reply(
+            S.get('upload_file_received_count', lang, {'count': '${files.length}'}),
+            replyMarkup: doneKb,
+          );
+        } else {
+          await ctx.reply(
+            S.get('upload_collecting_files', lang),
+            replyMarkup: doneKb,
+          );
         }
+      }
+      break;
 
-        final linkName = url.length > 60 ? '${url.substring(0, 60)}…' : url;
-        final materialName = (state['material_name'] as String?) ?? linkName;
-        final materialId = await FirebaseDb.addMaterial(track2, subject2, type2, {
+    // ---- Link upload: user pastes URL --------------------------------
+    case 'contrib_upload_link':
+      final track2 = (state['track'] as String?) ?? '';
+      final subject2 = (state['subject'] as String?) ?? '';
+      final type2 = (state['type'] as String?) ?? 'رابط';
+      Utils.clearUploadState(userId);
+
+      final url = text.trim();
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        await ctx.reply(S.get('upload_link_invalid', lang));
+        break;
+      }
+
+      final linkName = url.length > 60 ? '${url.substring(0, 60)}…' : url;
+      final materialName = (state['material_name'] as String?) ?? linkName;
+      final materialId = await FirebaseDb.addMaterial(track2, subject2, type2, {
+        'name': materialName,
+        'file_id': url,
+        'file_type': 'link',
+        'added_by': userId.toString(),
+      });
+
+      if (materialId != null) {
+        await FirebaseDb.addContributorMaterialRef(userId, materialId, {
+          'track': track2,
+          'subject': subject2,
+          'type': type2,
           'name': materialName,
           'file_id': url,
-          'file_type': 'link',
-          'added_by': userId.toString(),
+          'file_type': 'link'
         });
 
-        if (materialId != null) {
-          await FirebaseDb.addContributorMaterialRef(userId, materialId, {
-            'track': track2,
-            'subject': subject2,
-            'type': type2,
-            'name': materialName,
-            'file_id': url,
-            'file_type': 'link'
-          });
-
-          // Send notifications to subscribers
-          final subscribers = await FirebaseDb.getSubjectSubscribers(subject2);
-          if (subscribers.isNotEmpty) {
-            final text = '🔔 إضافة جديدة!\n\nتمت إضافة ملف جديد في مادة: **$subject2**\nالنوع: $type2\n\nقم بزيارة البوت لتفقدها.';
-            Utils.broadcast(bot, subscribers, text);
-          }
-
-          await ctx.reply(S.get('upload_multi_success', lang, {
-            'count': '1',
-            'subject': subject2,
-            'track': track2,
-            'type': type2,
-          }));
-        } else {
-          await ctx.reply(S.get('upload_failed', lang));
+        // Send notifications to subscribers
+        final subscribers = await FirebaseDb.getSubjectSubscribers(subject2);
+        if (subscribers.isNotEmpty) {
+          final text = '🔔 إضافة جديدة!\n\nتمت إضافة ملف جديد في مادة: **$subject2**\nالنوع: $type2\n\nقم بزيارة البوت لتفقدها.';
+          Utils.broadcast(bot, subscribers, text);
         }
-        break;
-    }
-  });
 
+        await ctx.reply(S.get('upload_multi_success', lang, {
+          'count': '1',
+          'subject': subject2,
+          'track': track2,
+          'type': type2,
+        }));
+      } else {
+        await ctx.reply(S.get('upload_failed', lang));
+      }
+      break;
+  }
+}
+
+void registerContributorUploadHandlers(Bot bot) {
   // ── Upload track/subject/type keyboard callbacks ─────────────────────
 
   bot.callbackQuery(RegExp(r'^up_track:(.+)'), (ctx) async {

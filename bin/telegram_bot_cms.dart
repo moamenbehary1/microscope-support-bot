@@ -179,16 +179,7 @@ Future<void> main() async {
     print('Bot Error: $err');
   });
 
-  // Ban check middleware
-  bot.use((ctx, next) async {
-    final id = ctx.from?.id;
-    if (id != null) {
-      if (await FirebaseDb.isBanned(id)) {
-        return; // Ignore all updates from banned users
-      }
-    }
-    await next();
-  });
+  bot.use(BanCheck());
 
   // Register Handlers
   registerStudentHandlers(bot);
@@ -198,3 +189,15 @@ Future<void> main() async {
   print('Bot is polling...');
   bot.start();
 }
+
+class BanCheck implements Middleware {
+  @override
+  Future<void> handle(Context ctx, NextFunction next) async {
+    final id = ctx.from?.id;
+    if (id != null && await FirebaseDb.isBanned(id)) {
+      return;
+    }
+    await next();
+  }
+}
+

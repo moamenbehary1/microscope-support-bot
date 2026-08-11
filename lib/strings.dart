@@ -306,6 +306,7 @@ class S {
     },
     'btn_add_admin': {'ar': '➕ إضافة أدمن', 'en': '➕ Add Admin'},
     'btn_broadcast': {'ar': '📢 بث جماعي', 'en': '📢 Broadcast'},
+    'btn_reply_user': {'ar': '💬 رد على مستخدم', 'en': '💬 Reply to User'},
     'btn_stats': {'ar': '📊 إحصائيات', 'en': '📊 Statistics'},
     'btn_requests': {'ar': '📩 الطلبات المعلقة', 'en': '📩 Pending Requests'},
     'btn_wipe': {'ar': '🗑️ مسح المناهج', 'en': '🗑️ Wipe Curriculum'},
@@ -327,6 +328,26 @@ class S {
     'admin_added': {
       'ar': '✅ تم إضافة المستخدم {id} كأدمن.',
       'en': '✅ User {id} has been added as an Admin.',
+    },
+    'enter_user_id_to_reply': {
+      'ar': 'أرسل الـ ID التيليجرام للمستخدم الذي تريد الرد عليه:',
+      'en': 'Please send the Telegram ID of the user you want to reply to:',
+    },
+    'enter_reply_message': {
+      'ar': 'أرسل الرسالة التي تريد إرسالها كاستجابة/رد للمستخدم:',
+      'en': 'Please send the message you want to send as a reply:',
+    },
+    'admin_reply_msg': {
+      'ar': '📩 رسالة من الإدارة:\n\n{msg}',
+      'en': '📩 Message from Admin:\n\n{msg}',
+    },
+    'reply_sent_success': {
+      'ar': '✅ تم إرسال الرد للمستخدم بنجاح.',
+      'en': '✅ Reply sent to user successfully.',
+    },
+    'reply_sent_failed': {
+      'ar': '❌ فشل إرسال الرد، قد يكون الـ ID غير صحيح أو البوت محظور من قبل المستخدم.',
+      'en': '❌ Failed to send reply, the ID might be invalid or the bot was blocked by the user.',
     },
     'enter_broadcast': {
       'ar': 'أرسل الرسالة التي تريد إرسالها لجميع المستخدمين:',

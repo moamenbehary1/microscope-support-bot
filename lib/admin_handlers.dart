@@ -105,6 +105,14 @@ void registerAdminHandlers(Bot bot) {
     await ctx.editMessageText(S.get('enter_broadcast', lang));
   });
 
+  bot.callbackQuery('dash_reply_user', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    Utils.uploadStates[userId] = {'action': 'reply_user_id'};
+    await ctx.editMessageText(S.get('enter_user_id_to_reply', lang));
+  });
+
   bot.callbackQuery('dash_stats', (ctx) async {
     final userId = ctx.from?.id;
     final lang = Utils.getUserLanguage(userId ?? 0);
@@ -362,6 +370,7 @@ void registerAdminHandlers(Bot bot) {
     // Fetch contributor's name from the pending request
     final request = await FirebaseDb.getRequest(targetId);
     final name = (request?['name'] as String?) ?? '$targetId';
+    final msgIds = request?['messageIds'] as Map<String, dynamic>? ?? {};
 
     await FirebaseDb.setContributor(targetId, name: name);
     await FirebaseDb.removeRequest(targetId);
@@ -371,6 +380,16 @@ void registerAdminHandlers(Bot bot) {
       S.get('contrib_approved_admin', adminLang,
           {'id': '$targetId', 'name': name}),
     );
+
+    // Delete direct messages for all other admins
+    for (var entry in msgIds.entries) {
+      final adminId = int.parse(entry.key);
+      final msgId = entry.value as int;
+      if (ctx.callbackQuery?.message?.messageId == msgId) continue;
+      try {
+        await bot.api.deleteMessage(ChatID(adminId), msgId);
+      } catch (_) {}
+    }
 
     try {
       final targetLang = Utils.getUserLanguage(targetId);
@@ -388,12 +407,25 @@ void registerAdminHandlers(Bot bot) {
     final parts = data.split(':');
     final targetId = int.parse(parts[1]);
 
+    final request = await FirebaseDb.getRequest(targetId);
+    final msgIds = request?['messageIds'] as Map<String, dynamic>? ?? {};
+
     await FirebaseDb.removeRequest(targetId);
 
     final adminLang = Utils.getUserLanguage(ctx.from?.id ?? 0);
     await ctx.editMessageText(
       S.get('contrib_rejected_admin', adminLang, {'id': '$targetId'}),
     );
+
+    // Delete direct messages for all other admins
+    for (var entry in msgIds.entries) {
+      final adminId = int.parse(entry.key);
+      final msgId = entry.value as int;
+      if (ctx.callbackQuery?.message?.messageId == msgId) continue;
+      try {
+        await bot.api.deleteMessage(ChatID(adminId), msgId);
+      } catch (_) {}
+    }
 
     try {
       final targetLang = Utils.getUserLanguage(targetId);
@@ -416,10 +448,12 @@ Future<InlineKeyboard> _buildAdminKeyboard(int userId, String lang) async {
     .add(S.get('btn_add_admin', lang), 'dash_add_admin')
     .add(S.get('btn_broadcast', lang), 'dash_broadcast')
     .row()
+    .add(S.get('btn_reply_user', lang), 'dash_reply_user')
     .add(S.get('btn_stats', lang), 'dash_stats')
-    .add(S.get('btn_requests', lang), 'dash_requests')
     .row()
+    .add(S.get('btn_requests', lang), 'dash_requests')
     .add(S.get('btn_wipe', lang), 'dash_wipe')
+    .row()
     .add(S.get('btn_rm_contrib', lang), 'dash_rm_contrib');
 
   if (isSuperAdmin) {

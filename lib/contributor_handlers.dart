@@ -65,6 +65,34 @@ void registerContributorAndUploadHandlers(Bot bot) {
         Utils.clearUploadState(userId);
         break;
 
+      // ---- Admin actions ------------------------------------------------
+      case 'reply_user_id':
+        final targetId = int.tryParse(text);
+        if (targetId != null) {
+          state['action'] = 'reply_user_msg';
+          state['target_id'] = targetId;
+          await ctx.reply(S.get('enter_reply_message', lang));
+        } else {
+          await ctx.reply(S.get('invalid_id', lang));
+          Utils.clearUploadState(userId);
+        }
+        break;
+
+      case 'reply_user_msg':
+        final targetId = state['target_id'] as int;
+        try {
+          final targetLang = Utils.getUserLanguage(targetId);
+          await bot.api.sendMessage(
+            ChatID(targetId),
+            S.get('admin_reply_msg', targetLang, {'msg': text}),
+          );
+          await ctx.reply(S.get('reply_sent_success', lang));
+        } catch (e) {
+          await ctx.reply(S.get('reply_sent_failed', lang));
+        }
+        Utils.clearUploadState(userId);
+        break;
+
       // ---- Contributor request (name only) ---------------------------------
       case 'req_contribute_name':
         final fullName = text.trim().isNotEmpty
@@ -77,6 +105,7 @@ void registerContributorAndUploadHandlers(Bot bot) {
 
         // Notify all admins
         final admins = await FirebaseDb.getAdmins();
+        final Map<String, dynamic> msgIds = {};
         for (var adminId in admins) {
           try {
             final adminLang = Utils.getUserLanguage(adminId);
@@ -84,7 +113,7 @@ void registerContributorAndUploadHandlers(Bot bot) {
               .row()
               .add(S.get('btn_approve', adminLang), 'approve_contrib:$userId')
               .add(S.get('btn_reject', adminLang), 'reject_contrib:$userId');
-            await bot.api.sendMessage(
+            final msg = await bot.api.sendMessage(
               ChatID(adminId),
               S.get('admin_contrib_request', adminLang, {
                 'id': '$userId',
@@ -92,8 +121,10 @@ void registerContributorAndUploadHandlers(Bot bot) {
               }),
               replyMarkup: keyboard,
             );
+            msgIds[adminId.toString()] = msg.messageId;
           } catch (_) {}
         }
+        await FirebaseDb.updateRequestMessageIds(userId, msgIds);
         break;
 
       // ---- Contact admin ------------------------------------------------

@@ -317,6 +317,12 @@ class FirebaseDb {
     });
   }
 
+  static Future<void> updateRequestMessageIds(int userId, Map<String, dynamic> messageIds) async {
+    await _patch('/requests/$userId', {
+      'messageIds': messageIds,
+    });
+  }
+
   static Future<Map<String, dynamic>?> getRequest(int userId) async {
     return await _get('/requests/$userId');
   }

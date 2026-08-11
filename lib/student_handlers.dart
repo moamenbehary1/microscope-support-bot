@@ -29,7 +29,7 @@ void registerStudentHandlers(Bot bot) {
     if (await FirebaseDb.isAdmin(userId)) {
       final lang = Utils.getUserLanguage(userId);
       await ctx.reply(
-        '⚙️',
+        '💙',
         replyMarkup: Keyboard()
           .addText(S.get('btn_admin_panel', lang))
           .addText(S.get('btn_student_mode', lang))

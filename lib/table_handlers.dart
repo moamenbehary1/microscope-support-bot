@@ -3,10 +3,21 @@ import 'firebase_db.dart';
 import 'utils.dart';
 
 void registerTableHandlers(Bot bot) {
-  bot.command('table', (ctx) async {
+  bot.hears(RegExp(r'^/table', caseSensitive: false), (ctx) async {
+    print('Command /table triggered by user!');
     final userId = ctx.from?.id;
-    if (userId == null) return;
-    await _showTableDashboard(ctx, userId);
+    if (userId == null) {
+      print('userId is null!');
+      return;
+    }
+    print('Calling _showTableDashboard for $userId');
+    try {
+      await _showTableDashboard(ctx, userId);
+      print('_showTableDashboard completed successfully');
+    } catch (e, stack) {
+      print('Error in _showTableDashboard: $e');
+      print(stack);
+    }
   });
 
   bot.callbackQuery('table_dash', (ctx) async {

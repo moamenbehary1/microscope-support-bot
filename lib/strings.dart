@@ -31,6 +31,10 @@ class S {
       'ar': 'التواصل مع الأدمن 📞',
       'en': 'Contact Admin 📞',
     },
+    'btn_whatsapp_support': {
+      'ar': 'الدعم عبر الواتساب 💬',
+      'en': 'WhatsApp Support 💬',
+    },
     'btn_change_lang': {
       'ar': 'تغيير اللغة 🌐',
       'en': 'Change Language 🌐',

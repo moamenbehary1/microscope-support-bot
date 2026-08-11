@@ -21,6 +21,8 @@ class Config {
 
   static String get firebaseDatabaseUrl => _get('FIREBASE_DATABASE_URL') ?? '';
   static String get firebaseSecret => _get('FIREBASE_SECRET') ?? '';
+
+  static String get whatsappSupportNumber => _get('WHATSAPP_SUPPORT_NUMBER') ?? '';
 }
 
 // User Modes

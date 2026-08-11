@@ -96,6 +96,11 @@ void registerStudentHandlers(Bot bot) {
     }
     keyboard.row().add(S.get('btn_contribute', lang), 'req_contribute');
     keyboard.row().add(S.get('btn_contact_admin', lang), 'contact_admin');
+    
+    if (Config.whatsappSupportNumber.isNotEmpty) {
+      keyboard.row().addUrl(S.get('btn_whatsapp_support', lang), 'https://wa.me/${Config.whatsappSupportNumber}');
+    }
+
     keyboard.row().add(S.get('btn_change_lang', lang), 'change_lang');
 
     await ctx.editMessageText(S.get('welcome', lang), replyMarkup: keyboard);
@@ -297,6 +302,11 @@ Future<void> _sendMainMenuNew(Bot bot, Context ctx, int userId) async {
   }
   keyboard.row().add(S.get('btn_contribute', lang), 'req_contribute');
   keyboard.row().add(S.get('btn_contact_admin', lang), 'contact_admin');
+  
+  if (Config.whatsappSupportNumber.isNotEmpty) {
+    keyboard.row().addUrl(S.get('btn_whatsapp_support', lang), 'https://wa.me/${Config.whatsappSupportNumber}');
+  }
+  
   keyboard.row().add(S.get('btn_change_lang', lang), 'change_lang');
 
   await ctx.reply(S.get('welcome', lang), replyMarkup: keyboard);
@@ -321,6 +331,11 @@ Future<void> _sendMainMenu(Bot bot, Context ctx, int userId) async {
   }
   keyboard.row().add(S.get('btn_contribute', lang), 'req_contribute');
   keyboard.row().add(S.get('btn_contact_admin', lang), 'contact_admin');
+  
+  if (Config.whatsappSupportNumber.isNotEmpty) {
+    keyboard.row().addUrl(S.get('btn_whatsapp_support', lang), 'https://wa.me/${Config.whatsappSupportNumber}');
+  }
+  
   keyboard.row().add(S.get('btn_change_lang', lang), 'change_lang');
 
   await ctx.reply(S.get('welcome', lang), replyMarkup: keyboard);

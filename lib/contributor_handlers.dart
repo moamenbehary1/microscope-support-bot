@@ -99,6 +99,10 @@ void registerContributorAndUploadHandlers(Bot bot) {
       // ---- Contact admin ------------------------------------------------
       case 'contact_admin':
         Utils.clearUploadState(userId);
+        
+        // Save to Firebase
+        await FirebaseDb.addFeedback(userId, text);
+        
         final admins2 = await FirebaseDb.getAdmins();
         for (var adminId in admins2) {
           try {

@@ -22,7 +22,10 @@ class Config {
   static String get firebaseDatabaseUrl => _get('FIREBASE_DATABASE_URL') ?? '';
   static String get firebaseSecret => _get('FIREBASE_SECRET') ?? '';
 
-  static String get whatsappSupportNumber => _get('WHATSAPP_SUPPORT_NUMBER') ?? '';
+  static String get whatsappSupportNumber {
+    final num = _get('WHATSAPP_SUPPORT_NUMBER') ?? '';
+    return num.replaceAll(RegExp(r'[^\d+]'), '');
+  }
 }
 
 // User Modes

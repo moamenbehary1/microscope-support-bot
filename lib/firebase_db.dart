@@ -174,6 +174,22 @@ class FirebaseDb {
     return data != null;
   }
 
+  // --- Feedback ---
+
+  static Future<void> addFeedback(int userId, String message) async {
+    await _post('/feedbacks', {
+      'userId': userId,
+      'message': message,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+  }
+
+  static Future<Map<String, dynamic>> getFeedbacks() async {
+    final data = await _get('/feedbacks');
+    if (data == null) return {};
+    return data as Map<String, dynamic>;
+  }
+
   // --- Curriculum (Content) ---
 
   // Get all tracks

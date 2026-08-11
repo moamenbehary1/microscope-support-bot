@@ -1264,7 +1264,7 @@ const S = {
     },
 
     async uploadFile(track, subject, type, file){
-      UI.toast(`Uploading ${file.name}...`, 'info', 60000);
+      UI.toast(`Uploading ${file.name}...`, 'info', 3000);
       try {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -1316,6 +1316,17 @@ const S = {
             <thead><tr><th>User ID</th><th>Role</th><th style="text-align:right">Actions</th></tr></thead>
             <tbody id="adm-body"><tr><td colspan="3" class="loading-msg"><span class="spin"></span></td></tr></tbody>
           </table>
+        </div>
+        
+        <div class="sec-head" style="margin-top:40px;margin-bottom:16px">
+          <h2>💬 Feedback & Messages</h2>
+          <button class="btn btn-ghost btn-sm" onclick="S.admins.loadFeedbacks()" title="Refresh">🔄</button>
+        </div>
+        <div class="card tbl-wrap">
+          <table>
+            <thead><tr><th style="width:130px">User ID</th><th>Message</th><th style="width:160px;text-align:right">Date</th></tr></thead>
+            <tbody id="feedback-body"><tr><td colspan="3" class="loading-msg"><span class="spin"></span></td></tr></tbody>
+          </table>
         </div>`;
 
       const [admins,superA]=await Promise.all([
@@ -1348,6 +1359,35 @@ const S = {
           <td style="text-align:right">${actions}</td>
         </tr>`;
       }).join('');
+      
+      this.loadFeedbacks();
+    },
+    async loadFeedbacks(){
+      const tb=document.getElementById('feedback-body');
+      if(!tb) return;
+      tb.innerHTML=`<tr><td colspan="3" class="loading-msg"><span class="spin"></span></td></tr>`;
+      try {
+        const feedbacks = await FB.get('/feedbacks').catch(()=>null);
+        if(!feedbacks || Object.keys(feedbacks).length===0){
+          tb.innerHTML=`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px">No feedback messages yet</td></tr>`;
+          return;
+        }
+        
+        const list = Object.keys(feedbacks).map(k => ({id: k, ...feedbacks[k]}))
+          .sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+          
+        tb.innerHTML = list.map(f => {
+          const date = new Date(f.timestamp).toLocaleString();
+          const msg = (f.message||'').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return `<tr>
+            <td><strong>${f.userId}</strong></td>
+            <td style="white-space:pre-wrap;line-height:1.4">${msg}</td>
+            <td style="text-align:right;color:var(--dim);font-size:.8rem">${date}</td>
+          </tr>`;
+        }).join('');
+      } catch(e) {
+        tb.innerHTML=`<tr><td colspan="3" style="text-align:center;color:var(--danger);padding:24px">Error loading feedbacks</td></tr>`;
+      }
     },
     async add(){
       if(!Auth.isSuperAdmin()){ UI.toast('Only Super Admin can add admins','error'); return; }

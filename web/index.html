@@ -854,22 +854,32 @@ const S = {
         <div id="tree-root" class="tree-root"><div class="loading-msg"><span class="spin"></span> Loading…</div></div>`;
 
       const root = document.getElementById('tree-root');
+      let dragLeaveTimeout;
       root.addEventListener('dragover', e => {
+        e.preventDefault(); // crucial to allow dropping
+        clearTimeout(dragLeaveTimeout);
         const row = e.target.closest('.type-row[data-track]');
-        if(row){ e.preventDefault(); row.classList.add('drag-over'); }
+        document.querySelectorAll('.drag-over').forEach(el => {
+          if(el !== row) el.classList.remove('drag-over');
+        });
+        if(row){ row.classList.add('drag-over'); }
       });
       root.addEventListener('dragleave', e => {
-        const row = e.target.closest('.type-row[data-track]');
-        if(row){ row.classList.remove('drag-over'); }
+        dragLeaveTimeout = setTimeout(() => {
+          document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        }, 50);
       });
       root.addEventListener('drop', e => {
+        e.preventDefault();
+        clearTimeout(dragLeaveTimeout);
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
         const row = e.target.closest('.type-row[data-track]');
         if(!row) return;
-        e.preventDefault();
-        row.classList.remove('drag-over');
         if(e.dataTransfer.files && e.dataTransfer.files.length > 0){
-          const file = e.dataTransfer.files[0];
-          S.curriculum.uploadFile(row.dataset.track, row.dataset.subject, row.dataset.type, file);
+          // Upload all dropped files sequentially
+          for(let i=0; i<e.dataTransfer.files.length; i++){
+            S.curriculum.uploadFile(row.dataset.track, row.dataset.subject, row.dataset.type, e.dataTransfer.files[i]);
+          }
         }
       });
 
@@ -994,6 +1004,8 @@ const S = {
                 <span class="tree-lbl">${tyKey}</span>
                 <span class="tree-badge" style="background:rgba(34,197,94,.12);color:var(--success)">${mats.length}</span>
                 <div class="tree-actions">
+                  <button class="btn btn-sm btn-icon" style="color:var(--primary);border-color:var(--primary);background:transparent"
+                  onclick="event.stopPropagation();S.curriculum.triggerUpload('${eTrack}','${eSubj}','${eTyKey}')" title="Upload file">📤</button>
                   <button class="btn btn-sm btn-icon" style="color:var(--danger);border-color:var(--danger);background:transparent"
                   onclick="event.stopPropagation();S.curriculum.deleteNode('${eTrack}','${eSubj}','${eTyKey}','${tyKey}')" title="Delete type">🗑</button>
                 </div>
@@ -1232,6 +1244,23 @@ const S = {
         UI.toast(`"${name}" deleted`,'success');
         await this.fetchAndRender();
       }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
+
+    triggerUpload(track, subject, type){
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.multiple = true;
+      input.style.display = 'none';
+      input.onchange = e => {
+        if(e.target.files && e.target.files.length > 0) {
+          for(let i=0; i<e.target.files.length; i++){
+            this.uploadFile(track, subject, type, e.target.files[i]);
+          }
+        }
+      };
+      document.body.appendChild(input);
+      input.click();
+      setTimeout(() => input.remove(), 1000);
     },
 
     async uploadFile(track, subject, type, file){

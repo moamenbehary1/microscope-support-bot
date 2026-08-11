@@ -345,4 +345,69 @@ class FirebaseDb {
   static Future<void> wipeUsers() async {
     await _delete('/users');
   }
+
+  // ── Tables & Schedule ────────────────────────────────────────────────
+  
+  static Future<void> saveTable(int userId, String tableName, String track, List<String> subjects) async {
+    await _put('/users/$userId/tables/$tableName', {
+      'track': track,
+      'subjects': subjects,
+    });
+    // Update subscriptions
+    for (var subject in subjects) {
+      await _put('/subject_subscribers/$subject/$userId', true);
+    }
+  }
+
+  static Future<Map<String, dynamic>> getTables(int userId) async {
+    final data = await _get('/users/$userId/tables');
+    if (data == null) return {};
+    return data as Map<String, dynamic>;
+  }
+
+  static Future<void> deleteTable(int userId, String tableName) async {
+    final tables = await getTables(userId);
+    if (tables.containsKey(tableName)) {
+      final subjects = (tables[tableName]['subjects'] as List<dynamic>?)?.cast<String>() ?? [];
+      await _delete('/users/$userId/tables/$tableName');
+      await _recalculateUserSubscriptions(userId, subjects);
+    }
+  }
+
+  static Future<void> deleteAllTables(int userId) async {
+    final tables = await getTables(userId);
+    List<String> allSubjects = [];
+    tables.forEach((key, val) {
+      final subs = (val['subjects'] as List<dynamic>?)?.cast<String>() ?? [];
+      allSubjects.addAll(subs);
+    });
+    await _delete('/users/$userId/tables');
+    for (var subject in allSubjects) {
+      await _delete('/subject_subscribers/$subject/$userId');
+    }
+  }
+
+  static Future<void> _recalculateUserSubscriptions(int userId, List<String> subjectsToCheck) async {
+    // If a table is deleted, check if the subjects exist in other tables. If not, unsubscribe.
+    final tables = await getTables(userId);
+    Set<String> remainingSubjects = {};
+    tables.forEach((key, val) {
+      final subs = (val['subjects'] as List<dynamic>?)?.cast<String>() ?? [];
+      remainingSubjects.addAll(subs);
+    });
+
+    for (var subject in subjectsToCheck) {
+      if (!remainingSubjects.contains(subject)) {
+        await _delete('/subject_subscribers/$subject/$userId');
+      }
+    }
+  }
+
+  static Future<List<int>> getSubjectSubscribers(String subject) async {
+    final data = await _get('/subject_subscribers/$subject');
+    if (data == null) return [];
+    final map = data as Map<String, dynamic>;
+    return map.keys.map((e) => int.tryParse(e) ?? 0).where((e) => e != 0).toList();
+  }
+
 }

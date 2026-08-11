@@ -12,6 +12,10 @@ class Utils {
   // userId -> { 'action': 'upload', 'track': '', 'subject': '', 'type': '' }
   static final Map<int, Map<String, dynamic>> uploadStates = {};
 
+  // Track table creation for students
+  // userId -> { 'name': '', 'track': '', 'selected_subjects': [] }
+  static final Map<int, Map<String, dynamic>> tableCreationStates = {};
+
   static UserMode getUserMode(int userId) {
     return _userModes[userId] ?? UserMode.student;
   }
@@ -80,6 +84,53 @@ class Utils {
         row.add(item.text, item.data!);
       }
     }
+
+    if (backData != null) {
+      keyboard.row().add('🔙 Back', backData);
+    }
+
+    return keyboard;
+  }
+
+  /// Generates a paginated inline keyboard with multi-select checkmarks.
+  static InlineKeyboard paginateMultiSelectKeyboard(
+    List<String> items,
+    List<String> selectedItems, {
+    required int page,
+    int itemsPerPage = 5,
+    required String togglePrefix,
+    required String doneData,
+    String? backData,
+  }) {
+    final keyboard = InlineKeyboard();
+
+    int startIndex = page * itemsPerPage;
+    int endIndex = startIndex + itemsPerPage;
+    if (endIndex > items.length) endIndex = items.length;
+
+    for (int i = startIndex; i < endIndex; i++) {
+      final item = items[i];
+      final isSelected = selectedItems.contains(item);
+      final text = isSelected ? '✅ $item' : item;
+      keyboard.row().add(text, '$togglePrefix$item');
+    }
+
+    final navRow = <InlineMenuData>[];
+    if (page > 0) {
+      navRow.add(InlineMenuData('⬅️ Prev', '${togglePrefix}page_${page - 1}'));
+    }
+    if (endIndex < items.length) {
+      navRow.add(InlineMenuData('Next ➡️', '${togglePrefix}page_${page + 1}'));
+    }
+
+    if (navRow.isNotEmpty) {
+      final row = keyboard.row();
+      for (var item in navRow) {
+        row.add(item.text, item.data!);
+      }
+    }
+
+    keyboard.row().add('✅ Done', doneData);
 
     if (backData != null) {
       keyboard.row().add('🔙 Back', backData);

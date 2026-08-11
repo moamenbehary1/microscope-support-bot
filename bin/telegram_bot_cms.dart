@@ -5,7 +5,9 @@ import '../lib/config.dart';
 import '../lib/student_handlers.dart';
 import '../lib/admin_handlers.dart';
 import '../lib/contributor_handlers.dart';
+import '../lib/table_handlers.dart';
 import '../lib/firebase_db.dart';
+import '../lib/utils.dart';
 
 Future<void> startDummyServer(Bot bot) async {
   final port = int.tryParse(Platform.environment['PORT'] ?? '') ?? 5000;
@@ -124,6 +126,13 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
         'added_by': 'Admin Panel',
       });
 
+      // Send notifications to subscribers
+      final subscribers = await FirebaseDb.getSubjectSubscribers(subject);
+      if (subscribers.isNotEmpty) {
+        final text = '🔔 إضافة جديدة!\n\nتمت إضافة ملف جديد في مادة: **$subject**\nالنوع: $type\n\nقم بزيارة البوت لتفقدها.';
+        Utils.broadcast(bot, subscribers, text);
+      }
+
       req.response
         ..statusCode = 200
         ..headers.contentType = ContentType.json
@@ -185,6 +194,7 @@ Future<void> main() async {
   registerStudentHandlers(bot);
   registerAdminHandlers(bot);
   registerContributorAndUploadHandlers(bot);
+  registerTableHandlers(bot);
 
   print('Bot is polling...');
   bot.start();

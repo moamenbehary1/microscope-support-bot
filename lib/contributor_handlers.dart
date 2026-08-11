@@ -252,7 +252,17 @@ void registerContributorAndUploadHandlers(Bot bot) {
             'subject': subject2,
             'type': type2,
             'name': materialName,
+            'file_id': url,
+            'file_type': 'link'
           });
+
+          // Send notifications to subscribers
+          final subscribers = await FirebaseDb.getSubjectSubscribers(subject2);
+          if (subscribers.isNotEmpty) {
+            final text = '🔔 إضافة جديدة!\n\nتمت إضافة ملف جديد في مادة: **$subject2**\nالنوع: $type2\n\nقم بزيارة البوت لتفقدها.';
+            Utils.broadcast(bot, subscribers, text);
+          }
+
           await ctx.reply(S.get('upload_multi_success', lang, {
             'count': '1',
             'subject': subject2,
@@ -404,11 +414,11 @@ void registerContributorAndUploadHandlers(Bot bot) {
     final type = (state['type'] as String?) ?? '';
     final files = (state['files'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 
-    Utils.clearUploadState(userId);
     await ctx.answerCallbackQuery();
 
     if (files.isEmpty) {
       await ctx.editMessageText(S.get('upload_no_files', lang));
+      Utils.clearUploadState(userId);
       return;
     }
 
@@ -434,12 +444,22 @@ void registerContributorAndUploadHandlers(Bot bot) {
           'subject': subject,
           'type': type,
           'name': autoName,
+          'file_id': backupFileId ?? fId,
+          'file_type': fType
         });
         savedCount++;
       }
     }
 
-    await ctx.reply(S.get('upload_multi_success', lang, {
+    // Send notifications to subscribers
+    final subscribers = await FirebaseDb.getSubjectSubscribers(subject);
+    if (subscribers.isNotEmpty) {
+      final text = '🔔 إضافة جديدة!\n\nتمت إضافة ملف جديد في مادة: **$subject**\nالنوع: $type\n\nقم بزيارة البوت لتفقدها.';
+      Utils.broadcast(bot, subscribers, text);
+    }
+
+    Utils.clearUploadState(userId);
+    await ctx.editMessageText(S.get('upload_multi_success', lang, {
       'count': '$savedCount',
       'subject': subject,
       'track': track,

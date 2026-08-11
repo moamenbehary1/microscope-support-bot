@@ -220,6 +220,32 @@ input::placeholder{color:var(--muted)}
 .sbox h2{font-size:1.4rem;font-weight:700;margin-bottom:6px}
 .sbox p{color:var(--dim);font-size:.855rem;margin-bottom:24px;line-height:1.6}
 
+/* ── Login screen ── */
+#login-screen{
+  display:none;position:fixed;inset:0;background:var(--bg);z-index:300;
+  align-items:center;justify-content:center;padding:20px
+}
+#login-screen.show{display:flex}
+.login-box{
+  width:100%;max-width:400px;background:var(--surface);
+  border:1px solid var(--border);border-radius:20px;padding:40px 36px;
+  box-shadow:0 8px 60px rgba(0,0,0,.5);
+  animation:fadeUp .3s ease
+}
+@keyframes fadeUp{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+.login-logo{font-size:2.8rem;text-align:center;margin-bottom:12px}
+.login-box h2{font-size:1.5rem;font-weight:700;margin-bottom:6px;text-align:center}
+.login-box p{color:var(--dim);font-size:.855rem;margin-bottom:28px;line-height:1.6;text-align:center}
+.login-err{color:var(--danger);font-size:.8rem;margin-top:8px;min-height:20px;text-align:center}
+.login-box input{
+  font-size:1.1rem;text-align:center;letter-spacing:.12em;padding:12px;
+  border-radius:10px
+}
+.btn-login{
+  width:100%;justify-content:center;padding:12px;font-size:.95rem;
+  margin-top:6px;border-radius:10px
+}
+
 /* ── Bar chart ── */
 .bar-track{background:var(--border);border-radius:4px;height:6px;width:100px;flex-shrink:0}
 .bar-fill{height:100%;border-radius:4px;background:var(--primary);transition:width .4s}
@@ -340,6 +366,24 @@ input::placeholder{color:var(--muted)}
   </div>
 </div>
 
+<!-- ─── Login Screen ─── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🔬</div>
+    <h2>Admin Access</h2>
+    <p>Enter your Telegram ID to access the dashboard.</p>
+    <div class="form-group">
+      <label>Telegram User ID</label>
+      <input id="login-id" type="number" placeholder="1234567890" autocomplete="off"
+        onkeydown="if(event.key==='Enter') Auth.login()">
+    </div>
+    <div class="login-err" id="login-err"></div>
+    <button class="btn btn-primary btn-login" onclick="Auth.login()" id="login-btn">
+      🔑 Enter Dashboard
+    </button>
+  </div>
+</div>
+
 <!-- ─── Setup ─── -->
 <div id="setup">
   <div class="sbox">
@@ -379,6 +423,125 @@ input::placeholder{color:var(--muted)}
 
 // Safely encode a string for use inside single-quoted onclick attributes
 function encodeStr(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+/* ═══════════════════════════════════════════════
+   Auth — Telegram ID Login
+═══════════════════════════════════════════════ */
+const SUPER_ADMIN_ID = '7600319381';
+
+const Auth = {
+  _currentId: null,
+
+  /* Called once on DOMContentLoaded */
+  async check(){
+    // 1) Check URL ?token=XXXXX  (magic link from Grant Access)
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if(token){
+      const decoded = Auth._decode(token);
+      if(decoded){
+        const ok = await Auth._verifyId(decoded);
+        if(ok){
+          Auth._currentId = decoded;
+          sessionStorage.setItem('auth_id', decoded);
+          const clean = window.location.pathname;
+          history.replaceState(null,'',clean);
+          return true;
+        }
+      }
+      Auth._showLogin('Invalid or expired access link.');
+      return false;
+    }
+    // 2) Check session
+    const sid = sessionStorage.getItem('auth_id');
+    if(sid){
+      const ok = await Auth._verifyId(sid);
+      if(ok){ Auth._currentId = sid; return true; }
+    }
+    // 3) Show login
+    Auth._showLogin();
+    return false;
+  },
+
+  async login(){
+    const input = document.getElementById('login-id');
+    const errEl = document.getElementById('login-err');
+    const btn   = document.getElementById('login-btn');
+    const id    = input.value.trim();
+
+    if(!id || !/^\d+$/.test(id)){
+      errEl.textContent = '⚠️ Enter a valid numeric Telegram ID.';
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Checking…';
+    errEl.textContent = '';
+
+    const ok = await Auth._verifyId(id);
+    if(ok){
+      Auth._currentId = id;
+      sessionStorage.setItem('auth_id', id);
+      document.getElementById('login-screen').classList.remove('show');
+      btn.disabled = false;
+      btn.textContent = '🔑 Enter Dashboard';
+      App.initAfterAuth();
+    } else {
+      errEl.textContent = '❌ Access denied. This ID is not an admin.';
+      btn.disabled = false;
+      btn.textContent = '🔑 Enter Dashboard';
+      input.focus();
+    }
+  },
+
+  logout(){
+    sessionStorage.removeItem('auth_id');
+    Auth._currentId = null;
+    location.reload();
+  },
+
+  isSuperAdmin(){
+    return Auth._currentId === SUPER_ADMIN_ID;
+  },
+
+  getCurrentId(){
+    return Auth._currentId;
+  },
+
+  generateLink(adminId){
+    const token = Auth._encode(String(adminId));
+    return `${location.origin}${location.pathname}?token=${token}`;
+  },
+
+  _encode(id){
+    return btoa('mgscope:' + id + ':' + Date.now());
+  },
+  _decode(token){
+    try{
+      const raw = atob(token);
+      const parts = raw.split(':');
+      if(parts[0] !== 'mgscope' || parts.length < 2) return null;
+      return parts[1];
+    } catch{ return null; }
+  },
+
+  async _verifyId(id){
+    if(String(id) === SUPER_ADMIN_ID) return true;
+    try{
+      const val = await FB.get(`/admins/${id}`);
+      return val === true || val != null;
+    } catch{ return false; }
+  },
+
+  _showLogin(msg=''){
+    const el = document.getElementById('login-screen');
+    el.classList.add('show');
+    if(msg){
+      const errEl = document.getElementById('login-err');
+      if(errEl) errEl.textContent = msg;
+    }
+    setTimeout(()=>document.getElementById('login-id')?.focus(), 100);
+  },
+};
 
 /* ═══════════════════════════════════════════════
    Firebase REST Wrapper
@@ -461,7 +624,7 @@ const App = {
   cur:'overview',
   timer:null,
 
-  init(){
+  async init(){
     // Try server-injected credentials first
     const injUrl='{{FB_URL}}';
     const injSec='{{FB_SECRET}}';
@@ -469,21 +632,31 @@ const App = {
 
     if(hasInjected){
       FB.init(injUrl, injSec);
-      this.start();
     } else {
       const lsUrl=localStorage.getItem('fb_url');
       const lsSec=localStorage.getItem('fb_secret');
-      if(lsUrl&&lsSec){ FB.init(lsUrl,lsSec); this.start(); }
-      else document.getElementById('setup').classList.add('show');
+      if(lsUrl&&lsSec){ FB.init(lsUrl,lsSec); }
+      else {
+        document.getElementById('setup').classList.add('show');
+        return; // Don't proceed to login until Firebase is configured
+      }
     }
 
     // Nav
     document.querySelectorAll('.nav-item[data-s]').forEach(el=>{
       el.addEventListener('click',()=>this.setSection(el.dataset.s));
     });
+
+    // Check authentication
+    const authed = await Auth.check();
+    if(authed) this.initAfterAuth();
   },
 
-  saveSetup(){
+  initAfterAuth(){
+    this.start();
+  },
+
+  async saveSetup(){
     const url=document.getElementById('su-url').value.trim();
     const sec=document.getElementById('su-sec').value.trim();
     if(!url||!sec){ UI.toast('Both fields required','error'); return; }
@@ -491,8 +664,15 @@ const App = {
     localStorage.setItem('fb_secret',sec);
     FB.init(url,sec);
     document.getElementById('setup').classList.remove('show');
-    this.start();
+    // Wire nav (may not have been done yet)
+    document.querySelectorAll('.nav-item[data-s]').forEach(el=>{
+      el.addEventListener('click',()=>this.setSection(el.dataset.s));
+    });
+    // Now show login
+    const authed = await Auth.check();
+    if(authed) this.initAfterAuth();
   },
+
 
   openSettings(){
     UI.modal('⚙️ Settings',
@@ -1099,16 +1279,19 @@ const S = {
   admins:{
     async load(){
       const pg=document.getElementById('pg-admins');
+      const isSA = Auth.isSuperAdmin();
+      const myId = Auth.getCurrentId();
       pg.innerHTML=`
         <div class="sec-head">
           <h2>👑 Admins</h2>
           <div class="actions">
-            <button class="btn btn-primary btn-sm" onclick="S.admins.add()">+ Add Admin</button>
+            ${isSA ? `<button class="btn btn-primary btn-sm" onclick="S.admins.add()">+ Add Admin</button>` : ''}
+            ${!isSA ? `<button class="btn btn-ghost btn-sm" onclick="S.admins.copyMyLink()">🔗 My Access Link</button>` : ''}
           </div>
         </div>
         <div class="card tbl-wrap">
           <table>
-            <thead><tr><th>User ID</th><th>Role</th><th style="text-align:right">Action</th></tr></thead>
+            <thead><tr><th>User ID</th><th>Role</th><th style="text-align:right">Actions</th></tr></thead>
             <tbody id="adm-body"><tr><td colspan="3" class="loading-msg"><span class="spin"></span></td></tr></tbody>
           </table>
         </div>`;
@@ -1117,23 +1300,35 @@ const S = {
         FB.get('/admins').catch(()=>null),
         FB.get('/super_admin').catch(()=>null),
       ]);
-      const superId=String(superA?.id||'');
+      const superId=String(superA?.id||SUPER_ADMIN_ID);
       const tb=document.getElementById('adm-body');
       if(!admins||Object.keys(admins).length===0){
         tb.innerHTML=`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px">No admins found</td></tr>`;
         return;
       }
-      tb.innerHTML=Object.keys(admins).map(id=>`<tr>
-        <td><strong>${id}</strong></td>
-        <td>${id===superId
-          ?`<span class="badge badge-w">👑 Super Admin</span>`
-          :`<span class="badge badge-p">Admin</span>`}</td>
-        <td style="text-align:right">${id!==superId
-          ?`<button class="btn btn-danger btn-sm" onclick="S.admins.remove('${id}')">Remove</button>`
-          :''}</td>
-      </tr>`).join('');
+      tb.innerHTML=Object.keys(admins).map(id=>{
+        const isSuper = id===superId;
+        const isMe = id===myId;
+        const roleBadge = isSuper
+          ? `<span class="badge badge-w">👑 Super Admin</span>`
+          : `<span class="badge badge-p">Admin</span>`;
+        let actions = '';
+        if(isSA && !isSuper){
+          actions = `
+            <button class="btn btn-ghost btn-sm" onclick="S.admins.grantAccess('${id}')" title="Generate access link for this admin">🔗 Grant Access</button>
+            <button class="btn btn-danger btn-sm" onclick="S.admins.remove('${id}')">Remove</button>`;
+        } else if(!isSA && isMe){
+          actions = `<button class="btn btn-ghost btn-sm" onclick="S.admins.copyMyLink()">🔗 My Link</button>`;
+        }
+        return `<tr>
+          <td><strong>${id}</strong>${isMe?' <span class="badge badge-s">You</span>':''}</td>
+          <td>${roleBadge}</td>
+          <td style="text-align:right">${actions}</td>
+        </tr>`;
+      }).join('');
     },
     async add(){
+      if(!Auth.isSuperAdmin()){ UI.toast('Only Super Admin can add admins','error'); return; }
       const id=await UI.prompt('Add Admin','Telegram User ID (numbers only)','Add Admin');
       if(!id) return;
       if(!/^\d+$/.test(id)){ UI.toast('Numbers only','error'); return; }
@@ -1144,6 +1339,7 @@ const S = {
       }catch(e){ UI.toast('Failed: '+e.message,'error'); }
     },
     async remove(id){
+      if(!Auth.isSuperAdmin()){ UI.toast('Only Super Admin can remove admins','error'); return; }
       const ok=await UI.modal('Remove Admin?',
         `<p style="color:var(--dim)">Are you sure you want to remove admin <strong>${id}</strong>?</p>`,'Remove',true);
       if(!ok) return;
@@ -1152,8 +1348,39 @@ const S = {
         UI.toast(`Admin ${id} removed`,'success');
         this.load();
       }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
+    grantAccess(adminId){
+      const link = Auth.generateLink(adminId);
+      UI.modal('🔗 Access Link for Admin ' + adminId,
+        `<p style="color:var(--dim);margin-bottom:14px">Share this link with admin <strong style="color:var(--text)">${adminId}</strong>.<br>
+        <small>They can open it to log in automatically without typing their ID.</small></p>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;word-break:break-all;font-size:.78rem;color:var(--primary);font-family:monospace;user-select:all">${link}</div>
+        <p style="color:var(--muted);font-size:.75rem;margin-top:10px">⚠️ Only share with the intended admin.</p>`,
+        'Copy Link'
+      ).then(ok=>{
+        if(ok){
+          navigator.clipboard.writeText(link).then(()=>{
+            UI.toast('Link copied to clipboard!','success');
+          }).catch(()=>{ UI.toast('Copy failed — select text manually','error'); });
+        }
+      });
+    },
+    copyMyLink(){
+      const myId = Auth.getCurrentId();
+      if(!myId){ UI.toast('Not logged in','error'); return; }
+      const link = Auth.generateLink(myId);
+      navigator.clipboard.writeText(link).then(()=>{
+        UI.toast('Your access link copied!','success');
+      }).catch(()=>{
+        UI.modal('🔗 Your Access Link',
+          `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;word-break:break-all;font-size:.78rem;color:var(--primary);font-family:monospace;user-select:all">${link}</div>`,
+          'OK'
+        );
+      });
     }
   },
+
+
 
   /* ── Users ── */
   users:{

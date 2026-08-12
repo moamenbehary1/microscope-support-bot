@@ -1755,6 +1755,21 @@ const S = {
         <div class="sec-head"><h2>📢 Broadcast Center</h2></div>
         <div class="card" style="margin-bottom:20px">
           <h3 style="font-size:1rem;margin-bottom:12px">Create New Broadcast</h3>
+          <div style="display:flex;gap:12px;margin-bottom:12px">
+            <div style="flex:1">
+              <label style="font-size:.78rem;color:var(--dim)">Target Group</label>
+              <select id="bc-target"><option value="all">👥 All Users</option><option value="contributors">🤝 Contributors Only</option><option value="admins">👑 Admins Only</option></select>
+            </div>
+            <div style="flex:1">
+              <label style="font-size:.78rem;color:var(--dim)">Quick Template</label>
+              <select onchange="S.broadcast.applyTemplate(this.value)">
+                <option value="">-- Custom Message --</option>
+                <option value="maint">🛡️ System Maintenance Notice</option>
+                <option value="exam">📝 New Exam Materials Uploaded</option>
+                <option value="welcome">👋 Welcome New Students</option>
+              </select>
+            </div>
+          </div>
           <div class="form-group">
             <label>Message Title</label>
             <input type="text" id="bc-title" placeholder="e.g. System Maintenance Notice">
@@ -1768,33 +1783,47 @@ const S = {
         <div class="card tbl-wrap">
           <h3 style="font-size:1rem;margin-bottom:12px">Past Broadcasts</h3>
           <table>
-            <thead><tr><th>Date</th><th>Title</th><th>Message</th><th style="text-align:right">Action</th></tr></thead>
-            <tbody id="bc-body-list"><tr><td colspan="4" class="loading-msg"><span class="spin"></span></td></tr></tbody>
+            <thead><tr><th>Date</th><th>Target</th><th>Title</th><th>Message</th><th style="text-align:right">Action</th></tr></thead>
+            <tbody id="bc-body-list"><tr><td colspan="5" class="loading-msg"><span class="spin"></span></td></tr></tbody>
           </table>
         </div>`;
 
       const bcs = await FB.get('/broadcasts').catch(()=>null);
       const tb = document.getElementById('bc-body-list');
       if(!bcs || Object.keys(bcs).length === 0){
-        tb.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">No previous broadcasts</td></tr>`;
+        tb.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">No previous broadcasts</td></tr>`;
         return;
       }
       tb.innerHTML = Object.entries(bcs).reverse().map(([id, b])=>`
         <tr>
           <td><small style="color:var(--dim)">${new Date(b.timestamp||Date.now()).toLocaleDateString()}</small></td>
+          <td><span class="badge badge-p">${b.target||'all'}</span></td>
           <td><strong>${b.title||'Notice'}</strong></td>
           <td>${b.body||'—'}</td>
           <td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="S.broadcast.delete('${id}')">Delete</button></td>
         </tr>
       `).join('');
     },
+    applyTemplate(val){
+      if(val==='maint'){
+        document.getElementById('bc-title').value = '🛡️ System Maintenance Notice';
+        document.getElementById('bc-body').value = 'The system will undergo brief scheduled maintenance. Services will resume shortly.';
+      } else if(val==='exam'){
+        document.getElementById('bc-title').value = '📝 Exam Materials Updated';
+        document.getElementById('bc-body').value = 'New past exams and summary notes have been added to the curriculum!';
+      } else if(val==='welcome'){
+        document.getElementById('bc-title').value = '👋 Welcome to Educational Bot!';
+        document.getElementById('bc-body').value = 'Explore subjects, download study materials, and create custom timetables easily.';
+      }
+    },
     async send(){
+      const target = document.getElementById('bc-target').value;
       const title = document.getElementById('bc-title').value.trim();
       const body = document.getElementById('bc-body').value.trim();
       if(!body){ UI.toast('Please enter a message body', 'error'); return; }
       try {
         const id = 'bc_' + Date.now();
-        await FB.put(`/broadcasts/${id}`, { title, body, timestamp: Date.now() });
+        await FB.put(`/broadcasts/${id}`, { target, title, body, timestamp: Date.now() });
         UI.toast('Broadcast queued successfully!', 'success');
         document.getElementById('bc-title').value = '';
         document.getElementById('bc-body').value = '';

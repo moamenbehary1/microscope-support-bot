@@ -510,38 +510,97 @@ void registerContributorUploadHandlers(Bot bot) {
     final lang = Utils.getUserLanguage(userId);
 
     final materials = await FirebaseDb.getContributorMaterials(userId);
-
     if (materials.isEmpty) {
-      final kb = InlineKeyboard()
-        .row()
-        .add(S.get('btn_back_dashboard', lang), 'contrib_dash');
-      await ctx.editMessageText(S.get('contrib_no_materials', lang),
-          replyMarkup: kb);
+      final kb = InlineKeyboard().row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
+      await ctx.editMessageText(S.get('contrib_no_materials', lang), replyMarkup: kb);
       return;
     }
 
-    String msg = S.get('contrib_my_materials_header', lang);
-    final kb = InlineKeyboard();
+    final tracks = materials.values.map((v) => v['track'] as String).toSet().toList();
+    final keyboard = InlineKeyboard();
+    for (var t in tracks) {
+      keyboard.row().add(t, 'c_mat_track:$t');
+    }
+    keyboard.row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
 
-    materials.forEach((matId, data) {
-      final name = data['name'] as String? ?? matId;
-      final type = data['type'] as String? ?? '';
-      final track = data['track'] as String? ?? '';
-      final subject = data['subject'] as String? ?? '';
-      msg += S.get('contrib_material_item', lang,
-          {'name': name, 'type': type});
-      kb.row().add(
-          '$name 🗑️', 'contrib_del_mat:$matId:$track:$subject:$type');
-    });
+    await ctx.editMessageText('📋 موادي:\nاختر المسار:', replyMarkup: keyboard);
+  });
 
-    kb.row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
-    await ctx.editMessageText(msg,
-        replyMarkup: kb, parseMode: ParseMode.markdown);
+  bot.callbackQuery(RegExp(r'^c_mat_track:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    final data = ctx.callbackQuery?.data;
+    if (userId == null || data == null) return;
+    
+    final track = data.substring('c_mat_track:'.length);
+    final materials = await FirebaseDb.getContributorMaterials(userId);
+    final subjects = materials.values
+        .where((v) => v['track'] == track)
+        .map((v) => v['subject'] as String)
+        .toSet()
+        .toList();
+
+    final keyboard = InlineKeyboard();
+    for (var s in subjects) {
+      keyboard.row().add(s, 'c_mat_subj:$track:$s');
+    }
+    keyboard.row().add('🔙 رجوع', 'contrib_materials');
+
+    await ctx.editMessageText('📋 موادي - $track:\nاختر المادة:', replyMarkup: keyboard);
+  });
+
+  bot.callbackQuery(RegExp(r'^c_mat_subj:(.*?):(.*)'), (ctx) async {
+    final userId = ctx.from?.id;
+    final data = ctx.callbackQuery?.data;
+    if (userId == null || data == null) return;
+    
+    final parts = data.split(':');
+    final track = parts[1];
+    final subject = parts[2];
+    
+    final materials = await FirebaseDb.getContributorMaterials(userId);
+    final types = materials.values
+        .where((v) => v['track'] == track && v['subject'] == subject)
+        .map((v) => v['type'] as String)
+        .toSet()
+        .toList();
+
+    final keyboard = InlineKeyboard();
+    for (var t in types) {
+      keyboard.row().add(t, 'c_mat_type:$track:$subject:$t');
+    }
+    keyboard.row().add('🔙 رجوع', 'c_mat_track:$track');
+
+    await ctx.editMessageText('📋 موادي - $subject:\nاختر النوع:', replyMarkup: keyboard);
+  });
+
+  bot.callbackQuery(RegExp(r'^c_mat_type:(.*?):(.*?):(.*)'), (ctx) async {
+    final userId = ctx.from?.id;
+    final data = ctx.callbackQuery?.data;
+    if (userId == null || data == null) return;
+    
+    final parts = data.split(':');
+    final track = parts[1];
+    final subject = parts[2];
+    final type = parts[3];
+    
+    final materials = await FirebaseDb.getContributorMaterials(userId);
+    final mats = materials.entries
+        .where((e) => e.value['track'] == track && e.value['subject'] == subject && e.value['type'] == type)
+        .toList();
+
+    final keyboard = InlineKeyboard();
+    for (var e in mats) {
+      final matId = e.key;
+      final name = e.value['name'] as String? ?? matId;
+      keyboard.row().add('$name 🗑️', 'contrib_del_mat:$matId:$track:$subject:$type');
+    }
+    keyboard.row().add('🔙 رجوع', 'c_mat_subj:$track:$subject');
+
+    await ctx.editMessageText('📋 موادي - $type:\nاختر الملف لحذفه:', replyMarkup: keyboard);
   });
 
   // Contributor delete their own material
-  bot.callbackQuery(
-      RegExp(r'^contrib_del_mat:(.*?):(.*?):(.*?):(.*)'), (ctx) async {
+  bot.callbackQuery(RegExp(r'^contrib_del_mat:(.*?):(.*?):(.*?):(.*)'), (ctx) async {
     final data = ctx.callbackQuery?.data;
     final userId = ctx.from?.id;
     if (data == null || userId == null) return;
@@ -556,35 +615,57 @@ void registerContributorUploadHandlers(Bot bot) {
     await FirebaseDb.deleteMaterial(track, subject, type, matId);
     await FirebaseDb.removeContributorMaterialRef(userId, matId);
 
-    await ctx.answerCallbackQuery(
-        text: S.get('material_delete_toast', lang), showAlert: false);
+    await ctx.answerCallbackQuery(text: S.get('material_delete_toast', lang), showAlert: false);
 
-    // Refresh materials list
-    final remaining = await FirebaseDb.getContributorMaterials(userId);
-    if (remaining.isEmpty) {
-      final kb = InlineKeyboard()
-        .row()
-        .add(S.get('btn_back_dashboard', lang), 'contrib_dash');
-      await ctx.editMessageText(S.get('contrib_no_materials', lang),
-          replyMarkup: kb);
+    // Refresh materials list for the current type
+    final materials = await FirebaseDb.getContributorMaterials(userId);
+    final mats = materials.entries
+        .where((e) => e.value['track'] == track && e.value['subject'] == subject && e.value['type'] == type)
+        .toList();
+
+    if (mats.isEmpty) {
+      // Check if there are other types in the subject
+      final types = materials.values
+          .where((v) => v['track'] == track && v['subject'] == subject)
+          .map((v) => v['type'] as String)
+          .toSet()
+          .toList();
+      
+      if (types.isEmpty) {
+         // Return to tracks or dashboard depending on if it's fully empty
+         if (materials.isEmpty) {
+            final kb = InlineKeyboard().row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
+            await ctx.editMessageText(S.get('contrib_no_materials', lang), replyMarkup: kb);
+         } else {
+            // Jump back to tracks list as a safe fallback
+            final tracks = materials.values.map((v) => v['track'] as String).toSet().toList();
+            final keyboard = InlineKeyboard();
+            for (var t in tracks) {
+              keyboard.row().add(t, 'c_mat_track:$t');
+            }
+            keyboard.row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
+            await ctx.editMessageText('📋 موادي:\nاختر المسار:', replyMarkup: keyboard);
+         }
+      } else {
+          final keyboard = InlineKeyboard();
+          for (var t in types) {
+            keyboard.row().add(t, 'c_mat_type:$track:$subject:$t');
+          }
+          keyboard.row().add('🔙 رجوع', 'c_mat_track:$track');
+          await ctx.editMessageText('📋 موادي - $subject:\nاختر النوع:', replyMarkup: keyboard);
+      }
       return;
     }
 
-    String msg = S.get('contrib_my_materials_header', lang);
-    final kb = InlineKeyboard();
-    remaining.forEach((mId, d) {
-      final name = d['name'] as String? ?? mId;
-      final tp = d['type'] as String? ?? '';
-      final tr = d['track'] as String? ?? '';
-      final subj = d['subject'] as String? ?? '';
-      msg +=
-          S.get('contrib_material_item', lang, {'name': name, 'type': tp});
-      kb.row()
-          .add('$name 🗑️', 'contrib_del_mat:$mId:$tr:$subj:$tp');
-    });
-    kb.row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
-    await ctx.editMessageText(msg,
-        replyMarkup: kb, parseMode: ParseMode.markdown);
+    final keyboard = InlineKeyboard();
+    for (var e in mats) {
+      final id = e.key;
+      final name = e.value['name'] as String? ?? id;
+      keyboard.row().add('$name 🗑️', 'contrib_del_mat:$id:$track:$subject:$type');
+    }
+    keyboard.row().add('🔙 رجوع', 'c_mat_subj:$track:$subject');
+
+    await ctx.editMessageText('📋 موادي - $type:\nاختر الملف لحذفه:', replyMarkup: keyboard);
   });
 
   // Contributor announce new lecture

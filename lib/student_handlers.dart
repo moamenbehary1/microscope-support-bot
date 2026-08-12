@@ -194,6 +194,15 @@ void registerStudentHandlers(Bot bot) {
     }
 
     final materials = await FirebaseDb.getMaterials(track, subject, type);
+    if (materials.isEmpty) {
+      final kb = InlineKeyboard().row().add('🔙 Back', 'subj:$track:$subject');
+      await ctx.editMessageText(
+        '${S.get('materials_list', lang, {'type': type})}\n\n${S.get('no_files_found', lang)}',
+        replyMarkup: kb,
+      );
+      return;
+    }
+
     final itemsList = materials.entries.map((e) => MapEntry(e.key, e.value['name'].toString())).toList();
     
     final keyboard = Utils.paginateMapKeyboard(

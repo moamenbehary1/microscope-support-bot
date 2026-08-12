@@ -1543,28 +1543,33 @@ const S = {
         <div class="sec-head"><h2>🤝 Contributors</h2></div>
         <div class="card tbl-wrap">
           <table>
-            <thead><tr><th>ID</th><th>Name</th><th>Track</th><th>Subject</th><th style="text-align:right">Action</th></tr></thead>
+            <thead><tr><th>ID</th><th>Name</th><th>Materials</th><th style="text-align:right">Action</th></tr></thead>
             <tbody id="ctr-body"><tr><td colspan="5" class="loading-msg"><span class="spin"></span></td></tr></tbody>
           </table>
         </div>`;
 
-      const contributors=await FB.get('/contributors').catch(()=>null);
+      const [contributors, materials] = await Promise.all([
+        FB.get('/contributors').catch(()=>null),
+        FB.get('/contributor_materials').catch(()=>null)
+      ]);
       const tb=document.getElementById('ctr-body');
       if(!contributors||Object.keys(contributors).length===0){
-        tb.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">No contributors</td></tr>`;
+        tb.innerHTML=`<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">No contributors</td></tr>`;
         return;
       }
-      tb.innerHTML=Object.entries(contributors).map(([id,d])=>`<tr>
+      tb.innerHTML=Object.entries(contributors).map(([id,d])=>{
+        const matsCount = materials && materials[id] ? Object.keys(materials[id]).length : 0;
+        return `<tr>
         <td><strong>${id}</strong></td>
         <td>${d.name||`<span style="color:var(--muted)">—</span>`}</td>
-        <td><span class="badge badge-p">${d.track||'—'}</span></td>
-        <td>${d.subject||'—'}</td>
+        <td><span class="badge badge-s">${matsCount} Files</span></td>
         <td style="text-align:right">
           <button class="btn btn-danger btn-sm" onclick="S.contributors.remove('${id}','${(d.name||id).replace(/'/g,"\\'")}')">
             Remove
           </button>
         </td>
-      </tr>`).join('');
+      </tr>`;
+      }).join('');
     },
     async remove(id,name){
       const ok=await UI.modal('Remove Contributor?',

@@ -82,6 +82,10 @@ class S {
       'ar': '❌ لم يتم العثور على المادة!',
       'en': '❌ Material not found!',
     },
+    'no_files_found': {
+      'ar': 'لاتوجد ملفات',
+      'en': 'No files found',
+    },
 
     // ── Contact Admin ───────────────────────────────────────────────
     'contact_admin_prompt': {

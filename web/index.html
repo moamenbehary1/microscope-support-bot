@@ -383,9 +383,10 @@ input::placeholder{color:var(--muted)}
     <div class="nav-item" data-s="maintenance"><span class="icon">⚙️</span>Maintenance</div>
     <div class="nav-item" data-s="export"><span class="icon">💾</span>Data Backup</div>
     <div class="nav-item" data-s="analytics"><span class="icon">📊</span>Analytics</div>
+    <div class="nav-item" data-s="settings"><span class="icon">⚙️</span>Settings</div>
   </div>
   <div class="sidebar-foot">
-    <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="App.openSettings()">⚙️ Settings</button>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="App.setSection('settings')">⚙️ Master Settings</button>
   </div>
 </nav>
 
@@ -417,6 +418,7 @@ input::placeholder{color:var(--muted)}
     <div id="pg-maintenance"  class="page"></div>
     <div id="pg-export"       class="page"></div>
     <div id="pg-analytics"    class="page"></div>
+    <div id="pg-settings"     class="page"></div>
   </div>
 </div>
 
@@ -2344,6 +2346,98 @@ const S = {
               </table></div>`
           }
         </div>`;
+    }
+  },
+
+  /* ── Master Settings Page ── */
+  settings:{
+    async load(){
+      const pg=document.getElementById('pg-settings');
+      const curTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      const curLang = document.documentElement.getAttribute('lang') || 'en';
+      const interval = localStorage.getItem('refresh_interval') || '8000';
+
+      pg.innerHTML=`
+        <div class="sec-head"><h2>⚙️ Master Settings & System Preferences</h2></div>
+        
+        <div class="grid grid-2" style="margin-bottom:20px">
+          <!-- Firebase Credentials Card -->
+          <div class="card">
+            <h3 style="font-size:1rem;margin-bottom:12px;display:flex;align-items:center;gap:8px">🔥 Firebase Database Credentials</h3>
+            <div class="form-group">
+              <label>Firebase Realtime DB URL</label>
+              <input type="text" id="set-fb-url" value="${FB.url}" placeholder="https://your-app.firebaseio.com">
+            </div>
+            <div class="form-group">
+              <label>Firebase Secret Key</label>
+              <input type="password" id="set-fb-sec" value="${FB.secret}" placeholder="Secret Key">
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-primary btn-sm" onclick="S.settings.saveCredentials()">💾 Save Credentials</button>
+              <button class="btn btn-ghost btn-sm" onclick="S.webhooks.ping()">⚡ Test Connection</button>
+            </div>
+          </div>
+
+          <!-- Appearance & Interface Studio -->
+          <div class="card">
+            <h3 style="font-size:1rem;margin-bottom:12px;display:flex;align-items:center;gap:8px">🎨 Appearance & Interface Studio</h3>
+            <div class="form-group">
+              <label>Theme Mode</label>
+              <select id="set-theme-sel" onchange="App.toggleTheme()">
+                <option value="dark" ${curTheme==='dark'?'selected':''}>🌙 Dark Mode (Deep Slate)</option>
+                <option value="light" ${curTheme==='light'?'selected':''}>☀️ Light Mode (Clean Pearl)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Language & Layout Direction</label>
+              <select id="set-lang-sel" onchange="App.toggleLang()">
+                <option value="en" ${curLang==='en'?'selected':''}>🇬🇧 English (LTR)</option>
+                <option value="ar" ${curLang==='ar'?'selected':''}>🇸🇦 العربية (RTL)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-bottom:20px">
+          <!-- Realtime Sync & Data Control -->
+          <div class="card">
+            <h3 style="font-size:1rem;margin-bottom:12px;display:flex;align-items:center;gap:8px">⚡ Realtime Sync & Data Control</h3>
+            <div class="form-group">
+              <label>Auto-Refresh Frequency</label>
+              <select id="set-interval-sel" onchange="S.settings.saveInterval(this.value)">
+                <option value="5000" ${interval==='5000'?'selected':''}>🚀 Fast (5 seconds)</option>
+                <option value="8000" ${interval==='8000'?'selected':''}>⚡ Normal (8 seconds)</option>
+                <option value="15000" ${interval==='15000'?'selected':''}>☕ Relaxed (15 seconds)</option>
+              </select>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="localStorage.clear();location.reload()">🗑️ Clear Local Cache & Reset</button>
+          </div>
+
+          <!-- Sound & Audio Notifications -->
+          <div class="card">
+            <h3 style="font-size:1rem;margin-bottom:12px;display:flex;align-items:center;gap:8px">🔔 Sound & Audio Laboratory</h3>
+            <p style="font-size:.82rem;color:var(--dim);margin-bottom:16px">Test audio chimes for incoming student requests and feedback.</p>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-primary btn-sm" onclick="App.playAlertSound()">🔊 Play Chime Sound</button>
+              <button class="btn btn-ghost btn-sm" onclick="S.notifications.requestPush()">🔔 Test Desktop Push</button>
+            </div>
+          </div>
+        </div>`;
+    },
+
+    async saveCredentials(){
+      const u = document.getElementById('set-fb-url').value.trim();
+      const s = document.getElementById('set-fb-sec').value.trim();
+      if(!u || !s){ UI.toast('Both URL and Secret are required', 'error'); return; }
+      localStorage.setItem('fb_url', u);
+      localStorage.setItem('fb_secret', s);
+      FB.init(u, s);
+      UI.toast('Firebase Credentials Updated Successfully! ✓', 'success');
+    },
+
+    saveInterval(val){
+      localStorage.setItem('refresh_interval', val);
+      UI.toast(`Auto-refresh interval set to ${parseInt(val)/1000}s`, 'success');
     }
   }
 };

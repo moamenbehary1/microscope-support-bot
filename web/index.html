@@ -998,6 +998,7 @@ const S = {
           <div class="actions">
             <button class="btn btn-ghost btn-sm" onclick="S.curriculum.refresh()" title="Refresh">🔄</button>
             <button class="btn btn-primary btn-sm" onclick="S.curriculum.addTrack()">+ Add Track</button>
+            <button class="btn btn-primary btn-sm" style="background:#00B8D9; border-color:#00B8D9; border-radius:12px; font-family:'Inter', sans-serif; font-weight:600; color:#fff; box-shadow:0 4px 12px rgba(0,184,217,0.2);" onclick="S.curriculum.addSubjectsBulk()">+ Add Subjects</button>
           </div>
         </div>
         <div class="tree-search">
@@ -1230,6 +1231,82 @@ const S = {
       const cr = document.getElementById('c-'+id);
       if(ch) ch.classList.toggle('open', !!this._open[id]);
       if(cr) cr.classList.toggle('open', !!this._open[id]);
+    },
+
+    addSubjectsBulk: function() {
+      const modalHtml = `
+        <div id="add-subjects-modal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(200,200,200,0.15); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:9999; font-family:'Inter', sans-serif;">
+          <div style="background:#FFFFFF; box-shadow:0 15px 40px rgba(0,0,0,0.05); border-radius:24px; padding:32px; width:100%; max-width:420px; display:flex; flex-direction:column; gap:24px; animation:fadeInScale .25s cubic-bezier(0.16, 1, 0.3, 1);">
+            <h3 style="margin:0; color:#1A1A1A; font-size:1.35rem; font-weight:600;">Add Subjects</h3>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <label style="color:#8C8C8C; font-size:0.875rem;">Type (Category)</label>
+              <input id="bulk-type" type="text" placeholder="e.g. mathematics" style="width:100%; padding:14px 16px; background:#F8FAF9; border:1px solid transparent; border-radius:12px; outline:none; transition:all 0.2s; color:#1A1A1A; font-size:0.95rem; box-sizing:border-box;" onfocus="this.style.borderColor='#00B8D9'" onblur="this.style.borderColor='transparent'">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <label style="color:#8C8C8C; font-size:0.875rem;">Subjects (Comma separated or JSON)</label>
+              <textarea id="bulk-subjects" placeholder="Algebra, Calculus, Geometry..." rows="4" style="width:100%; padding:14px 16px; background:#F8FAF9; border:1px solid transparent; border-radius:12px; outline:none; transition:all 0.2s; color:#1A1A1A; resize:none; font-size:0.95rem; box-sizing:border-box;" onfocus="this.style.borderColor='#00B8D9'" onblur="this.style.borderColor='transparent'"></textarea>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:8px;">
+              <button onclick="document.getElementById('add-subjects-modal').remove()" style="padding:12px 20px; border-radius:12px; background:transparent; border:none; color:#8C8C8C; font-weight:600; cursor:pointer; font-size:0.95rem; outline:none;">Cancel</button>
+              <button id="bulk-submit" style="padding:12px 24px; border-radius:12px; background:#00B8D9; box-shadow:0 8px 16px rgba(0,184,217,0.3); border:none; color:#FFFFFF; font-weight:600; cursor:pointer; transition:all 0.2s; font-size:0.95rem; outline:none;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 20px rgba(0,184,217,0.4)'" onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 16px rgba(0,184,217,0.3)'">Add Subjects</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+      
+      const submitBtn = document.getElementById('bulk-submit');
+      submitBtn.onclick = async () => {
+        const typeEl = document.getElementById('bulk-type');
+        const subjEl = document.getElementById('bulk-subjects');
+        const type = typeEl.value.trim();
+        let subjectsStr = subjEl.value.trim();
+        
+        if(!type || !subjectsStr) {
+          if (window.UI && window.UI.toast) UI.toast('Fields cannot be empty', 'error');
+          return;
+        }
+
+        let subjects = [];
+        try {
+          if(subjectsStr.startsWith('[') && subjectsStr.endsWith(']')) {
+            subjects = JSON.parse(subjectsStr);
+          } else {
+            subjects = subjectsStr.split(',').map(s => s.trim()).filter(s => s);
+          }
+        } catch(e) {
+          if (window.UI && window.UI.toast) UI.toast('Invalid JSON format', 'error');
+          return;
+        }
+
+        if(subjects.length === 0) {
+          if (window.UI && window.UI.toast) UI.toast('No subjects provided', 'error');
+          return;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.7';
+        submitBtn.innerText = 'Saving...';
+        
+        try {
+          const promises = subjects.map(subj => {
+             return window.FB.put(\`/curriculum/\${encodeURIComponent(type)}/\${encodeURIComponent(subj)}\`, {_placeholder: true});
+          });
+          await Promise.all(promises);
+          
+          if (window.UI && window.UI.toast) UI.toast('Subjects added successfully!', 'success');
+          document.getElementById('add-subjects-modal').remove();
+          
+          if(this.fetchAndRender) await this.fetchAndRender();
+          else if(window.S && window.S.curriculum) await window.S.curriculum.fetchAndRender();
+        } catch(e) {
+          console.error(e);
+          if (window.UI && window.UI.toast) UI.toast('Failed: ' + e.message, 'error');
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          submitBtn.innerText = 'Add Subjects';
+        }
+      };
     },
 
     async addTrack(){

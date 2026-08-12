@@ -764,97 +764,11 @@ const App = {
   },
 
   openSettings(){
-    const interval = localStorage.getItem('refresh_interval') || '8000';
-    UI.modal('⚙️ Master Settings',
-      `<div class="form-group"><label>Firebase URL</label>
-       <input id="se-url" value="${FB.url}" placeholder="https://..."/></div>
-       <div class="form-group"><label>Firebase Secret</label>
-       <input id="se-sec" type="password" value="${FB.secret}" placeholder="..."/></div>
-       <div class="form-group"><label>Auto Refresh Interval</label>
-       <select id="se-interval">
-         <option value="5000" ${interval==='5000'?'selected':''}>Fast (5 seconds)</option>
-         <option value="8000" ${interval==='8000'?'selected':''}>Normal (8 seconds)</option>
-         <option value="15000" ${interval==='15000'?'selected':''}>Relaxed (15 seconds)</option>
-       </select></div>
-       <div class="form-group"><label>Audio Alerts</label>
-       <button class="btn btn-ghost btn-sm" onclick="App.playAlertSound()">🔊 Test Notification Chime</button></div>`,
-      'Save Settings'
-    ).then(ok=>{
-      if(ok){
-        const u = document.getElementById('se-url').value.trim();
-        const s = document.getElementById('se-sec').value.trim();
-        const inv = document.getElementById('se-interval').value;
-        if(u&&s){
-          localStorage.setItem('fb_url',u);
-          localStorage.setItem('fb_secret',s);
-          localStorage.setItem('refresh_interval',inv);
-          FB.init(u,s);
-          UI.toast('Settings Saved ✓','success');
-          this.load(this.cur);
-        }
-      }
-    });
+    this.setSection('settings');
   },
 
-  async openFullBotConfigModal(){
-    UI.toast('Loading Bot Configuration...', 'info');
-    const settings = await FB.get('/settings').catch(()=>({}));
-    const maint = settings?.maintenance === true;
-    const banner = settings?.global_banner || '';
-    const welcome = settings?.welcome_text || 'مرحباً بك في البوت التعليمي! 📚';
-    const itemsPerPage = settings?.items_per_page || 5;
-
-    const html = `
-      <div style="max-height:420px;overflow-y:auto;padding-right:6px">
-        <h4 style="color:var(--primary);margin-bottom:10px">🤖 General Bot Settings</h4>
-        <div class="form-group">
-          <label>Welcome Message</label>
-          <input type="text" id="bc-welcome" value="${welcome}" placeholder="Welcome message text">
-        </div>
-        <div class="form-group">
-          <label>Global Announcement Banner</label>
-          <input type="text" id="bc-banner" value="${banner}" placeholder="Active alert text for students">
-        </div>
-
-        <h4 style="color:var(--primary);margin-top:16px;margin-bottom:10px">⚙️ Operational Features</h4>
-        <div class="form-group">
-          <label>Maintenance Mode Status</label>
-          <select id="bc-maint">
-            <option value="false" ${!maint?'selected':''}>✅ Normal Operation (Active)</option>
-            <option value="true" ${maint?'selected':''}>🛡️ Maintenance Mode (Paused)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Items Per Keyboard Page</label>
-          <select id="bc-items">
-            <option value="3" ${itemsPerPage==3?'selected':''}>3 Items</option>
-            <option value="5" ${itemsPerPage==5?'selected':''}>5 Items (Default)</option>
-            <option value="10" ${itemsPerPage==10?'selected':''}>10 Items</option>
-          </select>
-        </div>
-      </div>
-    `;
-
-    const ok = await UI.modal('🤖 Complete Bot Configuration', html, 'Save Bot Settings');
-    if(!ok) return;
-
-    try {
-      const newWelcome = document.getElementById('bc-welcome').value.trim();
-      const newBanner = document.getElementById('bc-banner').value.trim();
-      const newMaint = document.getElementById('bc-maint').value === 'true';
-      const newItems = parseInt(document.getElementById('bc-items').value);
-
-      await Promise.all([
-        FB.put('/settings/welcome_text', newWelcome),
-        FB.put('/settings/global_banner', newBanner),
-        FB.put('/settings/maintenance', newMaint),
-        FB.put('/settings/items_per_page', newItems)
-      ]);
-
-      UI.toast('Bot Configuration Updated Successfully! 🚀', 'success');
-    } catch(e) {
-      UI.toast('Failed to save bot settings: '+e.message, 'error');
-    }
+  openFullBotConfigModal(){
+    this.setSection('settings');
   },
 
   start(){
@@ -2419,6 +2333,13 @@ const S = {
       const curLang = document.documentElement.getAttribute('lang') || 'en';
       const interval = localStorage.getItem('refresh_interval') || '8000';
 
+      let botSettings = {};
+      try { botSettings = await FB.get('/settings') || {}; } catch(e) {}
+      const maint = botSettings.maintenance === true;
+      const banner = botSettings.global_banner || '';
+      const welcome = botSettings.welcome_text || 'مرحباً بك في البوت التعليمي! 📚';
+      const itemsPerPage = botSettings.items_per_page || 5;
+
       pg.innerHTML=`
         <div class="sec-head"><h2>⚙️ Master Settings & System Preferences</h2></div>
         
@@ -2440,6 +2361,38 @@ const S = {
             </div>
           </div>
 
+          <!-- Bot Configuration -->
+          <div class="card" style="grid-row: span 2;">
+            <h3 style="font-size:1rem;margin-bottom:12px;display:flex;align-items:center;gap:8px">🤖 Bot Configuration Settings</h3>
+            
+            <div class="form-group">
+              <label>Welcome Message</label>
+              <input type="text" id="bc-welcome" value="${encodeStr(welcome)}" placeholder="Welcome message text">
+            </div>
+            <div class="form-group">
+              <label>Global Announcement Banner</label>
+              <input type="text" id="bc-banner" value="${encodeStr(banner)}" placeholder="Active alert text for students">
+            </div>
+
+            <h4 style="color:var(--primary);margin-top:16px;margin-bottom:10px;font-size:0.9rem;">⚙️ Operational Features</h4>
+            <div class="form-group">
+              <label>Maintenance Mode Status</label>
+              <select id="bc-maint">
+                <option value="false" ${!maint?'selected':''}>✅ Normal Operation (Active)</option>
+                <option value="true" ${maint?'selected':''}>🛡️ Maintenance Mode (Paused)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Items Per Keyboard Page</label>
+              <select id="bc-items">
+                <option value="3" ${itemsPerPage==3?'selected':''}>3 Items</option>
+                <option value="5" ${itemsPerPage==5?'selected':''}>5 Items (Default)</option>
+                <option value="10" ${itemsPerPage==10?'selected':''}>10 Items</option>
+              </select>
+            </div>
+            <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;justify-content:center" onclick="S.settings.saveBotConfig()">🚀 Save Bot Settings</button>
+          </div>
+          
           <!-- Appearance & Interface Studio -->
           <div class="card">
             <h3 style="font-size:1rem;margin-bottom:12px;display:flex;align-items:center;gap:8px">🎨 Appearance & Interface Studio</h3>
@@ -2481,7 +2434,7 @@ const S = {
             <p style="font-size:.82rem;color:var(--dim);margin-bottom:16px">Test audio chimes for incoming student requests and feedback.</p>
             <div style="display:flex;gap:10px">
               <button class="btn btn-primary btn-sm" onclick="App.playAlertSound()">🔊 Play Chime Sound</button>
-              <button class="btn btn-ghost btn-sm" onclick="S.notifications.requestPush()">🔔 Test Desktop Push</button>
+              <button class="btn btn-ghost btn-sm" onclick="S.notifications?.requestPush()">🔔 Test Desktop Push</button>
             </div>
           </div>
         </div>`;
@@ -2495,6 +2448,26 @@ const S = {
       localStorage.setItem('fb_secret', s);
       FB.init(u, s);
       UI.toast('Firebase Credentials Updated Successfully! ✓', 'success');
+    },
+
+    async saveBotConfig(){
+      try {
+        const newWelcome = document.getElementById('bc-welcome').value.trim();
+        const newBanner = document.getElementById('bc-banner').value.trim();
+        const newMaint = document.getElementById('bc-maint').value === 'true';
+        const newItems = parseInt(document.getElementById('bc-items').value);
+
+        await Promise.all([
+          FB.put('/settings/welcome_text', newWelcome),
+          FB.put('/settings/global_banner', newBanner),
+          FB.put('/settings/maintenance', newMaint),
+          FB.put('/settings/items_per_page', newItems)
+        ]);
+
+        UI.toast('Bot Configuration Updated Successfully! 🚀', 'success');
+      } catch(e) {
+        UI.toast('Failed to save bot settings: '+e.message, 'error');
+      }
     },
 
     saveInterval(val){

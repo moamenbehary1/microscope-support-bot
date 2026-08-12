@@ -4,8 +4,6 @@ import 'utils.dart';
 import 'config.dart';
 import 'strings.dart';
 
-// Fixed material types shown in upload flow
-const _materialTypes = ['ملخص', 'شرح', 'فيديو', 'صوت', 'امتحانات', 'رابط'];
 
 void registerContributorAndUploadHandlers(Bot bot) {
   // ── /مساهم command ───────────────────────────────────────────────────

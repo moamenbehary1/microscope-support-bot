@@ -368,6 +368,7 @@ input::placeholder{color:var(--muted)}
     <div class="nav-sep"></div>
     <div class="nav-item" data-s="broadcast"><span class="icon">📢</span>Broadcast</div>
     <div class="nav-item" data-s="inbox"><span class="icon">📥</span>Feedback Inbox</div>
+    <div class="nav-item" data-s="simulator"><span class="icon">📱</span>Bot Simulator</div>
     <div class="nav-item" data-s="logs"><span class="icon">📜</span>Audit Logs</div>
     <div class="nav-item" data-s="schedules"><span class="icon">🗓️</span>Schedules</div>
     <div class="nav-item" data-s="maintenance"><span class="icon">⚙️</span>Maintenance</div>
@@ -395,6 +396,7 @@ input::placeholder{color:var(--muted)}
     <div id="pg-requests"     class="page"></div>
     <div id="pg-broadcast"    class="page"></div>
     <div id="pg-inbox"        class="page"></div>
+    <div id="pg-simulator"    class="page"></div>
     <div id="pg-logs"         class="page"></div>
     <div id="pg-schedules"    class="page"></div>
     <div id="pg-maintenance"  class="page"></div>
@@ -1873,6 +1875,111 @@ const S = {
         UI.toast('Feedback resolved', 'success');
         this.load();
       } catch(e) { UI.toast('Failed: '+e.message, 'error'); }
+    }
+  },
+
+  /* ── Interactive Bot Simulator ── */
+  simulator:{
+    async load(){
+      const pg = document.getElementById('pg-simulator');
+      pg.innerHTML = `
+        <div class="sec-head"><h2>📱 Live Bot Interactive Sandbox & Simulator</h2></div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap">
+          <!-- Chat Frame Mockup -->
+          <div class="card" style="width:360px;height:520px;display:flex;flex-direction:column;padding:0;overflow:hidden;border-radius:18px">
+            <div style="background:var(--surface2);padding:14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)">
+              <span style="font-size:1.2rem">🔬</span>
+              <div>
+                <strong style="font-size:.9rem;display:block">Microscope Bot</strong>
+                <small style="color:var(--success);font-size:.7rem">bot online</small>
+              </div>
+            </div>
+            <div id="sim-chat-box" style="flex:1;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;background:rgba(9, 13, 22, 0.6)">
+              <div style="background:rgba(99,102,241,0.15);padding:10px 14px;border-radius:12px;max-width:85%;font-size:.85rem;line-height:1.4">
+                👋 Welcome to the Bot Sandbox Simulator!<br>Type <code>/start</code> or click quick commands below to test the bot response flow.
+              </div>
+            </div>
+            <div style="padding:10px;background:var(--surface2);border-top:1px solid var(--border);display:flex;gap:8px">
+              <input type="text" id="sim-input" placeholder="Type /start, /table..." onkeydown="if(event.key==='Enter')S.simulator.send()" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:6px 12px;color:var(--text);font-size:.82rem;outline:none">
+              <button class="btn btn-primary btn-sm" onclick="S.simulator.send()">Send</button>
+            </div>
+          </div>
+
+          <!-- Controls & Quick Presets -->
+          <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:16px">
+            <div class="card">
+              <h3 style="font-size:1rem;margin-bottom:12px">⚡ Quick Command Trigger</h3>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-ghost btn-sm" onclick="S.simulator.trigger('/start')">▶️ /start</button>
+                <button class="btn btn-ghost btn-sm" onclick="S.simulator.trigger('/table')">📅 /table (Schedule)</button>
+                <button class="btn btn-ghost btn-sm" onclick="S.simulator.trigger('tracks')">🏢 Departments</button>
+                <button class="btn btn-ghost btn-sm" onclick="S.simulator.trigger('/help')">❓ /help</button>
+              </div>
+            </div>
+
+            <div class="card" style="flex:1">
+              <h3 style="font-size:1rem;margin-bottom:12px">🛠️ Live Payload & State Inspector</h3>
+              <pre id="sim-json" style="background:var(--bg);padding:12px;border-radius:8px;font-size:.78rem;color:var(--accent);max-height:260px;overflow:auto;border:1px solid var(--border)">{ "status": "idle", "simulated_user_id": "7600319381" }</pre>
+            </div>
+          </div>
+        </div>`;
+    },
+
+    async trigger(cmd){
+      document.getElementById('sim-input').value = cmd;
+      this.send();
+    },
+
+    async send(){
+      const input = document.getElementById('sim-input');
+      const box = document.getElementById('sim-chat-box');
+      const jsonEl = document.getElementById('sim-json');
+      const text = input.value.trim();
+      if(!text) return;
+
+      // User Message Bubble
+      const uBubble = document.createElement('div');
+      uBubble.style.cssText = "align-self:flex-end;background:var(--primary);color:#fff;padding:8px 12px;border-radius:12px;max-width:80%;font-size:.84rem;margin-top:4px";
+      uBubble.textContent = text;
+      box.appendChild(uBubble);
+      input.value = '';
+      box.scrollTop = box.scrollHeight;
+
+      // Bot Processing Response Simulation
+      const bBubble = document.createElement('div');
+      bBubble.style.cssText = "background:rgba(255,255,255,0.06);border:1px solid var(--border);padding:10px 14px;border-radius:12px;max-width:85%;font-size:.84rem;line-height:1.4";
+      bBubble.innerHTML = `<span class="spin" style="width:12px;height:12px"></span> Processing bot action...`;
+      box.appendChild(bBubble);
+      box.scrollTop = box.scrollHeight;
+
+      setTimeout(async () => {
+        let respText = '📚 Bot Response: Command received.';
+        let buttonsHtml = '';
+        const curriculum = await FB.get('/curriculum').catch(()=>null);
+
+        if(text === '/start' || text === 'tracks'){
+          respText = 'مرحباً بك في البوت التعليمي! 👋\nاختر المسار الذي تريده:';
+          const tracks = curriculum ? Object.keys(curriculum).filter(k=>k!=='_placeholder') : ['First Year', 'Second Year'];
+          buttonsHtml = '<div style="display:flex;flex-direction:column;gap:4px;margin-top:8px">' + 
+            tracks.map(t=>`<button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="S.simulator.trigger('track:${t}')">📁 ${t}</button>`).join('') +
+            '</div>';
+        } else if(text.startsWith('track:')){
+          const tName = text.substring(6);
+          respText = `🏢 قسم ${tName}:\nاختر المادة المطلوبة:`;
+          const subjs = (curriculum && curriculum[tName]) ? Object.keys(curriculum[tName]).filter(k=>k!=='_placeholder') : ['Subject 1', 'Subject 2'];
+          buttonsHtml = '<div style="display:flex;flex-direction:column;gap:4px;margin-top:8px">' + 
+            subjs.map(s=>`<button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="S.simulator.trigger('subj:${s}')">📋 ${s}</button>`).join('') +
+            '</div>';
+        } else if(text === '/table'){
+          respText = '📅 الجدول الدراسي الخاص بك:\nتم تعيين المسارات المحددة بنجاح!';
+        } else {
+          respText = `🔍 Search query / input: "${text}"\nResult: 2 files matched in curriculum.`;
+        }
+
+        bBubble.innerHTML = `<div>${respText.replace(/\n/g, '<br>')}</div>` + buttonsHtml;
+        jsonEl.textContent = JSON.stringify({ event: 'command_handled', command: text, timestamp: Date.now(), user_id: '7600319381' }, null, 2);
+        box.scrollTop = box.scrollHeight;
+      }, 400);
     }
   },
 

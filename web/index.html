@@ -789,7 +789,8 @@ const App = {
     // refresh
     clearInterval(this.timer);
     this.load(s);
-    this.timer=setInterval(()=>this.load(s), 8000);
+    const ms = parseInt(localStorage.getItem('refresh_interval') || '8000');
+    this.timer=setInterval(()=>this.load(s), ms);
   },
 
   async load(s){
@@ -2423,6 +2424,14 @@ const S = {
                 <option value="5000" ${interval==='5000'?'selected':''}>🚀 Fast (5 seconds)</option>
                 <option value="8000" ${interval==='8000'?'selected':''}>⚡ Normal (8 seconds)</option>
                 <option value="15000" ${interval==='15000'?'selected':''}>☕ Relaxed (15 seconds)</option>
+                <option value="1200000" ${interval==='1200000'?'selected':''}>⏳ 20 دقيقة (20 minutes)</option>
+                <option value="2400000" ${interval==='2400000'?'selected':''}>⏳ 40 دقيقة (40 minutes)</option>
+                <option value="3000000" ${interval==='3000000'?'selected':''}>⏳ 50 دقيقة (50 minutes)</option>
+                <option value="3600000" ${interval==='3600000'?'selected':''}>⏳ 60 دقيقة (1 hour)</option>
+                <option value="7200000" ${interval==='7200000'?'selected':''}>⏳ ساعتين (2 hours)</option>
+                <option value="10800000" ${interval==='10800000'?'selected':''}>⏳ 3 ساعات (3 hours)</option>
+                <option value="14400000" ${interval==='14400000'?'selected':''}>⏳ 4 ساعات (4 hours)</option>
+                <option value="18000000" ${interval==='18000000'?'selected':''}>⏳ 300 دقيقة (5 hours)</option>
               </select>
             </div>
             <button class="btn btn-danger btn-sm" onclick="localStorage.clear();location.reload()">🗑️ Clear Local Cache & Reset</button>
@@ -2472,7 +2481,10 @@ const S = {
 
     saveInterval(val){
       localStorage.setItem('refresh_interval', val);
-      UI.toast(`Auto-refresh interval set to ${parseInt(val)/1000}s`, 'success');
+      let ms = parseInt(val);
+      let msg = ms >= 60000 ? `${ms/60000}m` : `${ms/1000}s`;
+      UI.toast(`Auto-refresh interval set to ${msg}`, 'success');
+      App.setSection(App.cur); // Restart timer with new interval
     }
   }
 };

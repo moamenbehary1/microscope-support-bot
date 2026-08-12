@@ -45,12 +45,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);
 .brand small{font-size:.72rem;color:var(--dim);margin-top:2px;display:block}
 .nav-items{padding:6px 0;flex:1}
 .nav-item{
-  display:flex;align-items:center;gap:10px;padding:9px 16px;
+  display:flex;align-items:center;gap:10px;padding:10px 16px;
   cursor:pointer;color:var(--dim);font-size:.855rem;font-weight:500;
-  transition:all .15s;border-left:2px solid transparent;user-select:none
+  transition:all .2s ease;border-left:3px solid transparent;user-select:none;
+  border-radius:0 8px 8px 0;margin-right:8px
 }
-.nav-item:hover{background:var(--surface2);color:var(--text)}
-.nav-item.active{background:var(--surface2);color:var(--primary);border-left-color:var(--primary)}
+.nav-item:hover{background:var(--surface2);color:var(--text);transform:translateX(2px)}
+.nav-item.active{background:linear-gradient(90deg, rgba(99,102,241,0.2), transparent);color:var(--primary);border-left-color:var(--primary);font-weight:600}
 .nav-item .icon{font-size:1rem;min-width:20px;text-align:center}
 .nav-sep{height:1px;background:var(--border);margin:6px 0}
 .sidebar-foot{padding:12px;border-top:1px solid var(--border)}
@@ -341,6 +342,9 @@ input::placeholder{color:var(--muted)}
       <span id="req-badge"></span>
     </div>
     <div class="nav-sep"></div>
+    <div class="nav-item" data-s="broadcast"><span class="icon">📢</span>Broadcast</div>
+    <div class="nav-item" data-s="inbox"><span class="icon">📥</span>Feedback Inbox</div>
+    <div class="nav-item" data-s="export"><span class="icon">💾</span>Data Backup</div>
     <div class="nav-item" data-s="analytics"><span class="icon">📊</span>Analytics</div>
   </div>
   <div class="sidebar-foot">
@@ -356,13 +360,16 @@ input::placeholder{color:var(--muted)}
     <span class="live-pill">⚡ Changes are instant</span>
   </div>
   <div id="content">
-    <div id="pg-overview"  class="page active"></div>
-    <div id="pg-curriculum" class="page"></div>
-    <div id="pg-admins"    class="page"></div>
-    <div id="pg-users"     class="page"></div>
+    <div id="pg-overview"     class="page active"></div>
+    <div id="pg-curriculum"   class="page"></div>
+    <div id="pg-admins"       class="page"></div>
+    <div id="pg-users"        class="page"></div>
     <div id="pg-contributors" class="page"></div>
-    <div id="pg-requests"  class="page"></div>
-    <div id="pg-analytics" class="page"></div>
+    <div id="pg-requests"     class="page"></div>
+    <div id="pg-broadcast"    class="page"></div>
+    <div id="pg-inbox"        class="page"></div>
+    <div id="pg-export"       class="page"></div>
+    <div id="pg-analytics"    class="page"></div>
   </div>
 </div>
 
@@ -1544,7 +1551,7 @@ const S = {
         <div class="card tbl-wrap">
           <table>
             <thead><tr><th>ID</th><th>Name</th><th>Materials</th><th style="text-align:right">Action</th></tr></thead>
-            <tbody id="ctr-body"><tr><td colspan="5" class="loading-msg"><span class="spin"></span></td></tr></tbody>
+            <tbody id="ctr-body"><tr><td colspan="4" class="loading-msg"><span class="spin"></span></td></tr></tbody>
           </table>
         </div>`;
 
@@ -1558,28 +1565,69 @@ const S = {
         return;
       }
       tb.innerHTML=Object.entries(contributors).map(([id,d])=>{
-        const matsCount = materials && materials[id] ? Object.keys(materials[id]).length : 0;
+        const mats = materials && materials[id] ? materials[id] : {};
+        const matsCount = Object.keys(mats).length;
+        const nameEsc = encodeStr(d.name || id);
         return `<tr>
         <td><strong>${id}</strong></td>
         <td>${d.name||`<span style="color:var(--muted)">—</span>`}</td>
         <td><span class="badge badge-s">${matsCount} Files</span></td>
-        <td style="text-align:right">
-          <button class="btn btn-danger btn-sm" onclick="S.contributors.remove('${id}','${(d.name||id).replace(/'/g,"\\'")}')">
-            Remove
-          </button>
+        <td style="text-align:right;display:flex;gap:6px;justify-content:flex-end">
+          <button class="btn btn-ghost btn-sm" onclick="S.contributors.viewFiles('${id}','${nameEsc}')">📁 View Files</button>
+          <button class="btn btn-danger btn-sm" onclick="S.contributors.remove('${id}','${nameEsc}')">Remove & Wipe</button>
         </td>
       </tr>`;
       }).join('');
     },
+
+    async viewFiles(id, name){
+      const materials = await FB.get(`/contributor_materials/${id}`).catch(()=>null);
+      if(!materials || Object.keys(materials).length === 0){
+        UI.modal(`Files for ${name}`, `<p style="color:var(--dim)">No files uploaded by this contributor.</p>`, 'Close', false);
+        return;
+      }
+      const listHtml = Object.entries(materials).map(([matId, m])=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <strong>${m.name || matId}</strong><br>
+            <small style="color:var(--dim)">${m.track} &bull; ${m.subject} &bull; ${m.type}</small>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="S.contributors.deleteSingleFile('${id}','${matId}','${m.track}','${m.subject}','${m.type}')">Delete</button>
+        </div>
+      `).join('');
+      UI.modal(`Files uploaded by ${name}`, `<div style="max-height:300px;overflow-y:auto">${listHtml}</div>`, 'Close', false);
+    },
+
+    async deleteSingleFile(userId, matId, track, subject, type){
+      try {
+        await FB.del(`/curriculum/${track}/${subject}/${type}/${matId}`);
+        await FB.del(`/contributor_materials/${userId}/${matId}`);
+        UI.toast('File deleted', 'success');
+        document.getElementById('overlay').style.display='none';
+        this.load();
+      } catch(e) { UI.toast('Failed: '+e.message, 'error'); }
+    },
+
     async remove(id,name){
       const ok=await UI.modal('Remove Contributor?',
-        `<p style="color:var(--dim)">Remove <strong style="color:var(--text)">${name}</strong> as contributor?<br>
-        <small>Their uploaded materials will remain in the curriculum.</small></p>`,
-        'Remove',true);
+        `<p style="color:var(--dim)">Remove <strong style="color:var(--text)">${name}</strong>?<br>
+        <small style="color:var(--danger)">⚠️ All materials uploaded by this contributor will be automatically deleted from the curriculum.</small></p>`,
+        'Remove & Delete Materials',true);
       if(!ok) return;
       try{
+        // 1. Fetch contributor materials and delete from curriculum
+        const materials = await FB.get(`/contributor_materials/${id}`).catch(()=>null);
+        if(materials){
+          for(const [matId, m] of Object.entries(materials)){
+            if(m.track && m.subject && m.type){
+              await FB.del(`/curriculum/${m.track}/${m.subject}/${m.type}/${matId}`).catch(()=>{});
+            }
+          }
+          await FB.del(`/contributor_materials/${id}`).catch(()=>{});
+        }
+        // 2. Delete contributor entry
         await FB.del(`/contributors/${id}`);
-        UI.toast(`${name} removed`,'success');
+        UI.toast(`${name} removed & materials deleted`,'success');
         this.load();
       }catch(e){ UI.toast('Failed: '+e.message,'error'); }
     }
@@ -1669,31 +1717,166 @@ const S = {
     }
   },
 
-  /* ── Analytics ── */
+  /* ── Broadcast Center ── */
+  broadcast:{
+    async load(){
+      const pg=document.getElementById('pg-broadcast');
+      pg.innerHTML=`
+        <div class="sec-head"><h2>📢 Broadcast Center</h2></div>
+        <div class="card" style="margin-bottom:20px">
+          <h3 style="font-size:1rem;margin-bottom:12px">Create New Broadcast</h3>
+          <div class="form-group">
+            <label>Message Title</label>
+            <input type="text" id="bc-title" placeholder="e.g. System Maintenance Notice">
+          </div>
+          <div class="form-group">
+            <label>Message Body (Markdown supported)</label>
+            <textarea id="bc-body" rows="4" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px;color:var(--text);width:100%;font-family:inherit;outline:none" placeholder="Type announcement here..."></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="S.broadcast.send()">🚀 Dispatch Broadcast</button>
+        </div>
+        <div class="card tbl-wrap">
+          <h3 style="font-size:1rem;margin-bottom:12px">Past Broadcasts</h3>
+          <table>
+            <thead><tr><th>Date</th><th>Title</th><th>Message</th><th style="text-align:right">Action</th></tr></thead>
+            <tbody id="bc-body-list"><tr><td colspan="4" class="loading-msg"><span class="spin"></span></td></tr></tbody>
+          </table>
+        </div>`;
+
+      const bcs = await FB.get('/broadcasts').catch(()=>null);
+      const tb = document.getElementById('bc-body-list');
+      if(!bcs || Object.keys(bcs).length === 0){
+        tb.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">No previous broadcasts</td></tr>`;
+        return;
+      }
+      tb.innerHTML = Object.entries(bcs).reverse().map(([id, b])=>`
+        <tr>
+          <td><small style="color:var(--dim)">${new Date(b.timestamp||Date.now()).toLocaleDateString()}</small></td>
+          <td><strong>${b.title||'Notice'}</strong></td>
+          <td>${b.body||'—'}</td>
+          <td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="S.broadcast.delete('${id}')">Delete</button></td>
+        </tr>
+      `).join('');
+    },
+    async send(){
+      const title = document.getElementById('bc-title').value.trim();
+      const body = document.getElementById('bc-body').value.trim();
+      if(!body){ UI.toast('Please enter a message body', 'error'); return; }
+      try {
+        const id = 'bc_' + Date.now();
+        await FB.put(`/broadcasts/${id}`, { title, body, timestamp: Date.now() });
+        UI.toast('Broadcast queued successfully!', 'success');
+        document.getElementById('bc-title').value = '';
+        document.getElementById('bc-body').value = '';
+        this.load();
+      } catch(e) { UI.toast('Failed: '+e.message, 'error'); }
+    },
+    async delete(id){
+      try {
+        await FB.del(`/broadcasts/${id}`);
+        UI.toast('Broadcast removed', 'success');
+        this.load();
+      } catch(e) { UI.toast('Failed: '+e.message, 'error'); }
+    }
+  },
+
+  /* ── Inbox / Feedback ── */
+  inbox:{
+    async load(){
+      const pg=document.getElementById('pg-inbox');
+      pg.innerHTML=`
+        <div class="sec-head"><h2>📥 Student Feedback Inbox</h2></div>
+        <div class="card tbl-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>User ID</th><th>Message</th><th style="text-align:right">Action</th></tr></thead>
+            <tbody id="inbox-body"><tr><td colspan="4" class="loading-msg"><span class="spin"></span></td></tr></tbody>
+          </table>
+        </div>`;
+
+      const msgs = await FB.get('/feedback').catch(()=>null);
+      const tb = document.getElementById('inbox-body');
+      if(!msgs || Object.keys(msgs).length === 0){
+        tb.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">No messages in feedback inbox</td></tr>`;
+        return;
+      }
+      tb.innerHTML = Object.entries(msgs).reverse().map(([id, m])=>`
+        <tr>
+          <td><small style="color:var(--dim)">${new Date(m.timestamp||Date.now()).toLocaleDateString()}</small></td>
+          <td><strong>${m.userId||id}</strong></td>
+          <td>${m.text||'—'}</td>
+          <td style="text-align:right"><button class="btn btn-success btn-sm" onclick="S.inbox.resolve('${id}')">✓ Resolve</button></td>
+        </tr>
+      `).join('');
+    },
+    async resolve(id){
+      try {
+        await FB.del(`/feedback/${id}`);
+        UI.toast('Feedback resolved', 'success');
+        this.load();
+      } catch(e) { UI.toast('Failed: '+e.message, 'error'); }
+    }
+  },
+
+  /* ── Data Export ── */
+  export:{
+    async load(){
+      const pg=document.getElementById('pg-export');
+      pg.innerHTML=`
+        <div class="sec-head"><h2>💾 Data Backup & Export</h2></div>
+        <div class="card" style="max-width:500px">
+          <p style="color:var(--dim);margin-bottom:16px">Download a full JSON backup of the bot curriculum, users list, and contributors data for offline security.</p>
+          <button class="btn btn-primary" onclick="S.export.download()">⬇️ Download Full JSON Backup</button>
+        </div>`;
+    },
+    async download(){
+      try {
+        UI.toast('Generating backup...', 'info');
+        const [curriculum, users, contributors] = await Promise.all([
+          FB.get('/curriculum').catch(()=>({})),
+          FB.get('/users').catch(()=>({})),
+          FB.get('/contributors').catch(()=>({}))
+        ]);
+        const backup = { exportedAt: new Date().toISOString(), curriculum, users, contributors };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `bot_backup_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        UI.toast('Backup downloaded!', 'success');
+      } catch(e) { UI.toast('Backup failed: '+e.message, 'error'); }
+    }
+  },
+
+  /* ── Enhanced Analytics ── */
   analytics:{
     async load(){
       const pg=document.getElementById('pg-analytics');
       pg.innerHTML=`<div class="sec-head"><h2>📊 Analytics</h2></div>
         <div class="loading-msg"><span class="spin"></span> Loading…</div>`;
 
-      const [analytics,users]=await Promise.all([
+      const [analytics, users, curriculum, contributors]=await Promise.all([
         FB.get('/analytics/top_accessed').catch(()=>null),
         FB.get('/users').catch(()=>null),
+        FB.get('/curriculum').catch(()=>null),
+        FB.get('/contributors').catch(()=>null),
       ]);
 
       const uCnt=users?Object.keys(users).length:0;
+      const cCnt=contributors?Object.keys(contributors).length:0;
+      const trackCnt=curriculum?Object.keys(curriculum).length:0;
       const sorted=analytics?Object.values(analytics).sort((a,b)=>b.count-a.count):[];
       const total=sorted.reduce((s,m)=>s+m.count,0);
       const max=sorted[0]?.count||1;
 
       pg.innerHTML=`
-        <div class="sec-head"><h2>📊 Analytics</h2></div>
+        <div class="sec-head"><h2>📊 Enhanced Analytics</h2></div>
         <div class="grid grid-4" style="margin-bottom:20px">
           <div class="stat-card"><span class="stat-ico">👤</span><span class="stat-lbl">Total Users</span><span class="stat-val">${uCnt}</span></div>
-          <div class="stat-card"><span class="stat-ico">📄</span><span class="stat-lbl">Tracked Materials</span><span class="stat-val">${sorted.length}</span></div>
+          <div class="stat-card"><span class="stat-ico">📚</span><span class="stat-lbl">Active Tracks</span><span class="stat-val">${trackCnt}</span></div>
+          <div class="stat-card"><span class="stat-ico">🤝</span><span class="stat-lbl">Contributors</span><span class="stat-val">${cCnt}</span></div>
           <div class="stat-card"><span class="stat-ico">👁️</span><span class="stat-lbl">Total Views</span><span class="stat-val">${total}</span></div>
-          <div class="stat-card"><span class="stat-ico">🏆</span><span class="stat-lbl">Most Viewed</span>
-            <span class="stat-val" style="font-size:${sorted[0]?.name?.length>10?'.85rem':'1.1rem'}">${sorted[0]?.name||'—'}</span></div>
         </div>
         <div class="card">
           <div style="font-weight:600;margin-bottom:16px">Top Accessed Materials</div>

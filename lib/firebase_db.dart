@@ -171,6 +171,7 @@ class FirebaseDb {
   }
 
   static Future<void> removeContributor(int userId) async {
+    await deleteAllContributorMaterials(userId);
     await _delete('/contributors/$userId');
   }
 
@@ -249,6 +250,21 @@ class FirebaseDb {
 
   static Future<void> removeContributorMaterialRef(int userId, String materialId) async {
     await _delete('/contributor_materials/$userId/$materialId');
+  }
+
+  static Future<void> deleteAllContributorMaterials(int userId) async {
+    final materials = await getContributorMaterials(userId);
+    for (var entry in materials.entries) {
+      final matId = entry.key;
+      final data = entry.value as Map<String, dynamic>;
+      final track = data['track'] as String? ?? '';
+      final subject = data['subject'] as String? ?? '';
+      final type = data['type'] as String? ?? '';
+      if (track.isNotEmpty && subject.isNotEmpty && type.isNotEmpty) {
+        await deleteMaterial(track, subject, type, matId);
+      }
+    }
+    await _delete('/contributor_materials/$userId');
   }
 
   // Delete material

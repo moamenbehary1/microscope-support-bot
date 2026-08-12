@@ -521,9 +521,59 @@ void registerContributorUploadHandlers(Bot bot) {
     for (var t in tracks) {
       keyboard.row().add(t, 'c_mat_track:$t');
     }
+    keyboard.row().add('🗑️ مسح جميع موادي', 'c_del_all_mats_confirm');
     keyboard.row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
 
     await ctx.editMessageText('📋 موادي:\nاختر المسار:', replyMarkup: keyboard);
+  });
+
+  // Bulk Delete: All Materials
+  bot.callbackQuery('c_del_all_mats_confirm', (ctx) async {
+    final keyboard = InlineKeyboard()
+        .row().add('⚠️ نعم، احذف جميع موادي', 'c_del_all_mats_exec')
+        .row().add('🔙 تراجع', 'contrib_materials');
+    await ctx.editMessageText('هل أنت متأكد من رغبتك في حذف **جميع** المواد التي قمت برفعها؟ لا يمكن التراجع عن هذا الإجراء.', replyMarkup: keyboard, parseMode: ParseMode.markdown);
+  });
+
+  bot.callbackQuery('c_del_all_mats_exec', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    await ctx.editMessageText('جاري الحذف...');
+    await FirebaseDb.deleteAllContributorMaterials(userId);
+    final kb = InlineKeyboard().row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
+    await ctx.editMessageText('✅ تم حذف جميع موادك بنجاح.', replyMarkup: kb);
+  });
+
+  // Bulk Delete: Track Materials
+  bot.callbackQuery(RegExp(r'^c_del_track_mats_confirm:(.+)'), (ctx) async {
+    final track = ctx.callbackQuery!.data!.substring('c_del_track_mats_confirm:'.length);
+    final keyboard = InlineKeyboard()
+        .row().add('⚠️ نعم، احذف مواد مسار $track', 'c_del_track_mats_exec:$track')
+        .row().add('🔙 تراجع', 'c_mat_track:$track');
+    await ctx.editMessageText('هل أنت متأكد من رغبتك في حذف جميع موادك في مسار **$track**؟ لا يمكن التراجع عن هذا الإجراء.', replyMarkup: keyboard, parseMode: ParseMode.markdown);
+  });
+
+  bot.callbackQuery(RegExp(r'^c_del_track_mats_exec:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    final track = ctx.callbackQuery!.data!.substring('c_del_track_mats_exec:'.length);
+    if (userId == null) return;
+    
+    await ctx.editMessageText('جاري الحذف...');
+    final materials = await FirebaseDb.getContributorMaterials(userId);
+    for (var entry in materials.entries) {
+      final matId = entry.key;
+      final data = entry.value;
+      if (data['track'] == track) {
+        final subject = data['subject'] as String? ?? '';
+        final type = data['type'] as String? ?? '';
+        await FirebaseDb.deleteMaterial(track, subject, type, matId);
+        await FirebaseDb.removeContributorMaterialRef(userId, matId);
+      }
+    }
+    
+    final keyboard = InlineKeyboard().row().add('🔙 رجوع إلى موادي', 'contrib_materials');
+    await ctx.editMessageText('✅ تم حذف جميع مواد مسار $track بنجاح.', replyMarkup: keyboard);
   });
 
   bot.callbackQuery(RegExp(r'^c_mat_track:(.+)'), (ctx) async {
@@ -543,6 +593,7 @@ void registerContributorUploadHandlers(Bot bot) {
     for (var s in subjects) {
       keyboard.row().add(s, 'c_mat_subj:$track:$s');
     }
+    keyboard.row().add('🗑️ مسح جميع مواد المسار', 'c_del_track_mats_confirm:$track');
     keyboard.row().add('🔙 رجوع', 'contrib_materials');
 
     await ctx.editMessageText('📋 موادي - $track:\nاختر المادة:', replyMarkup: keyboard);
@@ -599,7 +650,6 @@ void registerContributorUploadHandlers(Bot bot) {
     await ctx.editMessageText('📋 موادي - $type:\nاختر الملف لحذفه:', replyMarkup: keyboard);
   });
 
-  // Contributor delete their own material
   bot.callbackQuery(RegExp(r'^contrib_del_mat:(.*?):(.*?):(.*?):(.*)'), (ctx) async {
     final data = ctx.callbackQuery?.data;
     final userId = ctx.from?.id;

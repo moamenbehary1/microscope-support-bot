@@ -396,6 +396,7 @@ input::placeholder{color:var(--muted)}
     <div class="status-dot" id="sdot"></div>
     <span id="status-lbl">Checking...</span>
     <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+      <button class="btn btn-primary btn-sm" onclick="App.openFullBotConfigModal()">🤖 Bot Config</button>
       <button class="btn btn-ghost btn-sm" onclick="App.toggleTheme()" id="theme-btn">🌙 Dark</button>
       <button class="btn btn-ghost btn-sm" onclick="App.toggleLang()" id="lang-btn">🌐 العربية</button>
       <span class="live-pill">⚡ Live Sync</span>
@@ -793,6 +794,67 @@ const App = {
         }
       }
     });
+  },
+
+  async openFullBotConfigModal(){
+    UI.toast('Loading Bot Configuration...', 'info');
+    const settings = await FB.get('/settings').catch(()=>({}));
+    const maint = settings?.maintenance === true;
+    const banner = settings?.global_banner || '';
+    const welcome = settings?.welcome_text || 'مرحباً بك في البوت التعليمي! 📚';
+    const itemsPerPage = settings?.items_per_page || 5;
+
+    const html = `
+      <div style="max-height:420px;overflow-y:auto;padding-right:6px">
+        <h4 style="color:var(--primary);margin-bottom:10px">🤖 General Bot Settings</h4>
+        <div class="form-group">
+          <label>Welcome Message</label>
+          <input type="text" id="bc-welcome" value="${welcome}" placeholder="Welcome message text">
+        </div>
+        <div class="form-group">
+          <label>Global Announcement Banner</label>
+          <input type="text" id="bc-banner" value="${banner}" placeholder="Active alert text for students">
+        </div>
+
+        <h4 style="color:var(--primary);margin-top:16px;margin-bottom:10px">⚙️ Operational Features</h4>
+        <div class="form-group">
+          <label>Maintenance Mode Status</label>
+          <select id="bc-maint">
+            <option value="false" ${!maint?'selected':''}>✅ Normal Operation (Active)</option>
+            <option value="true" ${maint?'selected':''}>🛡️ Maintenance Mode (Paused)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Items Per Keyboard Page</label>
+          <select id="bc-items">
+            <option value="3" ${itemsPerPage==3?'selected':''}>3 Items</option>
+            <option value="5" ${itemsPerPage==5?'selected':''}>5 Items (Default)</option>
+            <option value="10" ${itemsPerPage==10?'selected':''}>10 Items</option>
+          </select>
+        </div>
+      </div>
+    `;
+
+    const ok = await UI.modal('🤖 Complete Bot Configuration', html, 'Save Bot Settings');
+    if(!ok) return;
+
+    try {
+      const newWelcome = document.getElementById('bc-welcome').value.trim();
+      const newBanner = document.getElementById('bc-banner').value.trim();
+      const newMaint = document.getElementById('bc-maint').value === 'true';
+      const newItems = parseInt(document.getElementById('bc-items').value);
+
+      await Promise.all([
+        FB.put('/settings/welcome_text', newWelcome),
+        FB.put('/settings/global_banner', newBanner),
+        FB.put('/settings/maintenance', newMaint),
+        FB.put('/settings/items_per_page', newItems)
+      ]);
+
+      UI.toast('Bot Configuration Updated Successfully! 🚀', 'success');
+    } catch(e) {
+      UI.toast('Failed to save bot settings: '+e.message, 'error');
+    }
   },
 
   start(){

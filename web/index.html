@@ -999,6 +999,7 @@ const S = {
             <button class="btn btn-ghost btn-sm" onclick="S.curriculum.refresh()" title="Refresh">🔄</button>
             <button class="btn btn-primary btn-sm" onclick="S.curriculum.addTrack()">+ Add Track</button>
             <button class="btn btn-primary btn-sm" style="background:#00B8D9; border-color:#00B8D9; border-radius:12px; font-family:'Inter', sans-serif; font-weight:600; color:#fff; box-shadow:0 4px 12px rgba(0,184,217,0.2);" onclick="S.curriculum.addSubjectsBulk()">+ Add Subjects</button>
+            <button class="btn btn-primary btn-sm" style="background:#8b5cf6; border-color:#8b5cf6; border-radius:12px; font-family:'Inter', sans-serif; font-weight:600; color:#fff; box-shadow:0 4px 12px rgba(139,92,246,0.2);" onclick="S.curriculum.uploadJSON()" title="Upload JSON mapping departments to subjects">📁 Upload JSON</button>
           </div>
         </div>
         <div class="tree-search">
@@ -1307,6 +1308,68 @@ const S = {
           submitBtn.innerText = 'Add Subjects';
         }
       };
+    },
+
+    uploadJSON: function() {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.json,application/json';
+      fileInput.onchange = e => {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e2) => {
+          try {
+            const data = JSON.parse(e2.target.result);
+            if(typeof data !== 'object' || Array.isArray(data) || data === null) {
+              if (window.UI && window.UI.toast) window.UI.toast('Invalid format. Must be a JSON object.', 'error');
+              return;
+            }
+            
+            const departments = Object.keys(data);
+            if(departments.length === 0) {
+              if (window.UI && window.UI.toast) window.UI.toast('JSON is empty.', 'error');
+              return;
+            }
+
+            let valid = true;
+            for(const dep of departments) {
+              if(!Array.isArray(data[dep])) {
+                valid = false;
+                break;
+              }
+            }
+            
+            if(!valid) {
+              if (window.UI && window.UI.toast) window.UI.toast('Values must be arrays of subjects.', 'error');
+              return;
+            }
+
+            const promises = [];
+            for(const dep of departments) {
+              for(const subj of data[dep]) {
+                 if(typeof subj === 'string' && subj.trim() !== '') {
+                   promises.push(FB.put(`/curriculum/${encodeURIComponent(dep)}/${encodeURIComponent(subj)}`, {_placeholder: true}));
+                 }
+              }
+            }
+            
+            if (window.UI && window.UI.toast) window.UI.toast('Uploading JSON data...', 'info');
+            await Promise.all(promises);
+            
+            if (window.UI && window.UI.toast) window.UI.toast('JSON uploaded and curriculum updated successfully!', 'success');
+            
+            if(this.fetchAndRender) await this.fetchAndRender();
+            else if(window.S && window.S.curriculum) await window.S.curriculum.fetchAndRender();
+
+          } catch (err) {
+            console.error(err);
+            if (window.UI && window.UI.toast) window.UI.toast('Failed to process JSON: ' + err.message, 'error');
+          }
+        };
+        reader.readAsText(file);
+      };
+      fileInput.click();
     },
 
     async addTrack(){

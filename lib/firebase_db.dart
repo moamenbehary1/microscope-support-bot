@@ -348,10 +348,14 @@ class FirebaseDb {
 
   // ── Tables & Schedule ────────────────────────────────────────────────
   
-  static Future<void> saveTable(int userId, String tableName, String track, List<String> subjects) async {
+  static Future<void> saveTable(int userId, String tableName, String track, List<String> subjectsWithTracks) async {
+    // Extract pure subject names for subscriptions, while saving subjectsWithTracks to DB
+    final List<String> subjects = subjectsWithTracks.map((s) => s.contains('|') ? s.split('|')[1] : s).toList();
+    
     await _put('/users/$userId/tables/$tableName', {
       'track': track,
       'subjects': subjects,
+      'subjects_with_tracks': subjectsWithTracks,
     });
     // Update subscriptions
     for (var subject in subjects) {

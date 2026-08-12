@@ -57,9 +57,14 @@ void registerTableHandlers(Bot bot) {
     final state = Utils.tableCreationStates[userId];
     if (state == null) return;
     
-    state['track'] = trackName;
+    if (!state.containsKey('track')) {
+      state['track'] = trackName;
+    }
+    state['current_track'] = trackName;
     state['step'] = 'subjects';
-    state['subjects'] = <String>[]; // List to hold selected subjects
+    if (state['subjects_with_tracks'] == null) {
+      state['subjects_with_tracks'] = <String>[];
+    }
 
     await _showSubjectsSelection(ctx, userId, trackName, 0);
   });
@@ -73,7 +78,8 @@ void registerTableHandlers(Bot bot) {
     if (state == null) return;
     
     final page = int.parse(data.split('page_')[1]);
-    await _showSubjectsSelection(ctx, userId, state['track'], page);
+    final currentTrack = state['current_track'] as String? ?? state['track'] as String;
+    await _showSubjectsSelection(ctx, userId, currentTrack, page);
   });
 
   bot.callbackQuery(RegExp(r'^tab_subj:(?!page_)(.+)'), (ctx) async {
@@ -86,18 +92,34 @@ void registerTableHandlers(Bot bot) {
     final state = Utils.tableCreationStates[userId];
     if (state == null) return;
 
-    List<String> selected = (state['subjects'] as List<String>?) ?? [];
-    if (selected.contains(subj)) {
-      selected.remove(subj);
-    } else {
-      selected.add(subj);
-    }
-    state['subjects'] = selected;
+    final currentTrack = state['current_track'] as String? ?? state['track'] as String;
+    final subjWithTrack = '$currentTrack|$subj';
 
-    // We must extract the current page from the callback message if possible, or reset to 0.
-    // To keep it simple, we can store current page in state.
+    List<String> selected = (state['subjects_with_tracks'] as List<String>?) ?? [];
+    if (selected.contains(subjWithTrack)) {
+      selected.remove(subjWithTrack);
+    } else {
+      selected.add(subjWithTrack);
+    }
+    state['subjects_with_tracks'] = selected;
+
     final page = state['current_page'] ?? 0;
-    await _showSubjectsSelection(ctx, userId, state['track'], page);
+    await _showSubjectsSelection(ctx, userId, currentTrack, page);
+  });
+
+  bot.callbackQuery('tab_back_to_tracks', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    await ctx.answerCallbackQuery();
+    
+    final state = Utils.tableCreationStates[userId];
+    if (state == null) return;
+    
+    state['step'] = 'track';
+    
+    final tracks = await FirebaseDb.getTracks();
+    final keyboard = Utils.paginateKeyboard(tracks, page: 0, prefix: 'tab_track:', backData: 'table_dash');
+    await ctx.editMessageText('اختر الفرقة الدراسية (Track) التي تريد إضافة مواد منها:', replyMarkup: keyboard);
   });
 
   bot.callbackQuery('tab_done', (ctx) async {
@@ -110,8 +132,8 @@ void registerTableHandlers(Bot bot) {
       return;
     }
     
-    final subjects = (state['subjects'] as List<String>?) ?? [];
-    if (subjects.isEmpty) {
+    final subjectsWithTracks = (state['subjects_with_tracks'] as List<String>?) ?? [];
+    if (subjectsWithTracks.isEmpty) {
       await ctx.answerCallbackQuery(text: 'الرجاء اختيار مادة واحدة على الأقل!', showAlert: true);
       return;
     }
@@ -120,7 +142,7 @@ void registerTableHandlers(Bot bot) {
     final name = state['name'] ?? 'بدون اسم';
     final track = state['track'] ?? '';
     
-    await FirebaseDb.saveTable(userId, name, track, subjects);
+    await FirebaseDb.saveTable(userId, name, track, subjectsWithTracks);
     Utils.tableCreationStates.remove(userId);
     
     await ctx.editMessageText('تم حفظ الجدول "$name" بنجاح وتم تفعيل الإشعارات للمواد المحددة. ✅');
@@ -158,11 +180,25 @@ void registerTableHandlers(Bot bot) {
     if (!tables.containsKey(tableName)) return;
 
     final track = tables[tableName]['track'];
+    final subjectsWithTracks = (tables[tableName]['subjects_with_tracks'] as List<dynamic>?)?.cast<String>();
     final subjects = (tables[tableName]['subjects'] as List<dynamic>).cast<String>();
 
     final kb = InlineKeyboard();
-    for (var s in subjects) {
-      kb.row().add('📚 $s', 'track:$track:$s');
+    if (subjectsWithTracks != null) {
+      for (var s in subjectsWithTracks) {
+        if (s.contains('|')) {
+          final parts = s.split('|');
+          final t = parts[0];
+          final sub = parts[1];
+          kb.row().add('📚 $sub', 'subj:$t:$sub');
+        } else {
+          kb.row().add('📚 $s', 'subj:$track:$s');
+        }
+      }
+    } else {
+      for (var s in subjects) {
+        kb.row().add('📚 $s', 'subj:$track:$s');
+      }
     }
     kb.row().add('🗑 مسح الجدول', 'del_table:$tableName');
     kb.row().add('🔙 رجوع لجداولك', 'view_tables');
@@ -223,7 +259,7 @@ Future<void> handleTableText(Context ctx, Bot bot) async {
     }
     
     final keyboard = Utils.paginateKeyboard(tracks, page: 0, prefix: 'tab_track:', backData: 'table_dash');
-    await ctx.reply('تم حفظ الاسم: $text\n\nاختر الفرقة الدراسية (Track):', replyMarkup: keyboard);
+    await ctx.reply('تم حفظ الاسم: $text\n\nاختر الفرقة الدراسية (Track) لتبدأ إضافة المواد:', replyMarkup: keyboard);
   }
 }
 
@@ -253,16 +289,20 @@ Future<void> _showSubjectsSelection(Context ctx, int userId, String trackName, i
     return;
   }
 
-  List<String> selected = (state['subjects'] as List<String>?) ?? [];
+  List<String> selectedWithTracks = (state['subjects_with_tracks'] as List<String>?) ?? [];
+  List<String> selectedSubjects = selectedWithTracks
+      .where((s) => s.startsWith('$trackName|'))
+      .map((s) => s.split('|')[1])
+      .toList();
 
   final kb = Utils.paginateMultiSelectKeyboard(
     subjects,
-    selected,
+    selectedSubjects,
     page: page,
     itemsPerPage: 7,
     togglePrefix: 'tab_subj:',
     doneData: 'tab_done',
-    backData: 'table_dash',
+    backData: 'tab_back_to_tracks',
   );
 
   await ctx.editMessageText('المواد المتاحة في $trackName:\n(اختر المواد المطلوبة ثم اضغط ✅ Done)', replyMarkup: kb);

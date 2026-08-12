@@ -1290,7 +1290,7 @@ const S = {
         
         try {
           const promises = subjects.map(subj => {
-             return window.FB.put(\`/curriculum/\${encodeURIComponent(type)}/\${encodeURIComponent(subj)}\`, {_placeholder: true});
+             return FB.put(`/curriculum/${encodeURIComponent(type)}/${encodeURIComponent(subj)}`, {_placeholder: true});
           });
           await Promise.all(promises);
           

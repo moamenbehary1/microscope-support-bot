@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>🔬 Microscope Bot — Admin Panel</title>
+<title>🔬 بوت الميكروسكوب — لوحة التحكم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -29,19 +29,19 @@ html{font-size:14px;scroll-behavior:smooth}
 }
 
 /* ── Global Glassmorphism & Animations ── */
-body{font-family:'Inter',sans-serif;background:radial-gradient(circle at top right, #1a153a, #090d16 60%);color:var(--text);display:flex;min-height:100vh;overflow:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow:hidden}
 
 #sidebar{
-  width:var(--sidebar);background:rgba(15, 21, 37, 0.7);
+  width:var(--sidebar);background:var(--surface2);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  border-right:1px solid var(--border);
+  border-left:1px solid var(--border);
   display:flex;flex-direction:column;
-  position:fixed;left:0;top:0;bottom:0;z-index:10;
+  position:fixed;right:0;top:0;bottom:0;z-index:10;
   transition:transform .25s ease
 }
-#main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+#main{margin-right:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
 #header{
-  height:var(--hdr);background:rgba(15, 21, 37, 0.6);
+  height:var(--hdr);background:var(--surface);
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   border-bottom:1px solid var(--border);
   display:flex;align-items:center;padding:0 24px;gap:12px;
@@ -78,16 +78,16 @@ body{font-family:'Inter',sans-serif;background:radial-gradient(circle at top rig
 .nav-item{
   display:flex;align-items:center;gap:10px;padding:10px 16px;
   cursor:pointer;color:var(--dim);font-size:.855rem;font-weight:500;
-  transition:all .2s ease;border-left:3px solid transparent;user-select:none;
-  border-radius:0 8px 8px 0;margin-right:8px
+  transition:all .2s ease;border-right:3px solid transparent;user-select:none;
+  border-radius:8px 0 0 8px;margin-left:8px
 }
 .nav-item:hover{background:var(--surface2);color:var(--text);transform:translateX(2px)}
-.nav-item.active{background:linear-gradient(90deg, rgba(99,102,241,0.2), transparent);color:var(--primary);border-left-color:var(--primary);font-weight:600}
+.nav-item.active{background:linear-gradient(-90deg, rgba(99,102,241,0.2), transparent);color:var(--primary);border-right-color:var(--primary);font-weight:600}
 .nav-item .icon{font-size:1rem;min-width:20px;text-align:center}
 .nav-sep{height:1px;background:var(--border);margin:6px 0}
 .sidebar-foot{padding:12px;border-top:1px solid var(--border)}
 #req-badge{
-  margin-left:auto;background:rgba(245,158,11,.18);color:var(--warning);
+  margin-right:auto;background:rgba(245,158,11,.18);color:var(--warning);
   border:1px solid rgba(245,158,11,.3);border-radius:20px;padding:1px 7px;
   font-size:.68rem;font-weight:700;display:none
 }
@@ -101,7 +101,7 @@ body{font-family:'Inter',sans-serif;background:radial-gradient(circle at top rig
 .status-dot.offline{background:var(--danger)}
 #status-lbl{font-size:.8rem;color:var(--dim)}
 .live-pill{
-  margin-left:auto;background:rgba(34,197,94,.1);color:var(--success);
+  margin-right:auto;background:rgba(34,197,94,.1);color:var(--success);
   border:1px solid rgba(34,197,94,.25);border-radius:20px;padding:3px 11px;
   font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap
 }
@@ -129,7 +129,7 @@ body{font-family:'Inter',sans-serif;background:radial-gradient(circle at top rig
 }
 .sec-head{display:flex;align-items:center;gap:12px;margin-bottom:20px}
 .sec-head h2{font-size:1.1rem;font-weight:600}
-.sec-head .actions{margin-left:auto;display:flex;gap:8px}
+.sec-head .actions{margin-right:auto;display:flex;gap:8px}
 
 /* ── Buttons ── */
 .btn{
@@ -372,6 +372,14 @@ input::placeholder{color:var(--muted)}
   .tree-row.subject-row{margin-left:12px}
   .tree-row.type-row{margin-left:24px}
 }
+
+.sidebar-collapsed #sidebar { transform: translateX(100%); }
+.sidebar-collapsed #main { margin-right: 0 !important; }
+@media(max-width:768px){
+  #sidebar { transform: translateX(100%); }
+  #main { margin-right: 0 !important; }
+  .sidebar-collapsed #sidebar { transform: translateX(0); }
+}
 </style>
 </head>
 <body>
@@ -380,11 +388,11 @@ input::placeholder{color:var(--muted)}
 <nav id="sidebar">
   <div class="brand">
     <h1>🔬 Bot Panel</h1>
-    <small>Admin Dashboard</small>
+    <small>لوحة تحكم المشرف</small>
   </div>
   <div class="nav-items" id="nav-menu">
-    <div class="nav-item active" data-s="overview"><span class="icon">🏠</span>Overview</div>
-    <div class="nav-item" data-s="curriculum"><span class="icon">📚</span>Curriculum</div>
+    <div class="nav-item active" data-s="overview"><span class="icon">🏠</span>نظرة عامة</div>
+    <div class="nav-item" data-s="curriculum"><span class="icon">📚</span>المناهج</div>
     <div class="nav-item" data-s="admins"><span class="icon">👑</span>Admins</div>
     <div class="nav-item" data-s="users"><span class="icon">👥</span>Users</div>
     <div class="nav-item" data-s="contributors"><span class="icon">🤝</span>Contributors</div>
@@ -413,9 +421,10 @@ input::placeholder{color:var(--muted)}
 <!-- ─── Main ─── -->
 <div id="main">
   <div id="header">
+  <button class="btn btn-icon" onclick="document.body.classList.toggle('sidebar-collapsed')" style="background:transparent;border:none;font-size:1.2rem;cursor:pointer;color:var(--text)">☰</button>
     <div class="status-dot" id="sdot"></div>
     <span id="status-lbl">Checking...</span>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+    <div style="margin-right:auto;display:flex;align-items:center;gap:10px">
       <button class="btn btn-primary btn-sm" onclick="App.openFullBotConfigModal()">🤖 Bot Config</button>
       <button class="btn btn-ghost btn-sm" onclick="App.toggleTheme()" id="theme-btn">🌙 Dark</button>
       <button class="btn btn-ghost btn-sm" onclick="App.toggleLang()" id="lang-btn">🌐 العربية</button>
@@ -486,7 +495,7 @@ input::placeholder{color:var(--muted)}
     <h3 id="m-title">—</h3>
     <div id="m-body"></div>
     <div class="mfoot">
-      <button class="btn btn-ghost" onclick="UI.closeModal(false)">Cancel</button>
+      <button class="btn btn-ghost" onclick="UI.closeModal(false)">إلغاء</button>
       <button class="btn btn-primary" id="m-ok">Confirm</button>
     </div>
   </div>
@@ -698,7 +707,101 @@ const App = {
   cur:'overview',
   timer:null,
 
-  async init(){
+  async 
+    team: {
+      members: [],
+      files: [],
+      init(){
+        this.loadMembers();
+        this.loadFiles();
+        
+        // Check for invite link
+        const urlParams = new URLSearchParams(window.location.search);
+        const inviteData = urlParams.get('invite');
+        if(inviteData){
+          document.getElementById('sidebar').style.display = 'none';
+          document.getElementById('main').style.display = 'none';
+          document.getElementById('registration-page').style.display = 'flex';
+          try {
+            const data = JSON.parse(atob(inviteData));
+            document.getElementById('reg-role-desc').innerText = `أنت مدعو للانضمام كـ: ${data.r}`;
+            this._currentInvite = data;
+          } catch(e) {
+            alert('رابط الدعوة غير صالح!');
+          }
+        }
+      },
+      async loadMembers(){
+        FB.get('/team_members', (d)=>{
+          this.members = d ? Object.entries(d).map(([k,v])=>({id:k, ...v})) : [];
+          this.renderMembers();
+        });
+      },
+      renderMembers(){
+        const tb = document.getElementById('team-list-tbody');
+        if(!tb) return;
+        tb.innerHTML = this.members.map(m=>`
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:12px"><b>${m.name}</b><br><small style="color:var(--dim)">${m.phone}</small></td>
+            <td style="padding:12px">
+              <span class="tree-badge" style="background:rgba(99,102,241,0.15);color:var(--primary)">${m.role}</span>
+            </td>
+            <td style="padding:12px">${m.access === 'edit' ? 'مدير (صلاحيات كاملة)' : (m.access === 'view' ? 'عضو' : 'محدود')}</td>
+            <td style="padding:12px;color:var(--dim)">${new Date(m.date).toLocaleDateString('ar-EG')}</td>
+            <td style="padding:12px">
+              <button class="btn btn-sm" style="color:var(--danger);border-color:var(--danger);background:transparent" onclick="S.team.deleteMember('${m.id}')">حذف</button>
+            </td>
+          </tr>
+        `).join('') || `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--dim)">لا يوجد أعضاء حالياً.</td></tr>`;
+      },
+      async deleteMember(id){
+        if(!confirm('هل أنت متأكد من حذف هذا العضو؟')) return;
+        await FB.del(`/team_members/${id}`);
+        toast('تم حذف العضو بنجاح');
+      },
+      showInviteModal(){
+        document.getElementById('invite-modal').classList.add('active');
+        document.getElementById('invite-link-preview').innerText = '(سيظهر الرابط هنا)';
+      },
+      closeModal(){
+        document.getElementById('invite-modal').classList.remove('active');
+      },
+      generateLink(){
+        const role = document.getElementById('invite-role').value;
+        const access = document.getElementById('invite-access').value;
+        const payload = btoa(JSON.stringify({ r: role, a: access, t: Date.now() }));
+        const link = window.location.origin + window.location.pathname + '?invite=' + payload;
+        document.getElementById('invite-link-preview').innerText = link;
+        navigator.clipboard.writeText(link);
+        toast('تم نسخ الرابط! يمكنك إرساله للعضو الجديد.');
+      },
+      async submitRegistration(){
+        const name = document.getElementById('reg-name').value;
+        const phone = document.getElementById('reg-phone').value;
+        const pass = document.getElementById('reg-pass').value;
+        if(!name || !phone || !pass) return alert('الرجاء ملء جميع الحقول');
+        
+        const data = this._currentInvite;
+        if(!data) return alert('رابط غير صالح');
+        
+        const id = 'user_' + Date.now();
+        await FB.put(`/team_members/${id}`, {
+          name, phone, pass, role: data.r, access: data.a, date: new Date().toISOString()
+        });
+        
+        document.getElementById('registration-page').innerHTML = `
+          <div class="card" style="padding:32px;text-align:center">
+            <h1 style="font-size:3rem;margin-bottom:16px">🎉</h1>
+            <h2>تم التسجيل بنجاح!</h2>
+            <p style="color:var(--dim);margin-top:12px">يمكنك إغلاق هذه الصفحة الآن والتواصل مع الإدارة.</p>
+          </div>
+        `;
+      },
+      async loadFiles(){
+        // For now, placeholder functionality for files since we don't have direct firebase storage in this example
+      }
+    },
+    init(){
     // Try server-injected credentials first
     const injUrl='{{FB_URL}}';
     const injSec='{{FB_SECRET}}';
@@ -971,7 +1074,7 @@ const S = {
 
       document.getElementById('ov-stats').innerHTML=`
         <div class="stat-card"><span class="stat-ico">👤</span><span class="stat-lbl">Users</span><span class="stat-val">${uCnt}</span></div>
-        <div class="stat-card"><span class="stat-ico">📄</span><span class="stat-lbl">Materials</span><span class="stat-val">${mCnt}</span></div>
+        <div class="stat-card"><span class="stat-ico">📄</span><span class="stat-lbl">إجمالي الملفات</span><span class="stat-val">${mCnt}</span></div>
         <div class="stat-card"><span class="stat-ico">🤝</span><span class="stat-lbl">Contributors</span><span class="stat-val">${cCnt}</span></div>
         <div class="stat-card"><span class="stat-ico">📩</span><span class="stat-lbl">Requests</span><span class="stat-val">${rCnt}</span></div>`;
 
@@ -1189,7 +1292,7 @@ const S = {
                 </div>
               </div>
               <div class="tree-children${tyOpen?' open':''}" id="ch-${tyId}">
-                ${matsHtml||'<div style="margin-left:60px;padding:6px 0;color:var(--muted);font-size:.8rem">No materials</div>'}
+                ${matsHtml||'<div style="margin-left:60px;padding:6px 0;color:var(--muted);font-size:.8rem">لا توجد مواد</div>'}
               </div>`;
           }
 
@@ -1274,7 +1377,7 @@ const S = {
               <textarea id="bulk-subjects" placeholder="Algebra, Calculus, Geometry..." rows="4" style="width:100%; padding:14px 16px; background:#F8FAF9; border:1px solid transparent; border-radius:12px; outline:none; transition:all 0.2s; color:#1A1A1A; resize:none; font-size:0.95rem; box-sizing:border-box;" onfocus="this.style.borderColor='#00B8D9'" onblur="this.style.borderColor='transparent'"></textarea>
             </div>
             <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:8px;">
-              <button onclick="document.getElementById('add-subjects-modal').remove()" style="padding:12px 20px; border-radius:12px; background:transparent; border:none; color:#8C8C8C; font-weight:600; cursor:pointer; font-size:0.95rem; outline:none;">Cancel</button>
+              <button onclick="document.getElementById('add-subjects-modal').remove()" style="padding:12px 20px; border-radius:12px; background:transparent; border:none; color:#8C8C8C; font-weight:600; cursor:pointer; font-size:0.95rem; outline:none;">إلغاء</button>
               <button id="bulk-submit" style="padding:12px 24px; border-radius:12px; background:#00B8D9; box-shadow:0 8px 16px rgba(0,184,217,0.3); border:none; color:#FFFFFF; font-weight:600; cursor:pointer; transition:all 0.2s; font-size:0.95rem; outline:none;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 20px rgba(0,184,217,0.4)'" onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 16px rgba(0,184,217,0.3)'">Add Subjects</button>
             </div>
           </div>
@@ -1904,7 +2007,7 @@ const S = {
         <div class="sec-head"><h2>🤝 Contributors</h2></div>
         <div class="card tbl-wrap">
           <table>
-            <thead><tr><th>ID</th><th>Name</th><th>Materials</th><th style="text-align:right">Action</th></tr></thead>
+            <thead><tr><th>ID</th><th>Name</th><th>إجمالي الملفات</th><th style="text-align:right">Action</th></tr></thead>
             <tbody id="ctr-body"><tr><td colspan="4" class="loading-msg"><span class="spin"></span></td></tr></tbody>
           </table>
         </div>`;
@@ -1946,7 +2049,7 @@ const S = {
             <strong>${m.name || matId}</strong><br>
             <small style="color:var(--dim)">${m.track} &bull; ${m.subject} &bull; ${m.type}</small>
           </div>
-          <button class="btn btn-danger btn-sm" onclick="S.contributors.deleteSingleFile('${id}','${matId}','${m.track}','${m.subject}','${m.type}')">Delete</button>
+          <button class="btn btn-danger btn-sm" onclick="S.contributors.deleteSingleFile('${id}','${matId}','${m.track}','${m.subject}','${m.type}')">حذف</button>
         </div>
       `).join('');
       UI.modal(`Files uploaded by ${name}`, `<div style="max-height:300px;overflow-y:auto">${listHtml}</div>`, 'Close', false);
@@ -2124,7 +2227,7 @@ const S = {
           <td><span class="badge badge-p">${b.target||'all'}</span></td>
           <td><strong>${b.title||'Notice'}</strong></td>
           <td>${b.body||'—'}</td>
-          <td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="S.broadcast.delete('${id}')">Delete</button></td>
+          <td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="S.broadcast.delete('${id}')">حذف</button></td>
         </tr>
       `).join('');
     },
@@ -2379,7 +2482,7 @@ const S = {
                 <td><strong>${userId}</strong></td>
                 <td>${tbl.name || tblId}</td>
                 <td><span class="badge badge-s">${subjs.length} Subjects</span></td>
-                <td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="S.schedules.delete('${userId}','${tblId}')">Delete</button></td>
+                <td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="S.schedules.delete('${userId}','${tblId}')">حذف</button></td>
               </tr>
             `);
           });
@@ -2506,8 +2609,8 @@ const S = {
       pg.innerHTML=`
         <div class="sec-head"><h2>📊 Enhanced Analytics</h2></div>
         <div class="grid grid-4" style="margin-bottom:20px">
-          <div class="stat-card"><span class="stat-ico">👤</span><span class="stat-lbl">Total Users</span><span class="stat-val">${uCnt}</span></div>
-          <div class="stat-card"><span class="stat-ico">📚</span><span class="stat-lbl">Active Tracks</span><span class="stat-val">${trackCnt}</span></div>
+          <div class="stat-card"><span class="stat-ico">👤</span><span class="stat-lbl">إجمالي المستخدمين</span><span class="stat-val">${uCnt}</span></div>
+          <div class="stat-card"><span class="stat-ico">📚</span><span class="stat-lbl">المسارات النشطة</span><span class="stat-val">${trackCnt}</span></div>
           <div class="stat-card"><span class="stat-ico">🤝</span><span class="stat-lbl">Contributors</span><span class="stat-val">${cCnt}</span></div>
           <div class="stat-card"><span class="stat-ico">👁️</span><span class="stat-lbl">Total Views</span><span class="stat-val">${total}</span></div>
         </div>
@@ -2701,5 +2804,68 @@ const S = {
 /* ── Boot ── */
 document.addEventListener('DOMContentLoaded',()=>App.init());
 </script>
+
+<!-- Invite Modal -->
+<div id="invite-modal" class="modal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <h3>إرسال دعوة لعضو جديد</h3>
+      <button class="btn btn-icon" onclick="S.team.closeModal()">✖</button>
+    </div>
+    <div class="modal-bdy">
+      <p style="margin-bottom:12px;color:var(--dim);font-size:0.9rem;">
+        قم باختيار الصلاحيات والدور لإنشاء رابط دعوة. عندما يفتح العضو الرابط سيقوم بملء بياناته بنفسه وستتم إضافته فوراً.
+      </p>
+      <div class="form-group" style="margin-bottom:16px">
+        <label>الدور (Role)</label>
+        <select id="invite-role" class="input">
+          <option value="Member">عضو (Member)</option>
+          <option value="HR">الموارد البشرية (HR)</option>
+          <option value="PR">العلاقات العامة (PR)</option>
+          <option value="PM">مدير مشاريع (PM)</option>
+          <option value="Leader">قائد (Leader / Manager)</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label>صلاحية لوحة التحكم؟</label>
+        <select id="invite-access" class="input">
+          <option value="none">لا يوجد وصول</option>
+          <option value="view">عرض فقط</option>
+          <option value="edit">تعديل كامل</option>
+        </select>
+      </div>
+      <div style="margin-top:20px;padding:12px;background:var(--surface2);border-radius:8px;word-break:break-all;border:1px dashed var(--border)">
+        <span id="invite-link-preview" style="color:var(--primary);font-weight:600;font-size:0.85rem;">(سيظهر الرابط هنا)</span>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-outline" onclick="S.team.closeModal()">إلغاء</button>
+      <button class="btn" style="background:var(--success);border-color:var(--success)" onclick="S.team.generateLink()">توليد ونسخ الرابط</button>
+    </div>
+  </div>
+</div>
+
+<!-- Team Registration Page (Hidden by default, shown if URL has ?invite=...) -->
+<div id="registration-page" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:9999;align-items:center;justify-content:center;padding:24px">
+  <div class="card" style="padding:32px;max-width:500px;width:100%">
+    <h2 style="margin-bottom:12px;text-align:center">انضمام لفريق العمل 🤝</h2>
+    <p style="text-align:center;color:var(--dim);margin-bottom:24px" id="reg-role-desc">يرجى إدخال بياناتك لإتمام التسجيل.</p>
+    
+    <div class="form-group" style="margin-bottom:16px">
+      <label>الاسم الكامل</label>
+      <input type="text" id="reg-name" class="input" placeholder="اكتب اسمك هنا...">
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>رقم الهاتف / واتساب</label>
+      <input type="text" id="reg-phone" class="input" placeholder="01xxxxxxxxx">
+    </div>
+    <div class="form-group" style="margin-bottom:24px">
+      <label>كلمة المرور (للدخول لاحقاً)</label>
+      <input type="password" id="reg-pass" class="input" placeholder="رمز سري بسيط...">
+    </div>
+    <button class="btn" style="width:100%;font-size:1.1rem;padding:12px" onclick="S.team.submitRegistration()">إرسال البيانات والتسجيل ✅</button>
+  </div>
+</div>
+
 </body>
 </html>

@@ -86,7 +86,7 @@ void registerStudentHandlers(Bot bot) {
   bot.callbackQuery('show_departments', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
-    await ctx.answerCallbackQuery();
+    try { await ctx.answerCallbackQuery(text: 'جاري التحميل...'); } catch (_) {}
     final lang = Utils.getUserLanguage(userId);
     final tracks = await FirebaseDb.getTracks();
 
@@ -114,6 +114,7 @@ void registerStudentHandlers(Bot bot) {
     final data = ctx.callbackQuery?.data;
     final userId = ctx.from?.id;
     if (data == null || userId == null) return;
+    try { await ctx.answerCallbackQuery(text: 'جاري التحميل...'); } catch (_) {}
 
     final track = data.split(':')[1];
     final lang = Utils.getUserLanguage(userId);
@@ -145,6 +146,7 @@ void registerStudentHandlers(Bot bot) {
     final data = ctx.callbackQuery?.data;
     final userId = ctx.from?.id;
     if (data == null || userId == null) return;
+    try { await ctx.answerCallbackQuery(text: 'جاري التحميل...'); } catch (_) {}
 
     final parts = data.split(':');
     final track = parts[1];
@@ -178,6 +180,7 @@ void registerStudentHandlers(Bot bot) {
     final data = ctx.callbackQuery?.data;
     final userId = ctx.from?.id;
     if (data == null || userId == null) return;
+    try { await ctx.answerCallbackQuery(text: 'جاري التحميل...'); } catch (_) {}
 
     final parts = data.split(':');
     final track = parts[1];
@@ -223,6 +226,7 @@ void registerStudentHandlers(Bot bot) {
     final data = ctx.callbackQuery?.data;
     final userId = ctx.from?.id;
     if (data == null || userId == null) return;
+    try { await ctx.answerCallbackQuery(text: 'جاري التحميل...'); } catch (_) {}
 
     final parts = data.split(':');
     final track = parts[1];

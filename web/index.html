@@ -1112,7 +1112,7 @@ const S = {
       for(const [tKey, tVal] of tracks){
         if(!tVal || typeof tVal !== 'object') continue;
         const subjects = Object.entries(tVal).filter(([k])=>k!=='_placeholder');
-        const tId = 'tr-'+tKey.replace(/[^a-z0-9]/gi,'_');
+        const tId = 'tr-'+encodeURIComponent(tKey).replace(/%/g,'_');
         const tOpen = this._open[tId] ?? true; // tracks open by default
 
         // filter: show track if name matches OR any child matches
@@ -1132,7 +1132,7 @@ const S = {
         for(const [sKey, sVal] of subjects){
           if(!sVal || typeof sVal !== 'object') continue;
           const sMatch = !q || sKey.toLowerCase().includes(q) || tKey.toLowerCase().includes(q);
-          const sId = tId+'_s_'+sKey.replace(/[^a-z0-9]/gi,'_');
+          const sId = tId+'_s_'+encodeURIComponent(sKey).replace(/%/g,'_');
           const sOpen = this._open[sId] ?? false;
           const types = Object.entries(sVal).filter(([k])=>k!=='_placeholder');
 
@@ -1141,7 +1141,7 @@ const S = {
           for(const [tyKey, tyVal] of types){
             if(!tyVal || typeof tyVal !== 'object') continue;
             const tyMatch = !q || tyKey.toLowerCase().includes(q) || sKey.toLowerCase().includes(q) || tKey.toLowerCase().includes(q);
-            const tyId = sId+'_t_'+tyKey.replace(/[^a-z0-9]/gi,'_');
+            const tyId = sId+'_t_'+encodeURIComponent(tyKey).replace(/%/g,'_');
             const tyOpen = this._open[tyId] ?? false;
             const mats = Object.entries(tyVal).filter(([k])=>k!=='_placeholder');
             sMatCount += mats.length;

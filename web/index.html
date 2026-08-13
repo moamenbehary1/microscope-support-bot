@@ -166,13 +166,33 @@ tr:hover td{background:rgba(255,255,255,.018)}
 /* ── Form ── */
 .form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
 label{font-size:.78rem;color:var(--dim);font-weight:500}
-input,select{
+input:not([type="checkbox"]),select{
   background:var(--surface2);border:1px solid var(--border);border-radius:6px;
   padding:9px 12px;color:var(--text);font-size:.875rem;font-family:inherit;
   outline:none;transition:border-color .15s;width:100%
 }
-input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+input:not([type="checkbox"]):focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
 input::placeholder{color:var(--muted)}
+
+/* ── Checkboxes ── */
+.chk-label {
+  display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--text);
+  cursor: pointer; padding: 8px; border-radius: 6px; transition: background 0.2s;
+}
+.chk-label:hover { background: var(--surface2); }
+.chk-box {
+  width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--dim);
+  appearance: none; background: var(--bg); cursor: pointer; outline: none;
+  display: grid; place-content: center; transition: all 0.2s;
+}
+.chk-box::before {
+  content: ""; width: 10px; height: 10px; transform: scale(0);
+  box-shadow: inset 1em 1em var(--text); transform-origin: center;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  transition: 0.2s transform ease-in-out;
+}
+.chk-box:checked { background: var(--primary); border-color: var(--primary); }
+.chk-box:checked::before { transform: scale(1); box-shadow: inset 1em 1em #fff; }
 
 /* ── Breadcrumb ── */
 .crumb{display:flex;align-items:center;gap:5px;font-size:.8rem;color:var(--dim);margin-bottom:16px;flex-wrap:wrap}
@@ -664,6 +684,10 @@ document.getElementById('m-body').addEventListener('change', e=>{
   if(e.target.id==='type-pick'){
     const cust = document.getElementById('type-custom');
     if(cust) cust.style.display = e.target.value==='__custom' ? 'block' : 'none';
+  }
+  if(e.target.id==='type-pick-custom'){
+    const cust = document.getElementById('type-custom-input');
+    if(cust) cust.style.display = e.target.checked ? 'block' : 'none';
   }
 });
 
@@ -1179,6 +1203,8 @@ const S = {
               <span class="tree-lbl">${sKey}</span>
               <span class="tree-badge" style="background:rgba(99,102,241,.12);color:var(--primary)">${sMatCount} mat</span>
               <div class="tree-actions">
+                <button class="btn btn-sm btn-icon" style="color:var(--warning);border-color:var(--warning);background:transparent"
+                  onclick="event.stopPropagation();S.curriculum.broadcastSubject('${eSKey}')" title="Broadcast Message to Students">📢</button>
                 <button class="btn btn-sm btn-icon" style="color:var(--success);border-color:var(--success);background:transparent"
                   onclick="event.stopPropagation();S.curriculum.addTypeToSubject('${encodeStr(tKey)}','${eSKey}')" title="Add Type">+🏷️</button>
                 <button class="btn btn-sm btn-icon" style="color:var(--danger);border-color:var(--danger);background:transparent"
@@ -1394,22 +1420,65 @@ const S = {
 
     async addTypeToSubject(track, subject){
       const types = ['ملخص','شرح','فيديو','صوت','امتحانات','رابط'];
-      const selHtml = `<select id="type-pick" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:.875rem">
-        ${types.map(t=>`<option>${t}</option>`).join('')}
-        <option value="__custom">Custom…</option>
-      </select>
-      <input id="type-custom" placeholder="Custom type name" style="display:none;width:100%;margin-top:8px;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text)" />`;
-      const ok = await UI.modal(`Add Material Type to "${subject}"`, selHtml, 'Add Type');
+      let html = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">`;
+      types.forEach((t, i) => {
+        html += `<label class="chk-label"><input type="checkbox" class="chk-box type-pick-chk" value="${t}"> ${t}</label>`;
+      });
+      html += `<label class="chk-label"><input type="checkbox" class="chk-box type-pick-chk" value="__custom" id="type-pick-custom"> Custom...</label></div>`;
+      html += `<input id="type-custom-input" placeholder="Custom type name (e.g. مراجعة)" style="display:none;width:100%;margin-top:8px;" />`;
+      
+      const ok = await UI.modal(`Add Types to "${subject}"`, html, 'Add Types');
       if(!ok) return;
-      const sel = document.getElementById('type-pick')?.value;
-      const cust = document.getElementById('type-custom')?.value?.trim();
-      const typeName = sel==='__custom' ? cust : sel;
-      if(!typeName){ UI.toast('No type name','error'); return; }
+      
+      const checkboxes = document.querySelectorAll('.type-pick-chk:checked');
+      const selectedTypes = [];
+      checkboxes.forEach(chk => {
+        if (chk.value === '__custom') {
+          const cust = document.getElementById('type-custom-input')?.value?.trim();
+          if (cust) selectedTypes.push(cust);
+        } else {
+          selectedTypes.push(chk.value);
+        }
+      });
+      
+      if(selectedTypes.length === 0){ UI.toast('No types selected','error'); return; }
+      
       try{
-        await FB.put(`/curriculum/${encodeURIComponent(track)}/${encodeURIComponent(subject)}/${encodeURIComponent(typeName)}`,{_placeholder:true});
-        UI.toast(`Type "${typeName}" added!`,'success');
+        await Promise.all(selectedTypes.map(t => 
+          FB.put(`/curriculum/${encodeURIComponent(track)}/${encodeURIComponent(subject)}/${encodeURIComponent(t)}`,{_placeholder:true})
+        ));
+        UI.toast(`${selectedTypes.length} types added!`,'success');
         await this.fetchAndRender();
       }catch(e){ UI.toast('Failed: '+e.message,'error'); }
+    },
+
+    async broadcastSubject(subject) {
+      const msgHtml = `<div class="form-group">
+        <label>Message to send</label>
+        <textarea id="broadcast-msg" rows="4" style="width:100%;padding:12px;border-radius:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);outline:none;font-family:inherit;" placeholder="Enter notification message here..."></textarea>
+      </div>`;
+      const ok = await UI.modal(`📢 Broadcast to "${subject}" students`, msgHtml, 'Send Broadcast', false);
+      if(!ok) return;
+
+      const msg = document.getElementById('broadcast-msg')?.value?.trim();
+      if(!msg) { UI.toast('Message cannot be empty', 'error'); return; }
+      
+      try {
+        UI.toast('Sending broadcast...', 'info');
+        const res = await fetch('/api/broadcast_subject', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ subject: subject, message: msg })
+        });
+        const data = await res.json();
+        if(data.status === 'ok') {
+          UI.toast(`Broadcast sent successfully!`, 'success');
+        } else {
+          throw new Error(data.error || 'Unknown error');
+        }
+      } catch(e) {
+        UI.toast('Failed: ' + e.message, 'error');
+      }
     },
 
     async deleteNode(track, subject, type, label){

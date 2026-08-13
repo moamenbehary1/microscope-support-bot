@@ -144,6 +144,29 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
         ..write(jsonEncode({'success': false, 'error': e.toString()}));
     }
 
+  } else if (path == '/api/broadcast_subject' && req.method == 'POST') {
+    try {
+      final content = await utf8.decoder.bind(req).join();
+      final data = jsonDecode(content) as Map<String, dynamic>;
+      final subject = data['subject'] as String;
+      final message = data['message'] as String;
+
+      final subscribers = await FirebaseDb.getSubjectSubscribers(subject);
+      if (subscribers.isNotEmpty) {
+        await Utils.broadcast(bot, subscribers, message);
+      }
+
+      req.response
+        ..statusCode = 200
+        ..headers.contentType = ContentType.json
+        ..write('{"status":"ok", "count": ${subscribers.length}}');
+    } catch (e) {
+      req.response
+        ..statusCode = 500
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'status': 'error', 'error': e.toString()}));
+    }
+
   } else {
     req.response.statusCode = 404;
     req.response.write('Not found');

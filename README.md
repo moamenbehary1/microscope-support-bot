@@ -7,14 +7,15 @@ A Telegram bot CMS for educational content management, built with **Dart** and *
 ## ✨ Features
 
 - 📚 **Browse curriculum** — Tracks → Subjects → Material Types → Files
+- 🏷️ **Dynamic Material Types** — Multi-select standard types or add custom types to subjects directly from the dashboard
 - 📤 **Upload materials** — Admins and approved contributors can upload documents, photos, and videos
 - 🤝 **Contributor system** — Users can request to become contributors; admins approve/reject
-- 🛡️ **Admin dashboard** — Manage admins, contributors, broadcast messages, view analytics
+- 🛡️ **Admin web dashboard** — Manage admins, contributors, curriculum, and view analytics in a modern UI
 - 👑 **Super Admin** — Transfer ownership, wipe database, full control
-- 📢 **Broadcast** — Send a message to all registered users
+- 📢 **Broadcast System** — Send global messages to all users or target specific students based on their subject subscriptions
 - 📊 **Analytics** — Track most-accessed materials
 - 💾 **Backup channel** — Automatically backs up uploaded files to a Telegram channel
-- 🌐 **Health server** — HTTP server for uptime monitoring (Replit / Railway / Render compatible)
+- 🌐 **Health server & Web API** — HTTP server serving the dashboard and handling web hooks (Replit / Railway / Render compatible)
 
 ---
 

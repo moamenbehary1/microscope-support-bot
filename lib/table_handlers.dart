@@ -1,6 +1,7 @@
 import 'package:televerse/televerse.dart';
 import 'firebase_db.dart';
 import 'utils.dart';
+import 'translation_service.dart';
 
 void registerTableHandlers(Bot bot) {
   bot.hears(RegExp(r'^/table', caseSensitive: false), (ctx) async {
@@ -42,8 +43,9 @@ void registerTableHandlers(Bot bot) {
     if (userId == null || data == null) return;
     await ctx.answerCallbackQuery();
     final page = int.parse(data.split('page_')[1]);
+    final lang = Utils.getUserLanguage(userId);
     final tracks = await FirebaseDb.getTracks();
-    final keyboard = Utils.paginateKeyboard(tracks, page: page, prefix: 'tab_track:', backData: 'table_dash');
+    final keyboard = await Utils.paginateKeyboard(tracks, page: page, prefix: 'tab_track:', backData: 'table_dash', lang: lang);
     await ctx.editMessageReplyMarkup(replyMarkup: keyboard);
   });
 
@@ -118,9 +120,10 @@ void registerTableHandlers(Bot bot) {
     if (state == null) return;
     
     state['step'] = 'track';
+    final lang = Utils.getUserLanguage(userId);
     
     final tracks = await FirebaseDb.getTracks();
-    final keyboard = Utils.paginateKeyboard(tracks, page: 0, prefix: 'tab_track:', backData: 'table_dash');
+    final keyboard = await Utils.paginateKeyboard(tracks, page: 0, prefix: 'tab_track:', backData: 'table_dash', lang: lang);
     await ctx.editMessageText('اختر الفرقة الدراسية (Track) التي تريد إضافة مواد منها:', replyMarkup: keyboard);
   });
 
@@ -260,7 +263,8 @@ Future<void> handleTableText(Context ctx, Bot bot) async {
       return;
     }
     
-    final keyboard = Utils.paginateKeyboard(tracks, page: 0, prefix: 'tab_track:', backData: 'table_dash');
+    final lang = Utils.getUserLanguage(userId);
+    final keyboard = await Utils.paginateKeyboard(tracks, page: 0, prefix: 'tab_track:', backData: 'table_dash', lang: lang);
     await ctx.reply('تم حفظ الاسم: $text\n\nاختر الفرقة الدراسية (Track) لتبدأ إضافة المواد:', replyMarkup: keyboard);
   }
 }
@@ -297,7 +301,8 @@ Future<void> _showSubjectsSelection(Context ctx, int userId, String trackName, i
       .map((s) => s.split('|')[1])
       .toList();
 
-  final kb = Utils.paginateMultiSelectKeyboard(
+  final lang = Utils.getUserLanguage(userId);
+  final kb = await Utils.paginateMultiSelectKeyboard(
     subjects,
     selectedSubjects,
     page: page,
@@ -305,7 +310,9 @@ Future<void> _showSubjectsSelection(Context ctx, int userId, String trackName, i
     togglePrefix: 'tab_subj:',
     doneData: 'tab_done',
     backData: 'tab_back_to_tracks',
+    lang: lang,
   );
 
-  await ctx.editMessageText('المواد المتاحة في $trackName:\n(اختر المواد المطلوبة ثم اضغط ✅ Done)', replyMarkup: kb);
+  final tTrackName = await TranslationService.translate(trackName, to: lang);
+  await ctx.editMessageText('المواد المتاحة في $tTrackName:\n(اختر المواد المطلوبة ثم اضغط ✅ Done)', replyMarkup: kb);
 }

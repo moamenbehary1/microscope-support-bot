@@ -3,6 +3,7 @@ import 'firebase_db.dart';
 import 'utils.dart';
 import 'config.dart';
 import 'strings.dart';
+import 'translation_service.dart';
 
 void registerStudentHandlers(Bot bot) {
   // ── /start ──────────────────────────────────────────────────────────
@@ -96,7 +97,7 @@ void registerStudentHandlers(Bot bot) {
         ..row().add(S.get('no_tracks', lang), 'ignore')
         ..row().add('🔙 Back', 'back:main');
     } else {
-      keyboard = Utils.paginateKeyboard(tracks, page: 0, prefix: 'track:', backData: 'back:main');
+      keyboard = await Utils.paginateKeyboard(tracks, page: 0, prefix: 'track:', backData: 'back:main', lang: lang);
     }
 
     await ctx.editMessageText(S.get('departments', lang), replyMarkup: keyboard);
@@ -122,22 +123,24 @@ void registerStudentHandlers(Bot bot) {
     if (trackRaw.startsWith('page_')) {
       final page = int.parse(trackRaw.split('_')[1]);
       final tracks = await FirebaseDb.getTracks();
-      final keyboard = Utils.paginateKeyboard(tracks, page: page, prefix: 'track:', backData: 'back:main');
+      final keyboard = await Utils.paginateKeyboard(tracks, page: page, prefix: 'track:', backData: 'back:main', lang: lang);
       await ctx.editMessageText(S.get('departments', lang), replyMarkup: keyboard);
       return;
     }
 
     final track = Utils.lengthen(trackRaw);
     final subjects = await FirebaseDb.getSubjects(track);
-    final keyboard = Utils.paginateKeyboard(
+    final keyboard = await Utils.paginateKeyboard(
       subjects,
       page: 0,
       prefix: 'subj:${Utils.shorten(track)}:',
       backData: 'show_departments',
+      lang: lang,
     );
 
+    final tTrack = await TranslationService.translate(track, to: lang);
     await ctx.editMessageText(
-      S.get('selected_track', lang, {'track': track}),
+      S.get('selected_track', lang, {'track': tTrack}),
       replyMarkup: keyboard,
     );
   });
@@ -157,22 +160,25 @@ void registerStudentHandlers(Bot bot) {
     if (subjectRaw.startsWith('page_')) {
       final page = int.parse(subjectRaw.split('_')[1]);
       final subjects = await FirebaseDb.getSubjects(track);
-      final keyboard = Utils.paginateKeyboard(subjects, page: page, prefix: 'subj:${Utils.shorten(track)}:', backData: 'show_departments');
-      await ctx.editMessageText(S.get('selected_track', lang, {'track': track}), replyMarkup: keyboard);
+      final keyboard = await Utils.paginateKeyboard(subjects, page: page, prefix: 'subj:${Utils.shorten(track)}:', backData: 'show_departments', lang: lang);
+      final tTrack = await TranslationService.translate(track, to: lang);
+      await ctx.editMessageText(S.get('selected_track', lang, {'track': tTrack}), replyMarkup: keyboard);
       return;
     }
 
     final subject = Utils.lengthen(subjectRaw);
     final types = await FirebaseDb.getMaterialTypes(track, subject);
-    final keyboard = Utils.paginateKeyboard(
+    final keyboard = await Utils.paginateKeyboard(
       types,
       page: 0,
       prefix: 'type:${Utils.shorten(track)}:${Utils.shorten(subject)}:',
       backData: 'track:${Utils.shorten(track)}',
+      lang: lang,
     );
 
+    final tSubject = await TranslationService.translate(subject, to: lang);
     await ctx.editMessageText(
-      S.get('selected_subject', lang, {'subject': subject}),
+      S.get('selected_subject', lang, {'subject': tSubject}),
       replyMarkup: keyboard,
     );
   });
@@ -193,17 +199,19 @@ void registerStudentHandlers(Bot bot) {
     if (typeRaw.startsWith('page_')) {
       final page = int.parse(typeRaw.split('_')[1]);
       final types = await FirebaseDb.getMaterialTypes(track, subject);
-      final keyboard = Utils.paginateKeyboard(types, page: page, prefix: 'type:${Utils.shorten(track)}:${Utils.shorten(subject)}:', backData: 'track:${Utils.shorten(track)}');
-      await ctx.editMessageText(S.get('selected_subject', lang, {'subject': subject}), replyMarkup: keyboard);
+      final keyboard = await Utils.paginateKeyboard(types, page: page, prefix: 'type:${Utils.shorten(track)}:${Utils.shorten(subject)}:', backData: 'track:${Utils.shorten(track)}', lang: lang);
+      final tSubject = await TranslationService.translate(subject, to: lang);
+      await ctx.editMessageText(S.get('selected_subject', lang, {'subject': tSubject}), replyMarkup: keyboard);
       return;
     }
 
     final type = Utils.lengthen(typeRaw);
+    final tType = await TranslationService.translate(type, to: lang);
     final materials = await FirebaseDb.getMaterials(track, subject, type);
     if (materials.isEmpty) {
       final kb = InlineKeyboard().row().add('🔙 Back', 'subj:${Utils.shorten(track)}:${Utils.shorten(subject)}');
       await ctx.editMessageText(
-        '${S.get('materials_list', lang, {'type': type})}\n\n${S.get('no_files_found', lang)}',
+        '${S.get('materials_list', lang, {'type': tType})}\n\n${S.get('no_files_found', lang)}',
         replyMarkup: kb,
       );
       return;
@@ -211,15 +219,16 @@ void registerStudentHandlers(Bot bot) {
 
     final itemsList = materials.entries.map((e) => MapEntry(e.key, e.value['name'].toString())).toList();
     
-    final keyboard = Utils.paginateMapKeyboard(
+    final keyboard = await Utils.paginateMapKeyboard(
       itemsList,
       page: 0,
       prefix: 'mat:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}:',
       backData: 'subj:${Utils.shorten(track)}:${Utils.shorten(subject)}',
+      lang: lang,
     );
 
     await ctx.editMessageText(
-      S.get('materials_list', lang, {'type': type}),
+      S.get('materials_list', lang, {'type': tType}),
       replyMarkup: keyboard,
     );
   });
@@ -242,8 +251,9 @@ void registerStudentHandlers(Bot bot) {
       final page = int.parse(materialIdRaw.split('_')[1]);
       final materials = await FirebaseDb.getMaterials(track, subject, type);
       final itemsList = materials.entries.map((e) => MapEntry(e.key, e.value['name'].toString())).toList();
-      final keyboard = Utils.paginateMapKeyboard(itemsList, page: page, prefix: 'mat:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}:', backData: 'subj:${Utils.shorten(track)}:${Utils.shorten(subject)}');
-      await ctx.editMessageText(S.get('materials_list', lang, {'type': type}), replyMarkup: keyboard);
+      final keyboard = await Utils.paginateMapKeyboard(itemsList, page: page, prefix: 'mat:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}:', backData: 'subj:${Utils.shorten(track)}:${Utils.shorten(subject)}', lang: lang);
+      final tType = await TranslationService.translate(type, to: lang);
+      await ctx.editMessageText(S.get('materials_list', lang, {'type': tType}), replyMarkup: keyboard);
       return;
     }
 

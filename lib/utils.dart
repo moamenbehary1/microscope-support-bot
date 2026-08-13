@@ -1,5 +1,6 @@
 import 'package:televerse/televerse.dart';
 import 'config.dart';
+import 'translation_service.dart';
 
 class Utils {
   // Simple state management (In-memory for current session state)
@@ -66,19 +67,15 @@ class Utils {
 
   // ── Pagination ──────────────────────────────────────────────────────
 
-  /// Generates a paginated inline keyboard.
-  /// [items] List of items to display.
-  /// [page] Current page (0-indexed).
-  /// [itemsPerPage] Defaults to 5.
-  /// [prefix] The callback data prefix (e.g., 'track:'). The item string will be appended.
-  /// [backData] Callback data for a 'Back' button, if any.
-  static InlineKeyboard paginateKeyboard(
+  /// Generates a paginated inline keyboard for a list of items.
+  static Future<InlineKeyboard> paginateKeyboard(
     List<String> items, {
     required int page,
     int itemsPerPage = 5,
     required String prefix,
     String? backData,
-  }) {
+    String lang = 'ar',
+  }) async {
     final keyboard = InlineKeyboard();
 
     int startIndex = page * itemsPerPage;
@@ -86,7 +83,8 @@ class Utils {
     if (endIndex > items.length) endIndex = items.length;
 
     for (int i = startIndex; i < endIndex; i++) {
-      keyboard.row().add(items[i], '$prefix${Utils.shorten(items[i])}');
+      final tItem = await TranslationService.translate(items[i], to: lang);
+      keyboard.row().add(tItem, '$prefix${Utils.shorten(items[i])}');
     }
 
     final navRow = <InlineMenuData>[];
@@ -111,18 +109,15 @@ class Utils {
   }
 
   /// Generates a paginated inline keyboard for key-value items (e.g. materials).
-  /// [items] List of MapEntries where key is ID and value is Display Name.
-  /// [page] Current page (0-indexed).
-  /// [itemsPerPage] Defaults to 5.
-  /// [prefix] The callback data prefix (e.g., 'mat:'). The ID will be appended.
-  /// [backData] Callback data for a 'Back' button, if any.
-  static InlineKeyboard paginateMapKeyboard(
+  /// For a list of MapEntry, typically used when we have IDs mapping to names.
+  static Future<InlineKeyboard> paginateMapKeyboard(
     List<MapEntry<String, String>> items, {
     required int page,
     int itemsPerPage = 5,
     required String prefix,
     String? backData,
-  }) {
+    String lang = 'ar',
+  }) async {
     final keyboard = InlineKeyboard();
 
     int startIndex = page * itemsPerPage;
@@ -130,6 +125,7 @@ class Utils {
     if (endIndex > items.length) endIndex = items.length;
 
     for (int i = startIndex; i < endIndex; i++) {
+      // Don't translate file names (items[i].value), as requested by user.
       keyboard.row().add(items[i].value, '$prefix${Utils.shorten(items[i].key)}');
     }
 
@@ -156,7 +152,7 @@ class Utils {
   }
 
   /// Generates a paginated inline keyboard with multi-select checkmarks.
-  static InlineKeyboard paginateMultiSelectKeyboard(
+  static Future<InlineKeyboard> paginateMultiSelectKeyboard(
     List<String> items,
     List<String> selectedItems, {
     required int page,
@@ -164,7 +160,8 @@ class Utils {
     required String togglePrefix,
     required String doneData,
     String? backData,
-  }) {
+    String lang = 'ar',
+  }) async {
     final keyboard = InlineKeyboard();
 
     int startIndex = page * itemsPerPage;
@@ -174,7 +171,8 @@ class Utils {
     for (int i = startIndex; i < endIndex; i++) {
       final item = items[i];
       final isSelected = selectedItems.contains(item);
-      final text = isSelected ? '✅ $item' : item;
+      final tItem = await TranslationService.translate(item, to: lang);
+      final text = isSelected ? '✅ $tItem' : tItem;
       keyboard.row().add(text, '$togglePrefix${Utils.shorten(item)}');
     }
 

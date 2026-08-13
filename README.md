@@ -31,6 +31,8 @@ lib/
   student_handlers.dart       # Student browse & download handlers
   contributor_handlers.dart   # Contributor upload & request handlers
   utils.dart                  # Shared utilities (state, pagination, broadcast)
+web/
+  index.html                  # Built-in Web Dashboard for CMS
 ```
 
 ---
@@ -116,6 +118,17 @@ docker run --env-file .env microscope-support-bot
 | **Contributor** | Request via bot, approved by admin | Upload files to their assigned subject |
 | **Admin** | Added by Super Admin | Full content management, contributor approval |
 | **Super Admin** | Set via `SUPER_ADMIN_ID` env var | All admin powers + transfer ownership, wipe data |
+
+---
+
+## 🌍 Web Dashboard
+
+The project includes a built-in, responsive web dashboard available at `http://<YOUR_SERVER_URL>/` (or `http://localhost:5000` locally). The dashboard provides a modern UI to manage the bot's curriculum easily.
+
+**Dashboard Features:**
+- **Manage Curriculum:** Add, edit, or remove Tracks, Subjects, and Material Types.
+- **Dynamic Material Types:** Assign multiple material types to a single subject using a modern multi-select interface. You can also specify **Custom Types** easily.
+- **Targeted Broadcasting:** Send instant notifications directly from the dashboard to all students subscribed to a specific subject. The backend handles throttling to avoid Telegram rate limits.
 
 ---
 

@@ -45,6 +45,25 @@ class Utils {
     return _userLanguages.containsKey(userId);
   }
 
+  // ── Callback Data Shortener ─────────────────────────────────────────
+  static int _idCounter = 0;
+  static final Map<String, String> _shortToLong = {};
+  static final Map<String, String> _longToShort = {};
+
+  static String shorten(String data) {
+    if (data.length < 10) return data; // Only shorten if long enough
+    if (_longToShort.containsKey(data)) return _longToShort[data]!;
+    _idCounter++;
+    final shortId = _idCounter.toRadixString(36);
+    _shortToLong[shortId] = data;
+    _longToShort[data] = shortId;
+    return shortId;
+  }
+
+  static String lengthen(String shortId) {
+    return _shortToLong[shortId] ?? shortId;
+  }
+
   // ── Pagination ──────────────────────────────────────────────────────
 
   /// Generates a paginated inline keyboard.
@@ -67,7 +86,7 @@ class Utils {
     if (endIndex > items.length) endIndex = items.length;
 
     for (int i = startIndex; i < endIndex; i++) {
-      keyboard.row().add(items[i], '$prefix${items[i]}');
+      keyboard.row().add(items[i], '$prefix${Utils.shorten(items[i])}');
     }
 
     final navRow = <InlineMenuData>[];
@@ -111,7 +130,7 @@ class Utils {
     if (endIndex > items.length) endIndex = items.length;
 
     for (int i = startIndex; i < endIndex; i++) {
-      keyboard.row().add(items[i].value, '$prefix${items[i].key}');
+      keyboard.row().add(items[i].value, '$prefix${Utils.shorten(items[i].key)}');
     }
 
     final navRow = <InlineMenuData>[];
@@ -156,7 +175,7 @@ class Utils {
       final item = items[i];
       final isSelected = selectedItems.contains(item);
       final text = isSelected ? '✅ $item' : item;
-      keyboard.row().add(text, '$togglePrefix$item');
+      keyboard.row().add(text, '$togglePrefix${Utils.shorten(item)}');
     }
 
     final navRow = <InlineMenuData>[];

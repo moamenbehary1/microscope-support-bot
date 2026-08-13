@@ -116,22 +116,23 @@ void registerStudentHandlers(Bot bot) {
     if (data == null || userId == null) return;
     try { await ctx.answerCallbackQuery(text: 'جاري التحميل...'); } catch (_) {}
 
-    final track = data.split(':')[1];
+    final trackRaw = data.split(':')[1];
     final lang = Utils.getUserLanguage(userId);
     
-    if (track.startsWith('page_')) {
-      final page = int.parse(track.split('_')[1]);
+    if (trackRaw.startsWith('page_')) {
+      final page = int.parse(trackRaw.split('_')[1]);
       final tracks = await FirebaseDb.getTracks();
       final keyboard = Utils.paginateKeyboard(tracks, page: page, prefix: 'track:', backData: 'back:main');
       await ctx.editMessageText(S.get('departments', lang), replyMarkup: keyboard);
       return;
     }
 
+    final track = Utils.lengthen(trackRaw);
     final subjects = await FirebaseDb.getSubjects(track);
     final keyboard = Utils.paginateKeyboard(
       subjects,
       page: 0,
-      prefix: 'subj:$track:',
+      prefix: 'subj:${Utils.shorten(track)}:',
       backData: 'show_departments',
     );
 
@@ -149,24 +150,25 @@ void registerStudentHandlers(Bot bot) {
     try { await ctx.answerCallbackQuery(text: 'جاري التحميل...'); } catch (_) {}
 
     final parts = data.split(':');
-    final track = parts[1];
-    final subject = parts[2];
+    final track = Utils.lengthen(parts[1]);
+    final subjectRaw = parts[2];
     final lang = Utils.getUserLanguage(userId);
 
-    if (subject.startsWith('page_')) {
-      final page = int.parse(subject.split('_')[1]);
+    if (subjectRaw.startsWith('page_')) {
+      final page = int.parse(subjectRaw.split('_')[1]);
       final subjects = await FirebaseDb.getSubjects(track);
-      final keyboard = Utils.paginateKeyboard(subjects, page: page, prefix: 'subj:$track:', backData: 'show_departments');
+      final keyboard = Utils.paginateKeyboard(subjects, page: page, prefix: 'subj:${Utils.shorten(track)}:', backData: 'show_departments');
       await ctx.editMessageText(S.get('selected_track', lang, {'track': track}), replyMarkup: keyboard);
       return;
     }
 
+    final subject = Utils.lengthen(subjectRaw);
     final types = await FirebaseDb.getMaterialTypes(track, subject);
     final keyboard = Utils.paginateKeyboard(
       types,
       page: 0,
-      prefix: 'type:$track:$subject:',
-      backData: 'track:$track',
+      prefix: 'type:${Utils.shorten(track)}:${Utils.shorten(subject)}:',
+      backData: 'track:${Utils.shorten(track)}',
     );
 
     await ctx.editMessageText(
@@ -183,22 +185,23 @@ void registerStudentHandlers(Bot bot) {
     try { await ctx.answerCallbackQuery(text: 'جاري التحميل...'); } catch (_) {}
 
     final parts = data.split(':');
-    final track = parts[1];
-    final subject = parts[2];
-    final type = parts[3];
+    final track = Utils.lengthen(parts[1]);
+    final subject = Utils.lengthen(parts[2]);
+    final typeRaw = parts[3];
     final lang = Utils.getUserLanguage(userId);
 
-    if (type.startsWith('page_')) {
-      final page = int.parse(type.split('_')[1]);
+    if (typeRaw.startsWith('page_')) {
+      final page = int.parse(typeRaw.split('_')[1]);
       final types = await FirebaseDb.getMaterialTypes(track, subject);
-      final keyboard = Utils.paginateKeyboard(types, page: page, prefix: 'type:$track:$subject:', backData: 'track:$track');
+      final keyboard = Utils.paginateKeyboard(types, page: page, prefix: 'type:${Utils.shorten(track)}:${Utils.shorten(subject)}:', backData: 'track:${Utils.shorten(track)}');
       await ctx.editMessageText(S.get('selected_subject', lang, {'subject': subject}), replyMarkup: keyboard);
       return;
     }
 
+    final type = Utils.lengthen(typeRaw);
     final materials = await FirebaseDb.getMaterials(track, subject, type);
     if (materials.isEmpty) {
-      final kb = InlineKeyboard().row().add('🔙 Back', 'subj:$track:$subject');
+      final kb = InlineKeyboard().row().add('🔙 Back', 'subj:${Utils.shorten(track)}:${Utils.shorten(subject)}');
       await ctx.editMessageText(
         '${S.get('materials_list', lang, {'type': type})}\n\n${S.get('no_files_found', lang)}',
         replyMarkup: kb,
@@ -211,8 +214,8 @@ void registerStudentHandlers(Bot bot) {
     final keyboard = Utils.paginateMapKeyboard(
       itemsList,
       page: 0,
-      prefix: 'mat:$track:$subject:$type:',
-      backData: 'subj:$track:$subject',
+      prefix: 'mat:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}:',
+      backData: 'subj:${Utils.shorten(track)}:${Utils.shorten(subject)}',
     );
 
     await ctx.editMessageText(
@@ -229,21 +232,22 @@ void registerStudentHandlers(Bot bot) {
     try { await ctx.answerCallbackQuery(text: 'جاري التحميل...'); } catch (_) {}
 
     final parts = data.split(':');
-    final track = parts[1];
-    final subject = parts[2];
-    final type = parts[3];
-    final materialId = parts[4];
+    final track = Utils.lengthen(parts[1]);
+    final subject = Utils.lengthen(parts[2]);
+    final type = Utils.lengthen(parts[3]);
+    final materialIdRaw = parts[4];
     final lang = Utils.getUserLanguage(userId);
 
-    if (materialId.startsWith('page_')) {
-      final page = int.parse(materialId.split('_')[1]);
+    if (materialIdRaw.startsWith('page_')) {
+      final page = int.parse(materialIdRaw.split('_')[1]);
       final materials = await FirebaseDb.getMaterials(track, subject, type);
       final itemsList = materials.entries.map((e) => MapEntry(e.key, e.value['name'].toString())).toList();
-      final keyboard = Utils.paginateMapKeyboard(itemsList, page: page, prefix: 'mat:$track:$subject:$type:', backData: 'subj:$track:$subject');
+      final keyboard = Utils.paginateMapKeyboard(itemsList, page: page, prefix: 'mat:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}:', backData: 'subj:${Utils.shorten(track)}:${Utils.shorten(subject)}');
       await ctx.editMessageText(S.get('materials_list', lang, {'type': type}), replyMarkup: keyboard);
       return;
     }
 
+    final materialId = Utils.lengthen(materialIdRaw);
     final material = await FirebaseDb.getMaterial(track, subject, type, materialId);
 
     if (material != null) {

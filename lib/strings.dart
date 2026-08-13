@@ -83,8 +83,8 @@ class S {
       'en': '❌ Material not found!',
     },
     'no_files_found': {
-      'ar': 'لاتوجد ملفات',
-      'en': 'No files found',
+      'ar': 'لا يوجد داتا حالياً',
+      'en': 'No data currently',
     },
 
     // ── Contact Admin ───────────────────────────────────────────────

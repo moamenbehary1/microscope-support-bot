@@ -51,7 +51,8 @@ void registerTableHandlers(Bot bot) {
     final userId = ctx.from?.id;
     final data = ctx.callbackQuery?.data;
     if (userId == null || data == null) return;
-    final trackName = data.replaceFirst('tab_track:', '');
+    final trackNameRaw = data.replaceFirst('tab_track:', '');
+    final trackName = Utils.lengthen(trackNameRaw);
     await ctx.answerCallbackQuery();
 
     final state = Utils.tableCreationStates[userId];
@@ -86,7 +87,8 @@ void registerTableHandlers(Bot bot) {
     final userId = ctx.from?.id;
     final data = ctx.callbackQuery?.data;
     if (userId == null || data == null) return;
-    final subj = data.replaceFirst('tab_subj:', '');
+    final subjRaw = data.replaceFirst('tab_subj:', '');
+    final subj = Utils.lengthen(subjRaw);
     await ctx.answerCallbackQuery();
 
     final state = Utils.tableCreationStates[userId];

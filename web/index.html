@@ -1269,13 +1269,13 @@ const S = {
             const mats = Object.entries(tyVal).filter(([k])=>k!=='_placeholder');
             sMatCount += mats.length;
 
+            const eTrack = encodeStr(tKey), eSubj = encodeStr(sKey), eTyKey = encodeStr(tyKey);
             let matsHtml = '';
             for(const [mKey, mVal] of mats){
               if(!mVal || typeof mVal !== 'object') continue;
               const mName = mVal.name || mKey;
               const fIco = this._fileIcon(mVal.file_type);
               const ft = mVal.file_type || 'doc';
-              const eTrack = encodeStr(tKey), eSubj = encodeStr(sKey), eTyKey = encodeStr(tyKey);
               const eMat = encodeStr(mKey), eName = encodeStr(mName);
               matsHtml += `<div class="tree-row material-row">
                 <span class="tree-caret" style="opacity:0">▶</span>

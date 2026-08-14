@@ -1258,6 +1258,7 @@ const S = {
           if(!sVal || typeof sVal !== 'object') continue;
           const sId = tId+'_s_'+encodeURIComponent(sKey).replace(/%/g,'_');
           const sOpen = this._open[sId] ?? false;
+          const sMatch = !q || sKey.toLowerCase().includes(q);
           const types = Object.entries(sVal).filter(([k])=>k!=='_placeholder');
 
           let sMatCount = 0;

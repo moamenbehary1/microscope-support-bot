@@ -907,7 +907,7 @@ const I18n = {
     'Checking...': 'جاري التحقق...',
     '⚡ Live Sync': '⚡ مزامنة مباشرة',
     '🔬 Connect Dashboard': '🔬 ربط لوحة التحكم',
-    'Enter your Firebase credentials once. They\\'ll be stored in your browser for next visits.': 'أدخل بيانات Firebase مرة واحدة.',
+    "Enter your Firebase credentials once. They'll be stored in your browser for next visits.": 'أدخل بيانات Firebase مرة واحدة.',
     'Firebase Database URL': 'رابط قاعدة بيانات Firebase',
     'Firebase Database Secret': 'الرقم السري لقاعدة بيانات Firebase',
     'Connect →': 'اتصال →',
@@ -1277,8 +1277,20 @@ const S = {
               const ft = mVal.file_type || 'doc';
               const eTrack = encodeStr(tKey), eSubj = encodeStr(sKey), eTyKey = encodeStr(tyKey);
               const eMat = encodeStr(mKey), eName = encodeStr(mName);
-              matsHtml += `<div class="tree-material">
+              matsHtml += `<div class="tree-row material-row">
+                <span class="tree-caret" style="opacity:0">▶</span>
+                <span class="tree-icon">${fIco}</span>
+                <span class="tree-lbl">${mName}</span>
+                <span class="tree-sub">${ft}</span>
+                <div class="tree-actions">
+                  <button class="btn btn-sm btn-icon" style="color:var(--primary);border-color:var(--primary);background:transparent"
+                    onclick="S.curriculum.viewMaterial('${eTrack}','${eSubj}','${eTyKey}','${eMat}')" title="${I18n.t("View Details")}">👁️</button>
+                  <button class="btn btn-sm btn-icon" style="color:var(--danger);border-color:var(--danger);background:transparent"
+                    onclick="S.curriculum.deleteNode('${eTrack}','${eSubj}','${eTyKey}','${eMat}','${eName}')" title="${I18n.t("Delete")}">🗑</button>
+                </div>
+              </div>`;
             }
+
 
             typesHtml += `
               <div class="tree-row type-row" onclick="S.curriculum.toggle('${tyId}')" data-track="${eTrack}" data-subject="${eSubj}" data-type="${eTyKey}">

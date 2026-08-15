@@ -8,7 +8,6 @@ import '../lib/contributor_handlers.dart';
 import '../lib/table_handlers.dart';
 import '../lib/firebase_db.dart';
 import '../lib/utils.dart';
-import '../lib/translation_service.dart';
 
 Future<void> startDummyServer(Bot bot) async {
   final port = int.tryParse(Platform.environment['PORT'] ?? '') ?? 5000;
@@ -168,38 +167,6 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
         ..write(jsonEncode({'status': 'error', 'error': e.toString()}));
     }
 
-  } else if (path == '/api/translations' && req.method == 'GET') {
-    try {
-      final translations = await FirebaseDb.getTranslations('ar');
-      req.response
-        ..statusCode = 200
-        ..headers.contentType = ContentType.json
-        ..write(jsonEncode(translations));
-    } catch (e) {
-      req.response
-        ..statusCode = 500
-        ..write(jsonEncode({'error': e.toString()}));
-    }
-
-  } else if (path == '/api/translate' && req.method == 'POST') {
-    try {
-      final content = await utf8.decoder.bind(req).join();
-      final data = jsonDecode(content) as Map<String, dynamic>;
-      final text = data['text'] as String;
-      final toLang = data['to'] as String? ?? 'ar';
-      
-      final translated = await TranslationService.translate(text, to: toLang);
-      
-      req.response
-        ..statusCode = 200
-        ..headers.contentType = ContentType.json
-        ..write(jsonEncode({'original': text, 'translated': translated}));
-    } catch (e) {
-      req.response
-        ..statusCode = 500
-        ..write(jsonEncode({'error': e.toString()}));
-    }
-
   } else {
     req.response.statusCode = 404;
     req.response.write('Not found');
@@ -211,8 +178,6 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
 
 Future<void> main() async {
   print('Starting Telegram Bot CMS...');
-  
-  await TranslationService.init();
 
   if (Config.botToken.isEmpty) {
     print('ERROR: BOT_TOKEN is not set in .env');

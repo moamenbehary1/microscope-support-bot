@@ -1,6 +1,5 @@
 import 'package:televerse/televerse.dart';
 import 'config.dart';
-import 'translation_service.dart';
 
 class Utils {
   // Simple state management (In-memory for current session state)
@@ -68,14 +67,13 @@ class Utils {
   // ── Pagination ──────────────────────────────────────────────────────
 
   /// Generates a paginated inline keyboard for a list of items.
-  static Future<InlineKeyboard> paginateKeyboard(
+  static InlineKeyboard paginateKeyboard(
     List<String> items, {
     required int page,
     int itemsPerPage = 5,
     required String prefix,
     String? backData,
-    String lang = 'ar',
-  }) async {
+  }) {
     final keyboard = InlineKeyboard();
 
     int startIndex = page * itemsPerPage;
@@ -83,8 +81,7 @@ class Utils {
     if (endIndex > items.length) endIndex = items.length;
 
     for (int i = startIndex; i < endIndex; i++) {
-      final tItem = await TranslationService.translate(items[i], to: lang);
-      keyboard.row().add(tItem, '$prefix${Utils.shorten(items[i])}');
+      keyboard.row().add(items[i], '$prefix${Utils.shorten(items[i])}');
     }
 
     final navRow = <InlineMenuData>[];
@@ -110,14 +107,13 @@ class Utils {
 
   /// Generates a paginated inline keyboard for key-value items (e.g. materials).
   /// For a list of MapEntry, typically used when we have IDs mapping to names.
-  static Future<InlineKeyboard> paginateMapKeyboard(
+  static InlineKeyboard paginateMapKeyboard(
     List<MapEntry<String, String>> items, {
     required int page,
     int itemsPerPage = 5,
     required String prefix,
     String? backData,
-    String lang = 'ar',
-  }) async {
+  }) {
     final keyboard = InlineKeyboard();
 
     int startIndex = page * itemsPerPage;
@@ -152,7 +148,7 @@ class Utils {
   }
 
   /// Generates a paginated inline keyboard with multi-select checkmarks.
-  static Future<InlineKeyboard> paginateMultiSelectKeyboard(
+  static InlineKeyboard paginateMultiSelectKeyboard(
     List<String> items,
     List<String> selectedItems, {
     required int page,
@@ -160,8 +156,7 @@ class Utils {
     required String togglePrefix,
     required String doneData,
     String? backData,
-    String lang = 'ar',
-  }) async {
+  }) {
     final keyboard = InlineKeyboard();
 
     int startIndex = page * itemsPerPage;
@@ -171,8 +166,7 @@ class Utils {
     for (int i = startIndex; i < endIndex; i++) {
       final item = items[i];
       final isSelected = selectedItems.contains(item);
-      final tItem = await TranslationService.translate(item, to: lang);
-      final text = isSelected ? '✅ $tItem' : tItem;
+      final text = isSelected ? '✅ $item' : item;
       keyboard.row().add(text, '$togglePrefix${Utils.shorten(item)}');
     }
 

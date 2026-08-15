@@ -430,16 +430,4 @@ class FirebaseDb {
     return map.keys.map((e) => int.tryParse(e) ?? 0).where((e) => e != 0).toList();
   }
 
-  // --- Translations ---
-  static Future<Map<String, String>> getTranslations(String lang) async {
-    final data = await _get('/translations/$lang');
-    if (data == null) return {};
-    return (data as Map<String, dynamic>).map((k, v) => MapEntry(k, v.toString()));
-  }
-
-  static Future<void> setTranslation(String lang, String original, String translated) async {
-    // encode key to prevent firebase errors with invalid characters
-    final key = Uri.encodeComponent(original).replaceAll('.', '%2E');
-    await _put('/translations/$lang/$key', translated);
-  }
 }

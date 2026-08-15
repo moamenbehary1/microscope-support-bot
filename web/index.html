@@ -1088,9 +1088,16 @@ const S = {
       const cCnt=contributors?Object.keys(contributors).length:0;
       const rCnt=requests?Object.keys(requests).length:0;
       let mCnt=0;
-      if(curriculum) Object.values(curriculum).forEach(t=>
-        Object.values(t||{}).forEach(su=>
-          Object.values(su||{}).forEach(ty=>mCnt+=Object.keys(ty||{}).length)));
+      if(curriculum) Object.values(curriculum).forEach(t=> {
+        if(typeof t !== 'object' || !t) return;
+        Object.values(t).forEach(su=> {
+          if(typeof su !== 'object' || !su) return;
+          Object.values(su).forEach(ty=> {
+            if(typeof ty !== 'object' || !ty) return;
+            mCnt += Object.keys(ty).filter(k=>k!=='_placeholder').length;
+          });
+        });
+      });
 
       // badge
       const badge=document.getElementById('req-badge');
@@ -1151,6 +1158,7 @@ const S = {
             <button class="btn btn-ghost btn-sm" onclick="S.curriculum.refresh()" title="${I18n.t("Refresh")}">🔄</button>
             <button class="btn btn-primary btn-sm" onclick="S.curriculum.addTrack()">${I18n.t("+ Add Track")}</button>
             <button class="btn btn-primary btn-sm" style="background:#00B8D9; border-color:#00B8D9; border-radius:12px; font-family:'Inter', sans-serif; font-weight:600; color:#fff; box-shadow:0 4px 12px rgba(0,184,217,0.2);" onclick="S.curriculum.addSubjectsBulk()">${I18n.t("+ Add Subjects")}</button>
+            <button class="btn btn-primary btn-sm" style="background:#3b82f6; border-color:#3b82f6; border-radius:12px; font-family:'Inter', sans-serif; font-weight:600; color:#fff; box-shadow:0 4px 12px rgba(59,130,246,0.2);" onclick="S.curriculum.addTypesBulk()">${I18n.t("+ Bulk Add Types")}</button>
             <button class="btn btn-primary btn-sm" style="background:#8b5cf6; border-color:#8b5cf6; border-radius:12px; font-family:'Inter', sans-serif; font-weight:600; color:#fff; box-shadow:0 4px 12px rgba(139,92,246,0.2);" onclick="S.curriculum.uploadJSON()" title="${I18n.t("Upload JSON mapping departments to subjects")}">${I18n.t("📁 Upload JSON")}</button>
           </div>
         </div>
@@ -1454,6 +1462,120 @@ const S = {
       };
     },
 
+    addTypesBulk: function() {
+      const data = this._data || {};
+      const tracks = Object.keys(data).filter(k => k !== '_placeholder');
+      const trackOptions = tracks.map(t => `<option value="${t}">${t}</option>`).join('');
+      
+      const modalHtml = `
+        <div id="add-types-modal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(200,200,200,0.15); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:9999; font-family:'Inter', sans-serif;">
+          <div style="background:#FFFFFF; box-shadow:0 15px 40px rgba(0,0,0,0.05); border-radius:24px; padding:32px; width:100%; max-width:420px; display:flex; flex-direction:column; gap:24px; animation:fadeInScale .25s cubic-bezier(0.16, 1, 0.3, 1);">
+            <h3 style="margin:0; color:#1A1A1A; font-size:1.35rem; font-weight:600;">Bulk Add Types</h3>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <label style="color:#8C8C8C; font-size:0.875rem;">Track</label>
+              <select id="bulk-type-track" style="width:100%; padding:14px 16px; background:#F8FAF9; border:1px solid transparent; border-radius:12px; outline:none; transition:all 0.2s; color:#1A1A1A; font-size:0.95rem; box-sizing:border-box;">
+                <option value="">-- Select Track --</option>
+                ${trackOptions}
+              </select>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <label style="color:#8C8C8C; font-size:0.875rem;">Subjects</label>
+              <div id="bulk-type-subjects" style="max-height:120px; overflow-y:auto; background:#F8FAF9; padding:8px; border-radius:12px;">
+                <span style="color:#8C8C8C; font-size:0.85rem; padding:4px;">Select a track first</span>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <label style="color:#8C8C8C; font-size:0.875rem;">Types to Add (Comma separated)</label>
+              <input id="bulk-type-types" type="text" placeholder="summary, explanation, exams..." style="width:100%; padding:14px 16px; background:#F8FAF9; border:1px solid transparent; border-radius:12px; outline:none; transition:all 0.2s; color:#1A1A1A; font-size:0.95rem; box-sizing:border-box;">
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:8px;">
+              <button onclick="document.getElementById('add-types-modal').remove()" style="padding:12px 20px; border-radius:12px; background:transparent; border:none; color:#8C8C8C; font-weight:600; cursor:pointer; font-size:0.95rem; outline:none;">Cancel</button>
+              <button id="bulk-type-submit" style="padding:12px 24px; border-radius:12px; background:#3b82f6; box-shadow:0 8px 16px rgba(59,130,246,0.3); border:none; color:#FFFFFF; font-weight:600; cursor:pointer; transition:all 0.2s; font-size:0.95rem; outline:none;">Add Types</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+      
+      const trackSelect = document.getElementById('bulk-type-track');
+      const subjContainer = document.getElementById('bulk-type-subjects');
+      
+      trackSelect.onchange = () => {
+        const tr = trackSelect.value;
+        if(!tr) {
+          subjContainer.innerHTML = '<span style="color:#8C8C8C; font-size:0.85rem; padding:4px;">Select a track first</span>';
+          return;
+        }
+        const subjects = Object.keys(data[tr] || {}).filter(k => k !== '_placeholder');
+        if(subjects.length === 0) {
+          subjContainer.innerHTML = '<span style="color:#8C8C8C; font-size:0.85rem; padding:4px;">No subjects found</span>';
+          return;
+        }
+        subjContainer.innerHTML = `
+          <label style="display:flex; align-items:center; gap:8px; padding:4px; font-size:0.9rem; cursor:pointer;">
+            <input type="checkbox" id="bulk-type-selectall" checked> <b style="color:#1A1A1A">Select All</b>
+          </label>
+        ` + subjects.map(s => `
+          <label style="display:flex; align-items:center; gap:8px; padding:4px; font-size:0.9rem; cursor:pointer;">
+            <input type="checkbox" class="bulk-subj-cb" value="${s}" checked> <span style="color:#1A1A1A">${s}</span>
+          </label>
+        `).join('');
+        
+        document.getElementById('bulk-type-selectall').onchange = (e) => {
+          const isChecked = e.target.checked;
+          document.querySelectorAll('.bulk-subj-cb').forEach(cb => cb.checked = isChecked);
+        };
+      };
+
+      const submitBtn = document.getElementById('bulk-type-submit');
+      submitBtn.onclick = async () => {
+        const track = trackSelect.value;
+        if(!track) {
+          if(window.UI && window.UI.toast) UI.toast('Please select a track', 'error');
+          return;
+        }
+        
+        const cbs = document.querySelectorAll('.bulk-subj-cb:checked');
+        const selectedSubjs = Array.from(cbs).map(cb => cb.value);
+        if(selectedSubjs.length === 0) {
+           if(window.UI && window.UI.toast) UI.toast('Please select at least one subject', 'error');
+           return;
+        }
+        
+        const typesStr = document.getElementById('bulk-type-types').value;
+        const types = typesStr.split(',').map(t => t.trim()).filter(t => t);
+        if(types.length === 0) {
+           if(window.UI && window.UI.toast) UI.toast('Please enter types to add', 'error');
+           return;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.7';
+        submitBtn.innerText = 'Saving...';
+        
+        try {
+          const promises = [];
+          selectedSubjs.forEach(subj => {
+            types.forEach(t => {
+              promises.push(FB.put(\`/curriculum/\${encodeURIComponent(track)}/\${encodeURIComponent(subj)}/\${encodeURIComponent(t)}\`, {_placeholder: true}));
+            });
+          });
+          await Promise.all(promises);
+          
+          if(window.UI && window.UI.toast) UI.toast('Types added successfully!', 'success');
+          document.getElementById('add-types-modal').remove();
+          if(this.fetchAndRender) await this.fetchAndRender();
+          else if(window.S && window.S.curriculum) await window.S.curriculum.fetchAndRender();
+        } catch(e) {
+          console.error(e);
+          if(window.UI && window.UI.toast) UI.toast('Failed: ' + e.message, 'error');
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          submitBtn.innerText = 'Add Types';
+        }
+      };
+    },
+
     uploadJSON: function() {
       const fileInput = document.createElement('input');
       fileInput.type = 'file';
@@ -1521,23 +1643,37 @@ const S = {
                   }
                 }
               } else if (typeof subjectsData === 'object' && subjectsData !== null) {
-                // Object mapping: { "Subject 1": ["Type 1", "Type 2"], "Subject 2": [] }
+                // Object mapping support for Types Arrays and Type Objects
                 for (const subjName of Object.keys(subjectsData)) {
                   if (subjName.trim() === '') continue;
-                  let types = subjectsData[subjName];
-                  if (!Array.isArray(types)) {
-                    if (typeof types === 'string') types = [types];
-                    else types = [];
-                  }
+                  let typesData = subjectsData[subjName];
                   
-                  if (types.length > 0) {
+                  if (Array.isArray(typesData)) {
+                    if (typesData.length > 0) {
+                      const payload = { _placeholder: true };
+                      typesData.forEach(t => {
+                        if (typeof t === 'string' && t.trim() !== '') {
+                          payload[t.trim()] = { _placeholder: true };
+                        }
+                      });
+                      promises.push(FB.put(`/curriculum/${encodeURIComponent(dep)}/${encodeURIComponent(subjName)}`, payload));
+                    } else {
+                      promises.push(FB.put(`/curriculum/${encodeURIComponent(dep)}/${encodeURIComponent(subjName)}`, { _placeholder: true }));
+                    }
+                  } else if (typeof typesData === 'object' && typesData !== null) {
                     const payload = { _placeholder: true };
-                    types.forEach(t => {
-                      if (typeof t === 'string' && t.trim() !== '') {
-                        payload[t.trim()] = { _placeholder: true };
+                    for (const typeName of Object.keys(typesData)) {
+                      if (typeName.trim() === '') continue;
+                      const matData = typesData[typeName];
+                      if (typeof matData === 'object' && matData !== null && Object.keys(matData).length > 0) {
+                        payload[typeName.trim()] = { _placeholder: true, ...matData };
+                      } else {
+                        payload[typeName.trim()] = { _placeholder: true };
                       }
-                    });
+                    }
                     promises.push(FB.put(`/curriculum/${encodeURIComponent(dep)}/${encodeURIComponent(subjName)}`, payload));
+                  } else if (typeof typesData === 'string' && typesData.trim() !== '') {
+                    promises.push(FB.put(`/curriculum/${encodeURIComponent(dep)}/${encodeURIComponent(subjName)}`, { _placeholder: true, [typesData.trim()]: { _placeholder: true } }));
                   } else {
                     promises.push(FB.put(`/curriculum/${encodeURIComponent(dep)}/${encodeURIComponent(subjName)}`, { _placeholder: true }));
                   }

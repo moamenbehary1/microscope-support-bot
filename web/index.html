@@ -1557,7 +1557,7 @@ const S = {
           const promises = [];
           selectedSubjs.forEach(subj => {
             types.forEach(t => {
-              promises.push(FB.put(\`/curriculum/\${encodeURIComponent(track)}/\${encodeURIComponent(subj)}/\${encodeURIComponent(t)}\`, {_placeholder: true}));
+              promises.push(FB.put(`/curriculum/${encodeURIComponent(track)}/${encodeURIComponent(subj)}/${encodeURIComponent(t)}`, {_placeholder: true}));
             });
           });
           await Promise.all(promises);

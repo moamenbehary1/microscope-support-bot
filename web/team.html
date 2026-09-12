@@ -456,18 +456,71 @@ function setRating(val){
   document.querySelectorAll('.star-btn').forEach((b,i)=>b.classList.toggle('active',i<val));
 }
 // Feedback
-function submitFeedback(){
-  const name=document.getElementById('fb-name').value.trim();
-  const msg=document.getElementById('fb-msg').value.trim();
-  if(!name){document.getElementById('fb-name').focus();return;}
-  if(!msg){document.getElementById('fb-msg').focus();return;}
-  const toast=document.getElementById('toast');
-  toast.classList.add('show');
-  setTimeout(()=>toast.classList.remove('show'),4000);
-  document.getElementById('fb-name').value='';
-  document.getElementById('fb-msg').value='';
-  document.getElementById('fb-category').value='';
-  setRating(0);
+async function submitFeedback(){
+  const nameEl = document.getElementById('fb-name');
+  const msgEl = document.getElementById('fb-msg');
+  const catEl = document.getElementById('fb-category');
+  const btn = document.querySelector('.submit-btn');
+  const toast = document.getElementById('toast');
+
+  const name = nameEl.value.trim();
+  const msg = msgEl.value.trim();
+  const category = catEl.options[catEl.selectedIndex]?.text || catEl.value || 'عام';
+
+  if(!name){
+    nameEl.focus();
+    toast.textContent = '⚠️ يرجى كتابة اسمك أولاً';
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'),3000);
+    return;
+  }
+  if(!msg){
+    msgEl.focus();
+    toast.textContent = '⚠️ يرجى كتابة رسالتك أو تقييمك';
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'),3000);
+    return;
+  }
+
+  const origBtnText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ جاري الإرسال...';
+
+  try {
+    const res = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        name: name,
+        rating: rating,
+        category: category,
+        message: msg
+      })
+    });
+
+    const data = await res.json().catch(()=>null);
+    if(res.ok && data && data.success){
+      toast.textContent = '✅ شكراً على رأيك! تم إرسال تقييمك للأدمن بنجاح 🙏';
+      toast.classList.add('show');
+      setTimeout(()=>toast.classList.remove('show'),4500);
+
+      nameEl.value = '';
+      msgEl.value = '';
+      catEl.value = '';
+      setRating(0);
+    } else {
+      toast.textContent = '❌ تعذر إرسال التقييم، برجاء المحاولة لاحقاً';
+      toast.classList.add('show');
+      setTimeout(()=>toast.classList.remove('show'),4000);
+    }
+  } catch(e) {
+    toast.textContent = '❌ حدث خطأ في الاتصال، تأكد من اتصالك بالإنترنت';
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'),4000);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origBtnText;
+  }
 }
 // Scroll animations
 const animObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}});},{threshold:0.1,rootMargin:'0px 0px -50px 0px'});

@@ -167,6 +167,81 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
         ..write(jsonEncode({'status': 'error', 'error': e.toString()}));
     }
 
+  } else if (path == '/api/feedback' && req.method == 'POST') {
+    try {
+      final content = await utf8.decoder.bind(req).join();
+      final data = jsonDecode(content) as Map<String, dynamic>;
+
+      final name = (data['name'] ?? 'طالب').toString().trim();
+      final ratingNum = (data['rating'] is int) ? data['rating'] as int : int.tryParse('${data['rating']}') ?? 0;
+      final ratingStars = ratingNum > 0 ? '$ratingNum/5 ' + ('⭐' * ratingNum) : 'بدون تقييم';
+      final category = (data['category'] ?? 'عام').toString().trim();
+      final message = (data['message'] ?? '').toString().trim();
+
+      if (message.isEmpty && name.isEmpty) {
+        req.response
+          ..statusCode = 400
+          ..headers.contentType = ContentType.json
+          ..write(jsonEncode({'success': false, 'error': 'Empty feedback'}));
+        await req.response.close();
+        return;
+      }
+
+      // 1. Save to Firebase Database
+      await FirebaseDb.addWebFeedback(
+        name: name.isEmpty ? 'طالب' : name,
+        rating: ratingNum,
+        category: category.isEmpty ? 'عام' : category,
+        message: message,
+      );
+
+      // 2. Build Telegram notification message
+      final notification =
+          '🌟 رأي وتقييم جديد من موقع التيم! 🌟\n\n'
+          '👤 الاسم: ${name.isEmpty ? "طالب (غير محدد)" : name}\n'
+          '⭐ التقييم: $ratingStars\n'
+          '🏷️ القسم: ${category.isEmpty ? "عام" : category}\n'
+          '💬 الرسالة:\n$message\n\n'
+          '🌐 المصدر: صفحة التيم (3D Showcase Page)';
+
+      // Send to Super Admin
+      if (Config.superAdminId != 0) {
+        try {
+          await bot.api.sendMessage(
+            ChatID(Config.superAdminId),
+            notification,
+          );
+        } catch (e) {
+          print('Failed sending feedback alert to Super Admin: $e');
+        }
+      }
+
+      // Send to other admins
+      try {
+        final admins = await FirebaseDb.getAdmins();
+        for (var adminId in admins) {
+          if (adminId != Config.superAdminId) {
+            try {
+              await bot.api.sendMessage(
+                ChatID(adminId),
+                notification,
+              );
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+
+      req.response
+        ..statusCode = 200
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'success': true}));
+    } catch (e) {
+      req.response
+        ..statusCode = 500
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'success': false, 'error': e.toString()}));
+    }
+
   } else if (path == '/team.html' || path == '/team') {
     // Serve the 3D team showcase page
     final teamFile = File('web/team.html');

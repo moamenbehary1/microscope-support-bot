@@ -190,6 +190,27 @@ class FirebaseDb {
     });
   }
 
+  static Future<void> addWebFeedback({
+    required String name,
+    required int rating,
+    required String category,
+    required String message,
+  }) async {
+    final formatted = '⭐ التقييم: $rating/5 | 📂 القسم: $category\n$message';
+    final entry = {
+      'userId': '🌐 موقع التيم ($name)',
+      'name': name,
+      'rating': rating,
+      'category': category,
+      'message': formatted,
+      'text': formatted,
+      'source': 'team_web_page',
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+    await _post('/feedbacks', entry);
+    await _post('/feedback', entry);
+  }
+
   static Future<Map<String, dynamic>> getFeedbacks() async {
     final data = await _get('/feedbacks');
     if (data == null) return {};

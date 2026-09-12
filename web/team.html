@@ -114,31 +114,28 @@ body{
 }
 
 /* ═════════════════════════════════════════════════
-   INTERACTIVE CURTAIN / MASCOT BANNER
+   INTERACTIVE CURTAIN / MASCOT BANNER (No Outer Frame)
 ═════════════════════════════════════════════════ */
 .banner-stage-section{
   position:relative;z-index:2;
   width:100%;
-  max-width:980px;
-  margin:0 auto 50px;
+  max-width:920px;
+  margin:0 auto 40px;
   padding:0 20px;
-}
-.banner-outer-frame{
-  background:linear-gradient(145deg,#0a1738,#050b18);
-  border:2px solid var(--border-blue);
-  border-radius:26px;
-  padding:12px;
-  box-shadow:0 24px 60px rgba(0,0,0,0.7), 0 0 40px rgba(37,99,235,0.2);
-  position:relative;
 }
 .banner-container{
   position:relative;
   width:100%;
   aspect-ratio:1024 / 540;
-  border-radius:20px;
+  border-radius:18px;
   overflow:hidden;
-  background:#133370;
+  background:#21407f;
   user-select:none;
+  box-shadow:0 16px 45px rgba(0,0,0,0.5);
+  cursor:grab;
+}
+.banner-container:active{
+  cursor:grabbing;
 }
 
 /* Background revealed banner (منورين علوم + QR) */
@@ -154,38 +151,32 @@ body{
 /* Left and Right sliding mascot doors */
 .curtain-door{
   position:absolute;top:0;bottom:0;
-  width:50.2%;
+  width:50.1%;
   z-index:2;
-  transition:transform 0.8s cubic-bezier(0.16,1,0.3,1);
   overflow:hidden;
   pointer-events:none;
+  background:#21407f;
+  will-change:transform;
 }
 .door-left{
   left:0;
-  transform:translateX(0);
-  background:linear-gradient(90deg, #ffffff 0%, #ffffff 40%, rgba(24,60,123,0.95) 100%);
-  box-shadow:8px 0 25px rgba(0,0,0,0.5);
-  display:flex;align-items:center;justify-content:flex-start;
 }
 .door-right{
   right:0;
-  transform:translateX(0);
-  background:linear-gradient(270deg, #ffffff 0%, #ffffff 40%, rgba(24,60,123,0.95) 100%);
-  box-shadow:-8px 0 25px rgba(0,0,0,0.5);
-  display:flex;align-items:center;justify-content:flex-end;
 }
-.door-img{
+.door-mascot-img{
+  position:absolute;
+  top:0;bottom:0;
   height:100%;
+  width:auto;
   object-fit:contain;
   pointer-events:none;
 }
-
-/* State: When open */
-.banner-container.open .door-left{
-  transform:translateX(-100%);
+.mascot-left{
+  right:-2px;
 }
-.banner-container.open .door-right{
-  transform:translateX(100%);
+.mascot-right{
+  left:-2px;
 }
 
 /* Touch lock / open button in center */
@@ -196,38 +187,45 @@ body{
   z-index:3;
   background:linear-gradient(135deg,#1d4ed8,#00d2ff);
   color:#fff;
-  border:2px solid rgba(255,255,255,0.8);
+  border:2px solid rgba(255,255,255,0.85);
   border-radius:50px;
-  padding:14px 28px;
+  padding:12px 26px;
   font-family:var(--font-ar);
-  font-size:1rem;
+  font-size:0.95rem;
   font-weight:800;
   cursor:pointer;
-  box-shadow:0 12px 40px rgba(0,210,255,0.5), 0 0 20px rgba(29,78,216,0.6);
-  transition:all 0.35s ease;
-  display:flex;align-items:center;gap:10px;
+  box-shadow:0 10px 35px rgba(0,210,255,0.5), 0 0 20px rgba(29,78,216,0.5);
+  transition:all 0.25s ease;
+  display:flex;align-items:center;gap:8px;
   white-space:nowrap;
 }
 .center-seal-btn:hover{
-  transform:translate(-50%,-50%) scale(1.08);
-  box-shadow:0 16px 50px rgba(0,210,255,0.7);
+  transform:translate(-50%,-50%) scale(1.06);
+  box-shadow:0 14px 45px rgba(0,210,255,0.7);
 }
-.banner-container.open .center-seal-btn{
-  top:auto;bottom:16px;
-  transform:translateX(-50%);
-  padding:8px 20px;
-  font-size:0.85rem;
-  background:rgba(10,22,50,0.85);
-  border-color:rgba(0,210,255,0.5);
-  backdrop-filter:blur(8px);
+
+/* Scroll progress track */
+.scroll-track-bar{
+  width:100%;
+  height:5px;
+  background:rgba(255,255,255,0.08);
+  border-radius:10px;
+  margin-top:14px;
+  overflow:hidden;
+  position:relative;
 }
-.banner-container.open .center-seal-btn:hover{
-  transform:translateX(-50%) scale(1.05);
+.scroll-track-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#2563eb,#00d2ff);
+  box-shadow:0 0 10px #00d2ff;
+  border-radius:10px;
+  transition:width 0.08s linear;
 }
 
 .banner-hint{
   text-align:center;
-  margin-top:12px;
+  margin-top:10px;
   font-size:0.85rem;
   color:var(--dim);
   font-weight:600;
@@ -783,35 +781,38 @@ footer{
   <div class="batch-pill">🎓 معاك يا دفعة 50</div>
 </header>
 
-<!-- 1. INTERACTIVE CURTAIN MASCOT BANNER -->
+<!-- 1. INTERACTIVE CURTAIN MASCOT BANNER (No Outer Frame) -->
 <section class="banner-stage-section">
-  <div class="banner-outer-frame">
-    <div class="banner-container" id="banner-container" onclick="toggleBanner()">
-      
-      <!-- Center revealed banner with "منورين علوم" and QR phone -->
-      <div class="banner-content-bg"></div>
+  <div class="banner-container" id="banner-container">
+    
+    <!-- Center revealed banner with "منورين علوم" and QR phone -->
+    <div class="banner-content-bg"></div>
 
-      <!-- Left door carrying Hacker Mascot -->
-      <div class="curtain-door door-left" id="door-left">
-        <img src="char_left.png" class="door-img" alt="Hacker Mascot" />
-      </div>
-
-      <!-- Right door carrying Doctor Mascot -->
-      <div class="curtain-door door-right" id="door-right">
-        <img src="char_right.png" class="door-img" alt="Scientist Mascot" />
-      </div>
-
-      <!-- Interactive Center Button -->
-      <button type="button" class="center-seal-btn" id="seal-btn" onclick="event.stopPropagation(); toggleBanner();">
-        <span id="seal-icon">✨</span>
-        <span id="seal-text">اضغط لفتح البانر • مرحباً دفعة 50</span>
-      </button>
-
+    <!-- Left door carrying Hacker Mascot -->
+    <div class="curtain-door door-left" id="door-left">
+      <img src="char_left_trans.png" class="door-mascot-img mascot-left" alt="Hacker Mascot" />
     </div>
+
+    <!-- Right door carrying Doctor Mascot -->
+    <div class="curtain-door door-right" id="door-right">
+      <img src="char_right_trans.png" class="door-mascot-img mascot-right" alt="Scientist Mascot" />
+    </div>
+
+    <!-- Interactive Center Seal -->
+    <button type="button" class="center-seal-btn" id="seal-btn" onclick="toggleBannerManual()">
+      <span id="seal-icon">✨</span>
+      <span id="seal-text">ارفع بالسكرول أو اضغط للفتح</span>
+    </button>
+
   </div>
+
+  <div class="scroll-track-bar">
+    <div class="scroll-track-fill" id="scroll-track-fill"></div>
+  </div>
+
   <div class="banner-hint">
     <span>💡</span>
-    <span>اضغط على البانر أو اسحب لفتحه واستكشاف كود الـ QR والترحيب!</span>
+    <span>ارفع الصفحة بالسكرول لتفتح الصورة تدريجياً وتكتشف الكود والترحيب!</span>
   </div>
 </section>
 
@@ -1011,33 +1012,91 @@ const ratingLabels = [
   '⭐⭐⭐⭐⭐ رائع ومبهر جداً! 🌟'
 ];
 
-// Curtain Banner Toggle
-let isBannerOpen = false;
-function toggleBanner(){
-  const container = document.getElementById('banner-container');
-  const text = document.getElementById('seal-text');
-  const icon = document.getElementById('seal-icon');
-  isBannerOpen = !isBannerOpen;
-  
-  if(isBannerOpen){
-    container.classList.add('open');
-    text.textContent = 'إغلاق البانر ✖';
-    icon.textContent = '🔒';
-  } else {
-    container.classList.remove('open');
-    text.textContent = 'اضغط لفتح البانر • مرحباً دفعة 50';
-    icon.textContent = '✨';
+// ═══════════════════════════════════════════════════
+// Scroll-Linked Progressive Banner Opening + Drag Support
+// ═══════════════════════════════════════════════════
+let bannerProgress = 0;
+let targetProgress = 0;
+let isManualOpen = false;
+
+function applyBannerProgress(p) {
+  const doorL = document.getElementById('door-left');
+  const doorR = document.getElementById('door-right');
+  const sealBtn = document.getElementById('seal-btn');
+  const fill = document.getElementById('scroll-track-fill');
+
+  if (doorL) doorL.style.transform = `translateX(-${p * 100}%)`;
+  if (doorR) doorR.style.transform = `translateX(${p * 100}%)`;
+
+  if (sealBtn) {
+    sealBtn.style.opacity = Math.max(0, 1 - p * 2.2);
+    sealBtn.style.transform = `translate(-50%, -50%) scale(${Math.max(0.65, 1 - p * 0.35)})`;
+    sealBtn.style.pointerEvents = p > 0.45 ? 'none' : 'auto';
+  }
+
+  if (fill) {
+    fill.style.width = `${Math.min(100, Math.max(0, p * 100))}%`;
   }
 }
 
-// Auto open banner on scroll down if not already toggled
-let hasAutoOpened = false;
-window.addEventListener('scroll', () => {
-  if (!hasAutoOpened && window.scrollY > 80) {
-    hasAutoOpened = true;
-    if(!isBannerOpen) toggleBanner();
+// Scroll listener: opening links directly to scroll distance from 0 to 280px
+function handleScroll() {
+  if (isManualOpen) return;
+  const maxScrollDist = 280;
+  const currentY = window.scrollY || window.pageYOffset || 0;
+  targetProgress = Math.min(1, Math.max(0, currentY / maxScrollDist));
+}
+
+window.addEventListener('scroll', handleScroll, { passive: true });
+
+// Animation loop with smooth linear interpolation (lerp) for 60fps/120fps motion
+function bannerAnimLoop() {
+  bannerProgress += (targetProgress - bannerProgress) * 0.18;
+  if (Math.abs(targetProgress - bannerProgress) < 0.001) {
+    bannerProgress = targetProgress;
   }
-}, { passive: true });
+  applyBannerProgress(bannerProgress);
+  requestAnimationFrame(bannerAnimLoop);
+}
+requestAnimationFrame(bannerAnimLoop);
+
+// Manual toggle
+function toggleBannerManual() {
+  isManualOpen = !isManualOpen;
+  targetProgress = isManualOpen ? 1 : 0;
+}
+
+// Interactive touch & mouse drag support directly on the banner
+const bannerEl = document.getElementById('banner-container');
+let isDraggingBanner = false;
+let dragStartX = 0;
+let progressStart = 0;
+
+if (bannerEl) {
+  bannerEl.addEventListener('mousedown', (e) => {
+    isDraggingBanner = true;
+    dragStartX = e.clientX;
+    progressStart = targetProgress;
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!isDraggingBanner) return;
+    const delta = Math.abs(e.clientX - dragStartX);
+    targetProgress = Math.min(1, Math.max(0, progressStart + (delta / 200)));
+  });
+  window.addEventListener('mouseup', () => { isDraggingBanner = false; });
+
+  bannerEl.addEventListener('touchstart', (e) => {
+    isDraggingBanner = true;
+    dragStartX = e.touches[0].clientX;
+    progressStart = targetProgress;
+  }, { passive: true });
+  bannerEl.addEventListener('touchmove', (e) => {
+    if (!isDraggingBanner) return;
+    const delta = Math.abs(e.touches[0].clientX - dragStartX);
+    targetProgress = Math.min(1, Math.max(0, progressStart + (delta / 180)));
+  }, { passive: true });
+  bannerEl.addEventListener('touchend', () => { isDraggingBanner = false; });
+}
 
 // Generate Random Anonymous Identity (علومنجي #XXXX)
 function generateNewIdentity(){

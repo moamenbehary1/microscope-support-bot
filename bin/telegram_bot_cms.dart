@@ -167,6 +167,20 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
         ..write(jsonEncode({'status': 'error', 'error': e.toString()}));
     }
 
+  } else if (path == '/team.html' || path == '/team') {
+    // Serve the 3D team showcase page
+    final teamFile = File('web/team.html');
+    if (await teamFile.exists()) {
+      final html = await teamFile.readAsString();
+      req.response
+        ..statusCode = 200
+        ..headers.contentType = ContentType.html
+        ..write(html);
+    } else {
+      req.response.statusCode = 404;
+      req.response.write('Team page not found');
+    }
+
   } else {
     req.response.statusCode = 404;
     req.response.write('Not found');

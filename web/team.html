@@ -114,14 +114,22 @@ body{
 }
 
 /* ═════════════════════════════════════════════════
-   INTERACTIVE CURTAIN / MASCOT BANNER (No Outer Frame)
+   STICKY SCROLL-PIN BANNER WITH PROGRESSIVE ZOOM
 ═════════════════════════════════════════════════ */
-.banner-stage-section{
-  position:relative;z-index:2;
+.banner-scroll-track{
+  position:relative;
+  width:100%;
+  height:170vh; /* Smooth distance for opening and zooming while pinned */
+  margin-bottom:20px;
+}
+.banner-sticky-wrap{
+  position:sticky;
+  top:24px;
   width:100%;
   max-width:920px;
-  margin:0 auto 40px;
+  margin:0 auto;
   padding:0 20px;
+  z-index:10;
 }
 .banner-container{
   position:relative;
@@ -131,21 +139,22 @@ body{
   overflow:hidden;
   background:#21407f;
   user-select:none;
-  box-shadow:0 16px 45px rgba(0,0,0,0.5);
-  cursor:grab;
-}
-.banner-container:active{
-  cursor:grabbing;
+  box-shadow:0 16px 50px rgba(0,0,0,0.6);
+  cursor:pointer;
 }
 
-/* Background revealed banner (منورين علوم + QR) */
-.banner-content-bg{
+/* Inner zooming layer */
+.banner-zoom-layer{
   position:absolute;inset:0;
   width:100%;height:100%;
-  background-image:url('team_banner.png');
-  background-size:cover;
-  background-position:center;
-  z-index:1;
+  transform-origin:center center;
+  will-change:transform;
+  display:flex;align-items:center;justify-content:center;
+}
+.banner-bg-img{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
 }
 
 /* Left and Right sliding mascot doors */
@@ -155,7 +164,7 @@ body{
   z-index:2;
   overflow:hidden;
   pointer-events:none;
-  background:#21407f;
+  background:linear-gradient(to bottom, #ffffff 0%, #ffffff 16.8%, #21407f 16.8%, #21407f 79%, #ffffff 79%, #ffffff 100%);
   will-change:transform;
 }
 .door-left{
@@ -233,18 +242,18 @@ body{
 }
 
 /* ═════════════════════════════════════════════════
-   3-COLUMN FEEDBACK SECTION WITH MASCOTS BESIDE IT
+   CENTERED SINGLE FEEDBACK SECTION (No Side Boxes)
 ═════════════════════════════════════════════════ */
 .feedback-main-section{
   position:relative;z-index:2;
   width:100%;
-  max-width:1150px;
-  margin:0 auto 60px;
+  max-width:720px;
+  margin:40px auto 70px;
   padding:0 20px;
 }
 .section-header-box{
   text-align:center;
-  margin-bottom:36px;
+  margin-bottom:32px;
 }
 .eyebrow-tag{
   display:inline-flex;align-items:center;gap:6px;
@@ -273,74 +282,8 @@ body{
   line-height:1.7;
 }
 
-/* 3-Column layout: Mascot Left | Feedback Center | Mascot Right */
-.feedback-grid{
-  display:grid;
-  grid-template-columns:260px 1fr 260px;
-  gap:24px;
-  align-items:start;
-}
-
-/* Mascot Side Cards */
-.mascot-card{
-  background:var(--surface);
-  border:1px solid var(--border-blue);
-  border-radius:var(--r);
-  padding:24px 18px;
-  text-align:center;
-  box-shadow:0 16px 40px rgba(0,0,0,0.5);
-  backdrop-filter:blur(20px);
-  position:sticky;
-  top:20px;
-  transition:transform 0.3s ease;
-}
-.mascot-card:hover{
-  transform:translateY(-5px);
-  border-color:var(--accent);
-}
-.mascot-avatar-box{
-  width:140px;height:140px;
-  margin:0 auto 16px;
-  position:relative;
-  display:flex;align-items:center;justify-content:center;
-}
-.mascot-avatar-box img{
-  width:100%;height:100%;
-  object-fit:contain;
-  filter:drop-shadow(0 10px 20px rgba(0,210,255,0.3));
-  animation:mascotFloat 4s ease-in-out infinite;
-}
-@keyframes mascotFloat{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-8px)}
-}
-.mascot-role-badge{
-  display:inline-block;
-  background:linear-gradient(135deg,#1d4ed8,#00d2ff);
-  color:#fff;
-  font-size:0.8rem;
-  font-weight:800;
-  padding:4px 14px;
-  border-radius:50px;
-  margin-bottom:12px;
-  box-shadow:0 4px 14px rgba(37,99,235,0.4);
-}
-.mascot-speech-bubble{
-  background:var(--surface2);
-  border:1px solid rgba(0,210,255,0.25);
-  border-radius:16px;
-  padding:14px;
-  font-size:0.88rem;
-  line-height:1.6;
-  color:#e2e8f0;
-  position:relative;
-  font-weight:600;
-}
-.mascot-speech-bubble::before{
-  content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);
-  border-width:0 8px 8px 8px;
-  border-style:solid;
-  border-color:transparent transparent rgba(0,210,255,0.25) transparent;
+.feedback-single-wrap{
+  width:100%;
 }
 
 /* Feedback Center Card */
@@ -348,7 +291,7 @@ body{
   background:var(--surface);
   border:1px solid var(--border-blue);
   border-radius:var(--r);
-  padding:36px 30px;
+  padding:38px 32px;
   box-shadow:0 24px 70px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
   backdrop-filter:blur(24px);
   position:relative;
@@ -781,42 +724,46 @@ footer{
   <div class="batch-pill">🎓 معاك يا دفعة 50</div>
 </header>
 
-<!-- 1. INTERACTIVE CURTAIN MASCOT BANNER (No Outer Frame) -->
-<section class="banner-stage-section">
-  <div class="banner-container" id="banner-container">
-    
-    <!-- Center revealed banner with "منورين علوم" and QR phone -->
-    <div class="banner-content-bg"></div>
+<!-- 1. STICKY SCROLL-PIN BANNER WITH PROGRESSIVE REVEAL & ZOOM -->
+<div class="banner-scroll-track" id="banner-scroll-track">
+  <div class="banner-sticky-wrap">
+    <div class="banner-container" id="banner-container">
+      
+      <!-- Inner zooming revealed layer with clean center artwork (NO DUPLICATE MASCOTS!) -->
+      <div class="banner-zoom-layer" id="banner-zoom-layer">
+        <img src="banner_center_revealed.png" class="banner-bg-img" alt="منورين علوم Microscope Team" />
+      </div>
 
-    <!-- Left door carrying Hacker Mascot -->
-    <div class="curtain-door door-left" id="door-left">
-      <img src="char_left_trans.png" class="door-mascot-img mascot-left" alt="Hacker Mascot" />
+      <!-- Left door carrying Hacker Mascot -->
+      <div class="curtain-door door-left" id="door-left">
+        <img src="char_left_trans.png" class="door-mascot-img mascot-left" alt="Hacker Mascot" />
+      </div>
+
+      <!-- Right door carrying Doctor Mascot -->
+      <div class="curtain-door door-right" id="door-right">
+        <img src="char_right_trans.png" class="door-mascot-img mascot-right" alt="Scientist Mascot" />
+      </div>
+
+      <!-- Interactive Center Seal -->
+      <button type="button" class="center-seal-btn" id="seal-btn" onclick="openBannerSmoothly()">
+        <span id="seal-icon">✨</span>
+        <span id="seal-text">ارفع بالسكرول لفتح وتكبير البانر</span>
+      </button>
+
     </div>
 
-    <!-- Right door carrying Doctor Mascot -->
-    <div class="curtain-door door-right" id="door-right">
-      <img src="char_right_trans.png" class="door-mascot-img mascot-right" alt="Scientist Mascot" />
+    <div class="scroll-track-bar">
+      <div class="scroll-track-fill" id="scroll-track-fill"></div>
     </div>
 
-    <!-- Interactive Center Seal -->
-    <button type="button" class="center-seal-btn" id="seal-btn" onclick="toggleBannerManual()">
-      <span id="seal-icon">✨</span>
-      <span id="seal-text">ارفع بالسكرول أو اضغط للفتح</span>
-    </button>
-
+    <div class="banner-hint">
+      <span>💡</span>
+      <span>ارفع الصفحة بالسكرول لتفتح الشخصيتان وتكبر الصورة بالكامل وتستكشف الكود!</span>
+    </div>
   </div>
+</div>
 
-  <div class="scroll-track-bar">
-    <div class="scroll-track-fill" id="scroll-track-fill"></div>
-  </div>
-
-  <div class="banner-hint">
-    <span>💡</span>
-    <span>ارفع الصفحة بالسكرول لتفتح الصورة تدريجياً وتكتشف الكود والترحيب!</span>
-  </div>
-</section>
-
-<!-- 2. FEEDBACK SECTION WITH MASCOTS SPREAD ON BOTH SIDES -->
+<!-- 2. FEEDBACK SECTION (CENTERED SINGLE CARD - NO SIDE BOXES) -->
 <section class="feedback-main-section">
   
   <div class="section-header-box">
@@ -825,21 +772,7 @@ footer{
     <p class="section-sub-text">شاركنا رأيك، اقتراحاتك، أو شكواك بكل أريحية وبدون الكشف عن هويتك الحقيقية — رأيك هو سر تطوير المنظومة.</p>
   </div>
 
-  <div class="feedback-grid">
-
-    <!-- LEFT MASCOT: Coder / Hacker Mascot -->
-    <div class="mascot-card mascot-card-left">
-      <div class="mascot-avatar-box">
-        <img src="char_left_trans.png" alt="Microscope Tech Mascot" />
-      </div>
-      <div class="mascot-info">
-        <div class="mascot-role-badge">المطور والتقني 💻</div>
-        <div class="mascot-speech-bubble">
-          "أهلاً بيك يا علومانجي! 🚀 كود المنظومة والبوت بيتحسن بآرائكم وملاحظاتكم.. شاركنا فكرتك في سرية وأمان تام!"
-        </div>
-      </div>
-    </div>
-
+  <div class="feedback-single-wrap">
     <!-- CENTER: Feedback Form / Certificate -->
     <div class="feedback-center-card">
       
@@ -961,21 +894,9 @@ footer{
       </div>
 
     </div>
-
-    <!-- RIGHT MASCOT: Doctor / Scientist Mascot -->
-    <div class="mascot-card mascot-card-right">
-      <div class="mascot-avatar-box">
-        <img src="char_right_trans.png" alt="Microscope Science Mascot" />
-      </div>
-      <div class="mascot-info">
-        <div class="mascot-role-badge">المحتوى والملخصات 🧪</div>
-        <div class="mascot-speech-bubble">
-          "دفعة 50 الغاليين! 🎓 رأيكم في المواد والشروحات هو سر تميز المنظومة.. مستنيين تقييمكم بكل حب وفخر!"
-        </div>
-      </div>
-    </div>
-
   </div>
+
+</section>
 
 </section>
 
@@ -1013,45 +934,64 @@ const ratingLabels = [
 ];
 
 // ═══════════════════════════════════════════════════
-// Scroll-Linked Progressive Banner Opening + Drag Support
+// Sticky Pinned Banner Scroll & Progressive Zoom
 // ═══════════════════════════════════════════════════
 let bannerProgress = 0;
 let targetProgress = 0;
-let isManualOpen = false;
 
 function applyBannerProgress(p) {
   const doorL = document.getElementById('door-left');
   const doorR = document.getElementById('door-right');
+  const zoomLayer = document.getElementById('banner-zoom-layer');
   const sealBtn = document.getElementById('seal-btn');
   const fill = document.getElementById('scroll-track-fill');
 
+  // 1. Doors slide apart from center to edges (0% to 100%)
   if (doorL) doorL.style.transform = `translateX(-${p * 100}%)`;
   if (doorR) doorR.style.transform = `translateX(${p * 100}%)`;
 
+  // 2. Center image zooms up ("الصورة اللي جوة قاعدة تكبر لحد ما تطلع في الآخر")
+  const scale = 0.82 + (p * 0.18);
+  if (zoomLayer) zoomLayer.style.transform = `scale(${scale})`;
+
+  // 3. Center seal button fades out as opening starts
   if (sealBtn) {
-    sealBtn.style.opacity = Math.max(0, 1 - p * 2.2);
+    sealBtn.style.opacity = Math.max(0, 1 - p * 2.5);
     sealBtn.style.transform = `translate(-50%, -50%) scale(${Math.max(0.65, 1 - p * 0.35)})`;
-    sealBtn.style.pointerEvents = p > 0.45 ? 'none' : 'auto';
+    sealBtn.style.pointerEvents = p > 0.35 ? 'none' : 'auto';
   }
 
+  // 4. Progress bar line
   if (fill) {
     fill.style.width = `${Math.min(100, Math.max(0, p * 100))}%`;
   }
 }
 
-// Scroll listener: opening links directly to scroll distance from 0 to 280px
+// Calculate progress based on scroll through the sticky track
 function handleScroll() {
-  if (isManualOpen) return;
-  const maxScrollDist = 280;
-  const currentY = window.scrollY || window.pageYOffset || 0;
-  targetProgress = Math.min(1, Math.max(0, currentY / maxScrollDist));
+  const track = document.getElementById('banner-scroll-track');
+  if (!track) return;
+
+  const rect = track.getBoundingClientRect();
+  const trackDistance = track.offsetHeight - window.innerHeight;
+
+  if (trackDistance <= 0) {
+    const currentY = window.scrollY || window.pageYOffset || 0;
+    targetProgress = Math.min(1, Math.max(0, currentY / 250));
+    return;
+  }
+
+  // When rect.top reaches near top of viewport (sticky position ~24px)
+  const scrolledInside = 24 - rect.top;
+  targetProgress = Math.min(1, Math.max(0, scrolledInside / trackDistance));
 }
 
 window.addEventListener('scroll', handleScroll, { passive: true });
+window.addEventListener('resize', handleScroll, { passive: true });
 
 // Animation loop with smooth linear interpolation (lerp) for 60fps/120fps motion
 function bannerAnimLoop() {
-  bannerProgress += (targetProgress - bannerProgress) * 0.18;
+  bannerProgress += (targetProgress - bannerProgress) * 0.16;
   if (Math.abs(targetProgress - bannerProgress) < 0.001) {
     bannerProgress = targetProgress;
   }
@@ -1060,10 +1000,12 @@ function bannerAnimLoop() {
 }
 requestAnimationFrame(bannerAnimLoop);
 
-// Manual toggle
-function toggleBannerManual() {
-  isManualOpen = !isManualOpen;
-  targetProgress = isManualOpen ? 1 : 0;
+// Click seal to smoothly scroll open
+function openBannerSmoothly() {
+  const track = document.getElementById('banner-scroll-track');
+  if (!track) return;
+  const targetY = track.offsetTop + track.offsetHeight - window.innerHeight + 20;
+  window.scrollTo({ top: targetY, behavior: 'smooth' });
 }
 
 // Interactive touch & mouse drag support directly on the banner

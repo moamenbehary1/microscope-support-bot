@@ -261,6 +261,77 @@ input::placeholder{color:var(--muted)}
 .mbox h3{font-size:1rem;font-weight:600;margin-bottom:18px}
 .mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
 
+/* ── Feedback Certificate Modal & Cards ── */
+#feedback-card-overlay{
+  display:none;position:fixed;inset:0;background:rgba(2,6,23,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  z-index:9999;align-items:center;justify-content:center;padding:20px;overflow-y:auto;
+}
+#feedback-card-overlay.show{display:flex}
+.admin-cert-modal-box{
+  width:100%;max-width:720px;display:flex;flex-direction:column;gap:18px;animation:fadeUp .3s ease;
+}
+.admin-cert-card{
+  background:linear-gradient(145deg,#07122b 0%,#050b18 100%);
+  border:2px solid #2563eb;
+  border-radius:22px;
+  padding:32px 28px;
+  color:#ffffff;
+  box-shadow:0 24px 60px rgba(0,0,0,0.8), 0 0 40px rgba(37,99,235,0.25);
+  position:relative;
+  overflow:hidden;
+  font-family:'Cairo',sans-serif;
+  direction:rtl;
+}
+.admin-cert-card::before{
+  content:'';position:absolute;top:-50px;left:-50px;
+  width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,210,255,0.25),transparent 70%);
+  pointer-events:none;
+}
+.admin-cert-card::after{
+  content:'';position:absolute;bottom:-50px;right:-50px;
+  width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,rgba(37,99,235,0.25),transparent 70%);
+  pointer-events:none;
+}
+.admin-cert-head{
+  display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:18px;margin-bottom:20px;
+}
+.admin-cert-brand{display:flex;align-items:center;gap:12px}
+.admin-cert-logo{font-size:2.2rem;filter:drop-shadow(0 0 10px rgba(0,210,255,0.6))}
+.admin-cert-title{font-size:1.2rem;font-weight:900;color:#ffffff;letter-spacing:0.5px}
+.admin-cert-sub{font-size:0.75rem;color:#93c5fd;font-weight:600}
+.admin-cert-tag{
+  background:rgba(37,99,235,0.2);border:1px solid rgba(0,210,255,0.4);
+  border-radius:50px;padding:5px 14px;font-size:0.75rem;color:#e0f2fe;font-weight:700;
+}
+.admin-cert-user-bar{
+  display:flex;justify-content:space-between;align-items:center;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;padding:12px 18px;margin-bottom:20px;
+}
+.admin-cert-user-left{display:flex;align-items:center;gap:10px}
+.admin-cert-avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,#1d4ed8,#00d2ff);
+  display:flex;align-items:center;justify-content:center;font-size:1.15rem;
+}
+.admin-cert-username{font-size:1.15rem;font-weight:900;color:#ffffff}
+.admin-cert-stars{font-size:1.25rem;color:#f59e0b}
+.admin-cert-msg-box{
+  background:rgba(4,10,24,0.75);border-right:4px solid #00d2ff;
+  border-radius:12px;padding:18px 22px;margin-bottom:20px;
+}
+.admin-cert-quote-icon{font-size:1.8rem;color:rgba(0,210,255,0.4);line-height:1;margin-bottom:6px}
+.admin-cert-msg-text{font-size:1.02rem;line-height:1.8;color:#f1f5f9;white-space:pre-wrap;word-break:break-word}
+.admin-cert-foot{
+  display:flex;justify-content:space-between;align-items:center;
+  border-top:1px solid rgba(255,255,255,0.12);padding-top:16px;font-size:0.8rem;color:#94a3b8;flex-wrap:wrap;gap:10px;
+}
+.admin-cert-time{display:flex;align-items:center;gap:6px;color:#e2e8f0;font-weight:700}
+.admin-cert-actions{display:flex;gap:12px;justify-content:flex-end}
+
 /* ── Setup screen ── */
 #setup{
   display:none;position:fixed;inset:0;background:var(--bg);z-index:200;
@@ -2470,108 +2541,273 @@ const S = {
 
   /* ── Inbox / Feedback ── */
   inbox:{
+    currentCardData: null,
     async load(){
       const pg=document.getElementById('pg-inbox');
       pg.innerHTML=`
-        <div class="sec-head"><h2>📥 Student Feedback Inbox</h2></div>
+        <div class="sec-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <h2>📥 Student Feedback Inbox</h2>
+            <p style="font-size:0.82rem;color:var(--dim);margin-top:4px">استعراض وإدارة جميع رسائل وتقييمات الطلاب الواردة من صفحة التيم</p>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-primary" onclick="S.inbox.exportAllPdf()" style="display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1d4ed8,#00d2ff);border:none;font-weight:700">
+              <span>📑</span><span>تصدير جميع الرسائل كـ PDF</span>
+            </button>
+            <button class="btn btn-ghost" onclick="S.inbox.load()" title="تحديث">🔄 تحديث</button>
+          </div>
+        </div>
         <div class="card tbl-wrap">
           <table>
-            <thead><tr><th>Date</th><th>User ID</th><th>Message</th><th style="text-align:right">Action</th></tr></thead>
-            <tbody id="inbox-body"><tr><td colspan="4" class="loading-msg"><span class="spin"></span></td></tr></tbody>
+            <thead>
+              <tr>
+                <th>التاريخ والوقت</th>
+                <th>هوية الطالب</th>
+                <th>التقييم</th>
+                <th>نص الرسالة</th>
+                <th style="text-align:right">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="inbox-body"><tr><td colspan="5" class="loading-msg"><span class="spin"></span></td></tr></tbody>
           </table>
         </div>`;
 
       const msgs = await FB.get('/feedback').catch(()=>null);
       const tb = document.getElementById('inbox-body');
       if(!msgs || Object.keys(msgs).length === 0){
-        tb.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">No messages in feedback inbox</td></tr>`;
+        tb.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px">لا توجد رسائل جديدة في صندوق الفيدباك حالياً</td></tr>`;
         return;
       }
-      tb.innerHTML = Object.entries(msgs).reverse().map(([id, m])=>`
-        <tr>
-          <td><small style="color:var(--dim)">${new Date(m.timestamp||Date.now()).toLocaleString()}</small></td>
-          <td><strong>${m.userId||m.name||id}</strong></td>
-          <td style="white-space:pre-wrap;max-width:350px">${m.text||m.message||'—'}</td>
-          <td style="text-align:right;white-space:nowrap">
-            <button class="btn btn-primary btn-sm" style="margin-right:6px" onclick="S.inbox.exportPdf('${id}')" title="تصدير كـ PDF">📄 PDF</button>
-            <button class="btn btn-success btn-sm" onclick="S.inbox.resolve('${id}')">✓ Resolve</button>
-          </td>
-        </tr>
-      `).join('');
+      
+      const entries = Object.entries(msgs).reverse();
+      tb.innerHTML = entries.map(([id, m])=>{
+        const user = m.name || m.userId || 'علومنجي';
+        const starsCount = (typeof m.rating === 'number' && m.rating > 0) ? m.rating : 5;
+        const starsHtml = '⭐'.repeat(starsCount);
+        const textPreview = (m.message || m.text || '—').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const timeStr = new Date(m.timestamp || Date.now()).toLocaleString('ar-EG', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:true });
+        
+        return `
+          <tr style="cursor:pointer" onclick="S.inbox.viewCard('${id}')">
+            <td><small style="color:var(--dim)">${timeStr}</small></td>
+            <td><strong style="color:var(--text)">${user}</strong></td>
+            <td><span style="font-size:0.95rem">${starsHtml}</span></td>
+            <td style="white-space:pre-wrap;max-width:320px;color:var(--dim)">${textPreview}</td>
+            <td style="text-align:right;white-space:nowrap" onclick="event.stopPropagation()">
+              <button class="btn btn-primary btn-sm" style="margin-right:6px;background:#2563eb" onclick="S.inbox.viewCard('${id}')">👁️ عرض الكارت</button>
+              <button class="btn btn-success btn-sm" onclick="S.inbox.resolve('${id}')">✓ إنهاء</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
     },
+
     async resolve(id){
       try {
         await FB.del(`/feedback/${id}`);
-        UI.toast('Feedback resolved', 'success');
+        UI.toast('تم مسح وإنهاء الرسالة بنجاح', 'success');
         this.load();
-      } catch(e) { UI.toast('Failed: '+e.message, 'error'); }
+      } catch(e) { UI.toast('فشل: '+e.message, 'error'); }
     },
-    async exportPdf(id){
-      const msgs = await FB.get('/feedback');
+
+    async viewCard(id){
+      const msgs = await FB.get('/feedback').catch(()=>null);
       const m = msgs ? msgs[id] : null;
-      if(!m){ UI.toast('Feedback not found','error'); return; }
-      UI.toast('⏳ Preparing PDF card...','info');
+      if(!m){ UI.toast('الرسالة غير موجودة','error'); return; }
 
-      const tempDiv = document.createElement('div');
-      tempDiv.style.cssText = 'position:fixed;left:-9999px;top:0;width:680px;background:#0a1128;color:#f8fafc;padding:36px;border-radius:20px;font-family:Cairo,sans-serif;direction:rtl;border:2px solid #6366f1;box-sizing:border-box';
-      
-      const user = m.userId || m.name || 'علومنجي';
-      const msg = (m.text || m.message || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      const timeStr = new Date(m.timestamp || Date.now()).toLocaleString('ar-EG');
+      const user = m.name || m.userId || 'علومنجي';
+      const rating = (typeof m.rating === 'number' && m.rating > 0) ? m.rating : 5;
+      const text = (m.message || m.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const timeStr = new Date(m.timestamp || Date.now()).toLocaleString('ar-EG', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:true });
 
-      tempDiv.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:16px;margin-bottom:20px">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:2rem">🔬</span>
-            <div>
-              <div style="font-size:1.1rem;font-weight:900;color:#fff">منظومة Microscope التعليمية</div>
-              <div style="font-size:0.75rem;color:#94a3b8">توثيق رسمي للرأي والتقييم</div>
+      this.currentCardData = { id, user, rating, text, timeStr };
+
+      let overlay = document.getElementById('feedback-card-overlay');
+      if(!overlay){
+        overlay = document.createElement('div');
+        overlay.id = 'feedback-card-overlay';
+        overlay.onclick = (e) => { if(e.target === overlay) S.inbox.closeModal(); };
+        document.body.appendChild(overlay);
+      }
+
+      overlay.innerHTML = `
+        <div class="admin-cert-modal-box">
+          <div class="admin-cert-card" id="admin-modal-card">
+            <div class="admin-cert-head">
+              <div class="admin-cert-brand">
+                <span class="admin-cert-logo">🔬</span>
+                <div>
+                  <div class="admin-cert-title">MICROSCOPE TEAM</div>
+                  <div class="admin-cert-sub">معاك يا دفعة 50 • توثيق رسمي للرأي</div>
+                </div>
+              </div>
+              <div class="admin-cert-tag">
+                <span>🛡️ هوية سرية موثقة</span>
+              </div>
+            </div>
+
+            <div class="admin-cert-user-bar">
+              <div class="admin-cert-user-left">
+                <div class="admin-cert-avatar">👤</div>
+                <div>
+                  <div style="font-size:0.75rem;color:#94a3b8;font-weight:600">هوية الطالب المشارك:</div>
+                  <div class="admin-cert-username">${user}</div>
+                </div>
+              </div>
+              <div class="admin-cert-stars">${'⭐'.repeat(rating)}</div>
+            </div>
+
+            <div class="admin-cert-msg-box">
+              <div class="admin-cert-quote-icon">❝</div>
+              <div class="admin-cert-msg-text">${text}</div>
+            </div>
+
+            <div class="admin-cert-foot">
+              <div class="admin-cert-time">
+                <span>🕒</span>
+                <span>${timeStr}</span>
+              </div>
+              <div>منظومة Microscope التعليمية • صوتك بيصنع الفارق 🔬</div>
             </div>
           </div>
-          <div style="background:rgba(99,102,241,0.2);border:1px solid #6366f1;border-radius:20px;padding:4px 12px;font-size:0.75rem;color:#c7d2fe;font-weight:700">
-            🛡️ معتمد في لوحة التحكم
+
+          <div class="admin-cert-actions">
+            <button class="btn btn-primary" onclick="S.inbox.downloadSingleCardImage()" style="background:#2563eb;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-weight:700">
+              🖼️ حفظ كصورة PNG
+            </button>
+            <button class="btn btn-ghost" onclick="S.inbox.closeModal()" style="padding:10px 20px;border-radius:10px">
+              ✖ إغلاق
+            </button>
           </div>
-        </div>
-
-        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 18px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:1.3rem">👤</span>
-            <div>
-              <div style="font-size:0.7rem;color:#94a3b8">صاحب الرأي:</div>
-              <div style="font-size:1.15rem;font-weight:900;color:#fff">${user}</div>
-            </div>
-          </div>
-          <div style="font-size:1.2rem;color:#f59e0b">⭐⭐⭐⭐⭐</div>
-        </div>
-
-        <div style="background:rgba(15,23,42,0.8);border-right:4px solid #6366f1;border-radius:12px;padding:20px;margin-bottom:20px">
-          <div style="font-size:1.8rem;color:rgba(99,102,241,0.4);line-height:1;margin-bottom:6px">❝</div>
-          <div style="font-size:1rem;line-height:1.8;color:#f1f5f9;white-space:pre-wrap">${msg}</div>
-        </div>
-
-        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.15);padding-top:16px;font-size:0.8rem;color:#94a3b8">
-          <div>🕒 التاريخ والوقت: <strong style="color:#cbd5e1">${timeStr}</strong></div>
-          <div>Microscope Team • صوتك يصنع الفارق 🔬</div>
         </div>
       `;
 
-      document.body.appendChild(tempDiv);
+      overlay.classList.add('show');
+    },
+
+    closeModal(){
+      const overlay = document.getElementById('feedback-card-overlay');
+      if(overlay) overlay.classList.remove('show');
+    },
+
+    async downloadSingleCardImage(){
+      const card = document.getElementById('admin-modal-card');
+      if(!card){ UI.toast('تعذر تحديد الكارت', 'error'); return; }
+      UI.toast('⏳ جاري تصدير الصورة...', 'info');
+
       try {
-        const canvas = await html2canvas(tempDiv, { scale: 2, useCORS: true, backgroundColor: '#0a1128' });
+        const canvas = await html2canvas(card, { scale: 2, useCORS: true, backgroundColor: '#07122b' });
+        const link = document.createElement('a');
+        const cleanName = (this.currentCardData?.user || 'Feedback').replace(/[^\w\u0621-\u064A0-9]/g, '_');
+        link.download = `Microscope_Feedback_${cleanName}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        UI.toast('✅ تم تحميل الصورة بنجاح!', 'success');
+      } catch(e) {
+        UI.toast('تعذر تصدير الصورة: '+e.message, 'error');
+      }
+    },
+
+    async exportAllPdf(){
+      const msgs = await FB.get('/feedback').catch(()=>null);
+      if(!msgs || Object.keys(msgs).length === 0){
+        UI.toast('لا توجد رسائل لتصديرها في صندوق الفيدباك', 'info');
+        return;
+      }
+
+      const list = Object.entries(msgs).reverse().map(([id, m])=>({
+        id,
+        user: m.name || m.userId || 'علومنجي',
+        rating: (typeof m.rating === 'number' && m.rating > 0) ? m.rating : 5,
+        text: (m.message || m.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;'),
+        timeStr: new Date(m.timestamp || Date.now()).toLocaleString('ar-EG', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:true })
+      }));
+
+      UI.toast(`⏳ جاري تجميع وتصدير ملف الـ PDF لجميع الرسائل (${list.length} رسالة)...`, 'info');
+
+      const tempContainer = document.createElement('div');
+      tempContainer.style.cssText = 'position:fixed;left:-9999px;top:0;width:720px;z-index:-1;';
+      document.body.appendChild(tempContainer);
+
+      try {
         const { jsPDF } = window.jspdf;
+        // Landscape A4 (297 x 210 mm)
         const pdf = new jsPDF({
-          orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-          unit: 'px',
-          format: [canvas.width, canvas.height]
+          orientation: 'landscape',
+          unit: 'mm',
+          format: 'a4'
         });
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
-        const cleanName = user.replace(/[^\w\u0621-\u064A0-9]/g, '_');
-        pdf.save(`Feedback_${cleanName}.pdf`);
-        UI.toast('✅ PDF downloaded!','success');
-      } catch(err){
-        UI.toast('Failed to generate PDF: '+err.message, 'error');
+
+        for(let i=0; i<list.length; i++){
+          const item = list[i];
+          tempContainer.innerHTML = `
+            <div class="admin-cert-card" style="width:720px;box-sizing:border-box">
+              <div class="admin-cert-head">
+                <div class="admin-cert-brand">
+                  <span class="admin-cert-logo">🔬</span>
+                  <div>
+                    <div class="admin-cert-title">MICROSCOPE TEAM</div>
+                    <div class="admin-cert-sub">معاك يا دفعة 50 • توثيق رسمي للرأي</div>
+                  </div>
+                </div>
+                <div class="admin-cert-tag">
+                  <span>🛡️ هوية سرية موثقة (${i+1}/${list.length})</span>
+                </div>
+              </div>
+
+              <div class="admin-cert-user-bar">
+                <div class="admin-cert-user-left">
+                  <div class="admin-cert-avatar">👤</div>
+                  <div>
+                    <div style="font-size:0.75rem;color:#94a3b8;font-weight:600">هوية الطالب المشارك:</div>
+                    <div class="admin-cert-username">${item.user}</div>
+                  </div>
+                </div>
+                <div class="admin-cert-stars">${'⭐'.repeat(item.rating)}</div>
+              </div>
+
+              <div class="admin-cert-msg-box">
+                <div class="admin-cert-quote-icon">❝</div>
+                <div class="admin-cert-msg-text">${item.text}</div>
+              </div>
+
+              <div class="admin-cert-foot">
+                <div class="admin-cert-time">
+                  <span>🕒</span>
+                  <span>${item.timeStr}</span>
+                </div>
+                <div>منظومة Microscope التعليمية • صوتك بيصنع الفارق 🔬</div>
+              </div>
+            </div>
+          `;
+
+          const cardEl = tempContainer.querySelector('.admin-cert-card');
+          const canvas = await html2canvas(cardEl, { scale: 2, useCORS: true, backgroundColor: '#07122b' });
+          const imgData = canvas.toDataURL('image/png');
+
+          if(i > 0) pdf.addPage('a4', 'landscape');
+
+          // Draw dark background
+          pdf.setFillColor(7, 18, 43); // #07122b
+          pdf.rect(0, 0, 297, 210, 'F');
+
+          // Center the card in A4 landscape (297x210mm)
+          const imgWidth = 250;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          const posX = (297 - imgWidth) / 2;
+          const posY = Math.max(15, (210 - imgHeight) / 2);
+
+          pdf.addImage(imgData, 'PNG', posX, posY, imgWidth, Math.min(180, imgHeight));
+        }
+
+        const todayStr = new Date().toISOString().slice(0,10);
+        pdf.save(`Microscope_All_Feedbacks_${todayStr}.pdf`);
+        UI.toast('✅ تم تصدير وتحميل ملف الـ PDF لجميع الرسائل بنجاح!', 'success');
+      } catch(err) {
+        console.error('PDF export error:', err);
+        UI.toast('حدث خطأ أثناء تصدير الـ PDF: '+err.message, 'error');
       } finally {
-        tempDiv.remove();
+        tempContainer.remove();
       }
     }
   },

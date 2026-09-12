@@ -172,13 +172,16 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
       final content = await utf8.decoder.bind(req).join();
       final data = jsonDecode(content) as Map<String, dynamic>;
 
-      final name = (data['name'] ?? 'طالب').toString().trim();
+      var name = (data['name'] ?? '').toString().trim();
+      if (name.isEmpty) {
+        final randNum = 1000 + DateTime.now().millisecondsSinceEpoch % 90000;
+        name = 'علومنجي #$randNum';
+      }
       final ratingNum = (data['rating'] is int) ? data['rating'] as int : int.tryParse('${data['rating']}') ?? 0;
       final ratingStars = ratingNum > 0 ? '$ratingNum/5 ' + ('⭐' * ratingNum) : 'بدون تقييم';
-      final category = (data['category'] ?? 'عام').toString().trim();
       final message = (data['message'] ?? '').toString().trim();
 
-      if (message.isEmpty && name.isEmpty) {
+      if (message.isEmpty) {
         req.response
           ..statusCode = 400
           ..headers.contentType = ContentType.json
@@ -189,20 +192,23 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
 
       // 1. Save to Firebase Database
       await FirebaseDb.addWebFeedback(
-        name: name.isEmpty ? 'طالب' : name,
+        name: name,
         rating: ratingNum,
-        category: category.isEmpty ? 'عام' : category,
         message: message,
       );
 
+      final now = DateTime.now();
+      final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} '
+          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
       // 2. Build Telegram notification message
       final notification =
-          '🌟 رأي وتقييم جديد من موقع التيم! 🌟\n\n'
-          '👤 الاسم: ${name.isEmpty ? "طالب (غير محدد)" : name}\n'
+          '🌟 رأي وتقييم جديد من المنصة! 🌟\n\n'
+          '👤 المستخدم: $name\n'
           '⭐ التقييم: $ratingStars\n'
-          '🏷️ القسم: ${category.isEmpty ? "عام" : category}\n'
           '💬 الرسالة:\n$message\n\n'
-          '🌐 المصدر: صفحة التيم (3D Showcase Page)';
+          '🕒 التاريخ والوقت: $dateStr\n'
+          '🌐 المصدر: منصة الفيدباك (Microscope Feedback)';
 
       // Send to Super Admin
       if (Config.superAdminId != 0) {

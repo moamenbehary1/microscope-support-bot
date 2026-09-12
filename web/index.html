@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>🔬 Microscope Bot — Admin Panel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 /* ── Reset ── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -2487,10 +2489,13 @@ const S = {
       }
       tb.innerHTML = Object.entries(msgs).reverse().map(([id, m])=>`
         <tr>
-          <td><small style="color:var(--dim)">${new Date(m.timestamp||Date.now()).toLocaleDateString()}</small></td>
-          <td><strong>${m.userId||id}</strong></td>
-          <td>${m.text||'—'}</td>
-          <td style="text-align:right"><button class="btn btn-success btn-sm" onclick="S.inbox.resolve('${id}')">✓ Resolve</button></td>
+          <td><small style="color:var(--dim)">${new Date(m.timestamp||Date.now()).toLocaleString()}</small></td>
+          <td><strong>${m.userId||m.name||id}</strong></td>
+          <td style="white-space:pre-wrap;max-width:350px">${m.text||m.message||'—'}</td>
+          <td style="text-align:right;white-space:nowrap">
+            <button class="btn btn-primary btn-sm" style="margin-right:6px" onclick="S.inbox.exportPdf('${id}')" title="تصدير كـ PDF">📄 PDF</button>
+            <button class="btn btn-success btn-sm" onclick="S.inbox.resolve('${id}')">✓ Resolve</button>
+          </td>
         </tr>
       `).join('');
     },
@@ -2500,6 +2505,74 @@ const S = {
         UI.toast('Feedback resolved', 'success');
         this.load();
       } catch(e) { UI.toast('Failed: '+e.message, 'error'); }
+    },
+    async exportPdf(id){
+      const msgs = await FB.get('/feedback');
+      const m = msgs ? msgs[id] : null;
+      if(!m){ UI.toast('Feedback not found','error'); return; }
+      UI.toast('⏳ Preparing PDF card...','info');
+
+      const tempDiv = document.createElement('div');
+      tempDiv.style.cssText = 'position:fixed;left:-9999px;top:0;width:680px;background:#0a1128;color:#f8fafc;padding:36px;border-radius:20px;font-family:Cairo,sans-serif;direction:rtl;border:2px solid #6366f1;box-sizing:border-box';
+      
+      const user = m.userId || m.name || 'علومنجي';
+      const msg = (m.text || m.message || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const timeStr = new Date(m.timestamp || Date.now()).toLocaleString('ar-EG');
+
+      tempDiv.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:16px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:2rem">🔬</span>
+            <div>
+              <div style="font-size:1.1rem;font-weight:900;color:#fff">منظومة Microscope التعليمية</div>
+              <div style="font-size:0.75rem;color:#94a3b8">توثيق رسمي للرأي والتقييم</div>
+            </div>
+          </div>
+          <div style="background:rgba(99,102,241,0.2);border:1px solid #6366f1;border-radius:20px;padding:4px 12px;font-size:0.75rem;color:#c7d2fe;font-weight:700">
+            🛡️ معتمد في لوحة التحكم
+          </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 18px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:1.3rem">👤</span>
+            <div>
+              <div style="font-size:0.7rem;color:#94a3b8">صاحب الرأي:</div>
+              <div style="font-size:1.15rem;font-weight:900;color:#fff">${user}</div>
+            </div>
+          </div>
+          <div style="font-size:1.2rem;color:#f59e0b">⭐⭐⭐⭐⭐</div>
+        </div>
+
+        <div style="background:rgba(15,23,42,0.8);border-right:4px solid #6366f1;border-radius:12px;padding:20px;margin-bottom:20px">
+          <div style="font-size:1.8rem;color:rgba(99,102,241,0.4);line-height:1;margin-bottom:6px">❝</div>
+          <div style="font-size:1rem;line-height:1.8;color:#f1f5f9;white-space:pre-wrap">${msg}</div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.15);padding-top:16px;font-size:0.8rem;color:#94a3b8">
+          <div>🕒 التاريخ والوقت: <strong style="color:#cbd5e1">${timeStr}</strong></div>
+          <div>Microscope Team • صوتك يصنع الفارق 🔬</div>
+        </div>
+      `;
+
+      document.body.appendChild(tempDiv);
+      try {
+        const canvas = await html2canvas(tempDiv, { scale: 2, useCORS: true, backgroundColor: '#0a1128' });
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
+        const cleanName = user.replace(/[^\w\u0621-\u064A0-9]/g, '_');
+        pdf.save(`Feedback_${cleanName}.pdf`);
+        UI.toast('✅ PDF downloaded!','success');
+      } catch(err){
+        UI.toast('Failed to generate PDF: '+err.message, 'error');
+      } finally {
+        tempDiv.remove();
+      }
     }
   },
 

@@ -193,12 +193,13 @@ class FirebaseDb {
   static Future<void> addWebFeedback({
     required String name,
     required int rating,
-    required String category,
+    String category = 'عام',
     required String message,
   }) async {
-    final formatted = '⭐ التقييم: $rating/5 | 📂 القسم: $category\n$message';
+    final ratingStars = rating > 0 ? '$rating/5 ' + ('⭐' * rating) : 'بدون تقييم';
+    final formatted = '⭐ التقييم: $ratingStars\n$message';
     final entry = {
-      'userId': '🌐 موقع التيم ($name)',
+      'userId': name,
       'name': name,
       'rating': rating,
       'category': category,

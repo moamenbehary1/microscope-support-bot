@@ -262,6 +262,23 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
       req.response.write('Team page not found');
     }
 
+  } else if (path.startsWith('/web/') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.webp') || path.endsWith('.svg')) {
+    // Serve static images and web assets
+    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    final filePath = cleanPath.startsWith('web/') ? cleanPath : 'web/$cleanPath';
+    final file = File(filePath);
+    if (await file.exists()) {
+      final ext = path.split('.').last.toLowerCase();
+      final mime = ext == 'png' ? 'image/png' : ext == 'jpg' || ext == 'jpeg' ? 'image/jpeg' : ext == 'svg' ? 'image/svg+xml' : 'application/octet-stream';
+      req.response
+        ..statusCode = 200
+        ..headers.contentType = ContentType.parse(mime)
+        ..add(await file.readAsBytes());
+    } else {
+      req.response.statusCode = 404;
+      req.response.write('Asset not found');
+    }
+
   } else {
     req.response.statusCode = 404;
     req.response.write('Not found');

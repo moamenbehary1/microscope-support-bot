@@ -3,21 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💬 رأيك يهمنا — Microscope Team</title>
-<meta name="description" content="شاركنا رأيك وملاحظاتك بسرية تامة دون الحاجة للكشف عن هويتك — فريق Microscope">
+<title>MICROSCOPE TEAM — معاك يا دفعة 50</title>
+<meta name="description" content="منصة فريق Microscope التعليمي — معاك يا دفعة 50، رأيك يهمنا ويصنع الفارق">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-<!-- html2canvas and jsPDF for client-side PDF export -->
+<!-- html2canvas and jsPDF for high-res client-side PDF export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --primary:#6366f1;--primary-glow:rgba(99,102,241,0.4);
-  --accent:#ec4899;--accent2:#06b6d4;--gold:#f59e0b;--success:#10b981;
-  --bg-deep:#020817;--bg:#0a0f1e;--surface:rgba(15,23,42,0.85);
-  --surface2:rgba(30,41,59,0.7);--border:rgba(255,255,255,0.09);
-  --text:#f8fafc;--dim:#94a3b8;--muted:#64748b;--r:24px;
+  /* Team Microscope Official Palette: Deep Navy, Pure White, Royal Blue, Electric Cyan, Black */
+  --bg-deep:#030712;
+  --bg:#071026;
+  --surface:rgba(10,22,50,0.85);
+  --surface2:rgba(15,34,77,0.75);
+  --primary:#2563eb;
+  --primary-d:#1d4ed8;
+  --primary-glow:rgba(37,99,235,0.4);
+  --accent:#00d2ff;
+  --accent-glow:rgba(0,210,255,0.35);
+  --gold:#f59e0b;
+  --success:#10b981;
+  --border:rgba(255,255,255,0.12);
+  --border-blue:rgba(37,99,235,0.35);
+  --text:#ffffff;
+  --dim:#94a3b8;
+  --muted:#64748b;
+  --r:24px;
   --font-ar:'Cairo',sans-serif;
 }
 html{scroll-behavior:smooth}
@@ -32,12 +45,12 @@ body{
   position:relative;
 }
 
-/* Background animated orbs and grid */
+/* Background animated orbs and grid in Team Blue/Cyan/Black */
 .bg-canvas{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
-.bg-orb{position:absolute;border-radius:50%;filter:blur(110px);opacity:0.14;animation:floatOrb 14s ease-in-out infinite}
-.orb1{width:600px;height:600px;background:var(--primary);top:-200px;right:-150px}
-.orb2{width:500px;height:500px;background:var(--accent);bottom:-150px;left:-100px;animation-delay:-5s}
-.orb3{width:450px;height:450px;background:var(--accent2);top:35%;left:35%;animation-delay:-9s}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(120px);opacity:0.18;animation:floatOrb 15s ease-in-out infinite}
+.orb1{width:650px;height:650px;background:#1d4ed8;top:-200px;right:-150px}
+.orb2{width:550px;height:550px;background:#00d2ff;bottom:-150px;left:-100px;animation-delay:-6s;opacity:0.12}
+.orb3{width:480px;height:480px;background:#0f2b66;top:40%;left:30%;animation-delay:-11s}
 @keyframes floatOrb{
   0%,100%{transform:translate(0,0) scale(1)}
   33%{transform:translate(40px,-50px) scale(1.08)}
@@ -45,13 +58,13 @@ body{
 }
 .grid-lines{
   position:fixed;inset:0;z-index:0;
-  background-image:linear-gradient(rgba(99,102,241,0.035) 1px,transparent 1px),
-                   linear-gradient(90deg,rgba(99,102,241,0.035) 1px,transparent 1px);
+  background-image:linear-gradient(rgba(37,99,235,0.04) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(37,99,235,0.04) 1px,transparent 1px);
   background-size:50px 50px;
   pointer-events:none;
 }
 .particles{position:fixed;inset:0;z-index:0;pointer-events:none}
-.particle{position:absolute;width:3px;height:3px;background:var(--primary);border-radius:50%;opacity:0;animation:particleFly 7s ease-in-out infinite}
+.particle{position:absolute;width:3px;height:3px;background:var(--accent);border-radius:50%;opacity:0;animation:particleFly 7s ease-in-out infinite}
 @keyframes particleFly{
   0%{transform:translateY(100vh) translateX(0);opacity:0}
   15%{opacity:0.7}
@@ -59,192 +72,372 @@ body{
   100%{transform:translateY(-80px) translateX(60px);opacity:0}
 }
 
-/* Header bar */
-.top-nav{
-  position:relative;z-index:10;
-  display:flex;justify-content:space-between;align-items:center;
-  padding:20px 32px;
-  max-width:1200px;margin:0 auto;width:100%;
+/* Header section: MICROSCOPE TEAM & معاك يا دفعة 50 */
+.team-hero-header{
+  position:relative;z-index:2;
+  text-align:center;
+  padding:48px 20px 24px;
 }
-.back-btn{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:10px 20px;
-  background:rgba(15,23,42,0.8);
-  backdrop-filter:blur(12px);
-  border:1px solid rgba(255,255,255,0.12);
-  border-radius:50px;
-  color:var(--dim);
-  text-decoration:none;
-  font-size:0.88rem;
-  font-weight:600;
-  transition:all 0.25s ease;
-}
-.back-btn:hover{color:var(--text);border-color:rgba(99,102,241,0.5);transform:translateY(-2px);box-shadow:0 4px 20px rgba(99,102,241,0.25)}
-.brand-badge{
-  display:inline-flex;align-items:center;gap:8px;
-  background:rgba(99,102,241,0.12);
-  border:1px solid rgba(99,102,241,0.25);
-  border-radius:50px;
-  padding:8px 18px;
-  font-size:0.85rem;
-  color:#c7d2fe;
-  font-weight:700;
-}
-.brand-badge::before{
-  content:'';width:8px;height:8px;
-  background:var(--success);border-radius:50%;
-  box-shadow:0 0 10px var(--success);
-  animation:pulse 2s infinite;
-}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-
-/* Main layout */
-main{
-  position:relative;z-index:1;
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:20px 24px 60px;
-  width:100%;
-}
-.feedback-wrapper{
-  width:100%;
-  max-width:680px;
-  margin:0 auto;
-}
-
-/* Titles */
-.page-title-box{text-align:center;margin-bottom:32px}
-.eyebrow{
-  display:inline-flex;align-items:center;gap:6px;
-  font-size:0.82rem;font-weight:700;letter-spacing:0.1em;
-  color:#a5b4fc;
-  background:rgba(99,102,241,0.12);
-  border:1px solid rgba(99,102,241,0.25);
-  border-radius:50px;
-  padding:5px 16px;
-  margin-bottom:14px;
-}
-.main-title{
-  font-size:clamp(2.2rem,5vw,3.2rem);
+.microscope-brand-title{
+  font-size:clamp(2.4rem,6.5vw,4.5rem);
   font-weight:900;
-  line-height:1.15;
+  letter-spacing:0.04em;
+  line-height:1.1;
   margin-bottom:12px;
-  background:linear-gradient(135deg,#ffffff 0%,#c7d2fe 60%,#ec4899 100%);
+  background:linear-gradient(135deg,#ffffff 0%,#93c5fd 50%,#00d2ff 100%);
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
   background-clip:text;
-  display:inline-flex;align-items:center;gap:12px;
+  text-transform:uppercase;
+  filter:drop-shadow(0 0 35px rgba(37,99,235,0.4));
 }
-.main-desc{
-  color:var(--dim);
-  font-size:1rem;
-  line-height:1.7;
-  max-width:520px;
-  margin:0 auto;
+.batch-pill{
+  display:inline-flex;align-items:center;gap:10px;
+  background:rgba(37,99,235,0.15);
+  border:1px solid rgba(0,210,255,0.4);
+  border-radius:50px;
+  padding:8px 24px;
+  font-size:1.15rem;
+  font-weight:800;
+  color:#e0f2fe;
+  box-shadow:0 0 25px rgba(0,210,255,0.25);
+  animation:pulseGlow 3s infinite alternate;
+}
+@keyframes pulseGlow{
+  0%{box-shadow:0 0 20px rgba(0,210,255,0.2);border-color:rgba(0,210,255,0.3)}
+  100%{box-shadow:0 0 35px rgba(0,210,255,0.5);border-color:rgba(0,210,255,0.7)}
+}
+.batch-pill::before{
+  content:'';width:10px;height:10px;
+  background:#00e5ff;border-radius:50%;
+  box-shadow:0 0 10px #00e5ff;
 }
 
-/* Card */
-.glass-card{
-  background:var(--surface);
-  backdrop-filter:blur(24px);
-  -webkit-backdrop-filter:blur(24px);
-  border:1px solid rgba(255,255,255,0.1);
-  border-radius:var(--r);
-  padding:40px 36px;
+/* ═════════════════════════════════════════════════
+   INTERACTIVE CURTAIN / MASCOT BANNER
+═════════════════════════════════════════════════ */
+.banner-stage-section{
+  position:relative;z-index:2;
+  width:100%;
+  max-width:980px;
+  margin:0 auto 50px;
+  padding:0 20px;
+}
+.banner-outer-frame{
+  background:linear-gradient(145deg,#0a1738,#050b18);
+  border:2px solid var(--border-blue);
+  border-radius:26px;
+  padding:12px;
+  box-shadow:0 24px 60px rgba(0,0,0,0.7), 0 0 40px rgba(37,99,235,0.2);
   position:relative;
-  box-shadow:0 24px 70px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
-  transition:all 0.35s ease;
 }
-.glass-card::before{
-  content:'';position:absolute;top:0;left:24px;right:24px;height:2px;
-  background:linear-gradient(90deg,transparent,var(--primary),var(--accent),transparent);
+.banner-container{
+  position:relative;
+  width:100%;
+  aspect-ratio:1024 / 540;
+  border-radius:20px;
+  overflow:hidden;
+  background:#133370;
+  user-select:none;
 }
 
-/* User identity pill */
-.identity-box{
-  background:rgba(99,102,241,0.08);
-  border:1px solid rgba(99,102,241,0.22);
+/* Background revealed banner (منورين علوم + QR) */
+.banner-content-bg{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  background-image:url('team_banner.png');
+  background-size:cover;
+  background-position:center;
+  z-index:1;
+}
+
+/* Left and Right sliding mascot doors */
+.curtain-door{
+  position:absolute;top:0;bottom:0;
+  width:50.2%;
+  z-index:2;
+  transition:transform 0.8s cubic-bezier(0.16,1,0.3,1);
+  overflow:hidden;
+  pointer-events:none;
+}
+.door-left{
+  left:0;
+  transform:translateX(0);
+  background:linear-gradient(90deg, #ffffff 0%, #ffffff 40%, rgba(24,60,123,0.95) 100%);
+  box-shadow:8px 0 25px rgba(0,0,0,0.5);
+  display:flex;align-items:center;justify-content:flex-start;
+}
+.door-right{
+  right:0;
+  transform:translateX(0);
+  background:linear-gradient(270deg, #ffffff 0%, #ffffff 40%, rgba(24,60,123,0.95) 100%);
+  box-shadow:-8px 0 25px rgba(0,0,0,0.5);
+  display:flex;align-items:center;justify-content:flex-end;
+}
+.door-img{
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+}
+
+/* State: When open */
+.banner-container.open .door-left{
+  transform:translateX(-100%);
+}
+.banner-container.open .door-right{
+  transform:translateX(100%);
+}
+
+/* Touch lock / open button in center */
+.center-seal-btn{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  z-index:3;
+  background:linear-gradient(135deg,#1d4ed8,#00d2ff);
+  color:#fff;
+  border:2px solid rgba(255,255,255,0.8);
+  border-radius:50px;
+  padding:14px 28px;
+  font-family:var(--font-ar);
+  font-size:1rem;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 12px 40px rgba(0,210,255,0.5), 0 0 20px rgba(29,78,216,0.6);
+  transition:all 0.35s ease;
+  display:flex;align-items:center;gap:10px;
+  white-space:nowrap;
+}
+.center-seal-btn:hover{
+  transform:translate(-50%,-50%) scale(1.08);
+  box-shadow:0 16px 50px rgba(0,210,255,0.7);
+}
+.banner-container.open .center-seal-btn{
+  top:auto;bottom:16px;
+  transform:translateX(-50%);
+  padding:8px 20px;
+  font-size:0.85rem;
+  background:rgba(10,22,50,0.85);
+  border-color:rgba(0,210,255,0.5);
+  backdrop-filter:blur(8px);
+}
+.banner-container.open .center-seal-btn:hover{
+  transform:translateX(-50%) scale(1.05);
+}
+
+.banner-hint{
+  text-align:center;
+  margin-top:12px;
+  font-size:0.85rem;
+  color:var(--dim);
+  font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+
+/* ═════════════════════════════════════════════════
+   3-COLUMN FEEDBACK SECTION WITH MASCOTS BESIDE IT
+═════════════════════════════════════════════════ */
+.feedback-main-section{
+  position:relative;z-index:2;
+  width:100%;
+  max-width:1150px;
+  margin:0 auto 60px;
+  padding:0 20px;
+}
+.section-header-box{
+  text-align:center;
+  margin-bottom:36px;
+}
+.eyebrow-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:0.82rem;font-weight:700;letter-spacing:0.1em;
+  color:#93c5fd;
+  background:rgba(37,99,235,0.15);
+  border:1px solid rgba(37,99,235,0.3);
+  border-radius:50px;
+  padding:5px 18px;
+  margin-bottom:12px;
+}
+.section-title-text{
+  font-size:clamp(2rem,4.5vw,2.8rem);
+  font-weight:900;
+  margin-bottom:10px;
+  background:linear-gradient(135deg,#ffffff 0%,#bfdbfe 70%,#38bdf8 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.section-sub-text{
+  color:var(--dim);
+  font-size:0.98rem;
+  max-width:550px;
+  margin:0 auto;
+  line-height:1.7;
+}
+
+/* 3-Column layout: Mascot Left | Feedback Center | Mascot Right */
+.feedback-grid{
+  display:grid;
+  grid-template-columns:260px 1fr 260px;
+  gap:24px;
+  align-items:start;
+}
+
+/* Mascot Side Cards */
+.mascot-card{
+  background:var(--surface);
+  border:1px solid var(--border-blue);
+  border-radius:var(--r);
+  padding:24px 18px;
+  text-align:center;
+  box-shadow:0 16px 40px rgba(0,0,0,0.5);
+  backdrop-filter:blur(20px);
+  position:sticky;
+  top:20px;
+  transition:transform 0.3s ease;
+}
+.mascot-card:hover{
+  transform:translateY(-5px);
+  border-color:var(--accent);
+}
+.mascot-avatar-box{
+  width:140px;height:140px;
+  margin:0 auto 16px;
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.mascot-avatar-box img{
+  width:100%;height:100%;
+  object-fit:contain;
+  filter:drop-shadow(0 10px 20px rgba(0,210,255,0.3));
+  animation:mascotFloat 4s ease-in-out infinite;
+}
+@keyframes mascotFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-8px)}
+}
+.mascot-role-badge{
+  display:inline-block;
+  background:linear-gradient(135deg,#1d4ed8,#00d2ff);
+  color:#fff;
+  font-size:0.8rem;
+  font-weight:800;
+  padding:4px 14px;
+  border-radius:50px;
+  margin-bottom:12px;
+  box-shadow:0 4px 14px rgba(37,99,235,0.4);
+}
+.mascot-speech-bubble{
+  background:var(--surface2);
+  border:1px solid rgba(0,210,255,0.25);
+  border-radius:16px;
+  padding:14px;
+  font-size:0.88rem;
+  line-height:1.6;
+  color:#e2e8f0;
+  position:relative;
+  font-weight:600;
+}
+.mascot-speech-bubble::before{
+  content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  border-width:0 8px 8px 8px;
+  border-style:solid;
+  border-color:transparent transparent rgba(0,210,255,0.25) transparent;
+}
+
+/* Feedback Center Card */
+.feedback-center-card{
+  background:var(--surface);
+  border:1px solid var(--border-blue);
+  border-radius:var(--r);
+  padding:36px 30px;
+  box-shadow:0 24px 70px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+  backdrop-filter:blur(24px);
+  position:relative;
+}
+.feedback-center-card::before{
+  content:'';position:absolute;top:0;left:24px;right:24px;height:2px;
+  background:linear-gradient(90deg,transparent,#2563eb,#00d2ff,transparent);
+}
+
+/* Anonymous identity pill */
+.identity-bar{
+  background:rgba(37,99,235,0.1);
+  border:1px solid rgba(0,210,255,0.3);
   border-radius:18px;
-  padding:16px 20px;
-  margin-bottom:28px;
+  padding:14px 18px;
+  margin-bottom:24px;
   display:flex;
   align-items:center;
   justify-content:space-between;
   flex-wrap:wrap;
-  gap:12px;
+  gap:10px;
 }
-.identity-left{
-  display:flex;
-  align-items:center;
-  gap:12px;
+.identity-info{
+  display:flex;align-items:center;gap:12px;
 }
-.identity-avatar{
-  width:44px;height:44px;
-  border-radius:50%;
-  background:linear-gradient(135deg,var(--primary),var(--accent));
+.identity-icon{
+  width:42px;height:42px;border-radius:50%;
+  background:linear-gradient(135deg,#1d4ed8,#00d2ff);
   display:flex;align-items:center;justify-content:center;
-  font-size:1.4rem;
-  box-shadow:0 0 16px var(--primary-glow);
-  flex-shrink:0;
+  font-size:1.3rem;
+  box-shadow:0 0 14px rgba(0,210,255,0.4);
 }
-.identity-meta{display:flex;flex-direction:column}
-.identity-label{font-size:0.75rem;color:var(--dim);font-weight:600}
-.identity-name{font-size:1.15rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:6px}
-.identity-name span{
-  background:linear-gradient(135deg,#a5b4fc,#f472b6);
+.identity-text-box{display:flex;flex-direction:column}
+.identity-title-sm{font-size:0.75rem;color:var(--dim);font-weight:600}
+.identity-code-val{
+  font-size:1.15rem;font-weight:900;
+  background:linear-gradient(135deg,#ffffff,#93c5fd);
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
   background-clip:text;
 }
-.btn-randomize{
+.btn-new-id{
   background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.15);
+  border:1px solid rgba(0,210,255,0.3);
   border-radius:12px;
   padding:8px 14px;
-  color:#c7d2fe;
+  color:#e0f2fe;
   font-family:var(--font-ar);
   font-size:0.82rem;
-  font-weight:600;
+  font-weight:700;
   cursor:pointer;
   transition:all 0.2s ease;
   display:inline-flex;align-items:center;gap:6px;
 }
-.btn-randomize:hover{
-  background:rgba(99,102,241,0.2);
-  border-color:var(--primary);
-  transform:scale(1.03);
+.btn-new-id:hover{
+  background:rgba(37,99,235,0.25);
+  border-color:var(--accent);
+  transform:scale(1.04);
 }
 
 /* Stars Rating */
-.rating-section{margin-bottom:26px;text-align:center}
-.section-lbl{
+.rating-box{margin-bottom:24px;text-align:center}
+.lbl-heading{
   display:block;
   font-size:0.92rem;
   font-weight:700;
   color:#cbd5e1;
-  margin-bottom:12px;
+  margin-bottom:10px;
 }
-.stars-container{
+.stars-row{
   display:flex;
-  gap:10px;
+  gap:8px;
   justify-content:center;
   align-items:center;
-  margin-bottom:10px;
+  margin-bottom:8px;
 }
 .star-btn{
   background:none;
   border:none;
-  font-size:2.4rem;
+  font-size:2.3rem;
   cursor:pointer;
   opacity:0.3;
   filter:grayscale(1);
   transform:scale(0.95);
   transition:all 0.2s cubic-bezier(0.16,1,0.3,1);
   outline:none;
-  padding:4px;
+  padding:2px;
 }
 .star-btn:hover{
   opacity:0.8;
@@ -255,54 +448,49 @@ main{
   opacity:1;
   filter:grayscale(0);
   transform:scale(1.15);
-  text-shadow:0 0 20px rgba(245,158,11,0.7);
+  text-shadow:0 0 18px rgba(245,158,11,0.7);
 }
-.rating-text{
+.rating-status-lbl{
   font-size:0.88rem;
   font-weight:600;
   color:var(--gold);
   min-height:22px;
-  transition:all 0.2s;
 }
 
 /* Message Textarea */
-.form-group{margin-bottom:26px}
-.fb-textarea{
+.textarea-group{margin-bottom:24px}
+.main-textarea{
   width:100%;
-  min-height:140px;
-  background:rgba(255,255,255,0.04);
+  min-height:135px;
+  background:rgba(5,13,31,0.6);
   border:1px solid rgba(255,255,255,0.12);
   border-radius:16px;
-  padding:18px;
+  padding:16px;
   color:var(--text);
   font-family:var(--font-ar);
-  font-size:1rem;
+  font-size:0.98rem;
   line-height:1.7;
   outline:none;
   transition:all 0.25s ease;
   resize:vertical;
 }
-.fb-textarea:focus{
-  border-color:var(--primary);
-  background:rgba(99,102,241,0.07);
-  box-shadow:0 0 0 3px rgba(99,102,241,0.25);
+.main-textarea:focus{
+  border-color:var(--accent);
+  background:rgba(37,99,235,0.08);
+  box-shadow:0 0 0 3px rgba(0,210,255,0.25);
 }
-.textarea-foot{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-top:8px;
-  padding:0 6px;
-  font-size:0.78rem;
-  color:var(--muted);
+.textarea-details{
+  display:flex;justify-content:space-between;
+  margin-top:6px;padding:0 4px;
+  font-size:0.75rem;color:var(--muted);
 }
 
-/* Actions */
-.btn-submit{
+/* Submit Button */
+.btn-main-submit{
   width:100%;
   padding:16px 28px;
   border-radius:16px;
-  background:linear-gradient(135deg,var(--primary) 0%,#8b5cf6 60%,var(--accent) 100%);
+  background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 50%,#00d2ff 100%);
   color:#fff;
   border:none;
   font-family:var(--font-ar);
@@ -311,228 +499,222 @@ main{
   cursor:pointer;
   transition:all 0.3s ease;
   display:flex;align-items:center;justify-content:center;gap:10px;
-  box-shadow:0 10px 35px rgba(99,102,241,0.4);
+  box-shadow:0 10px 30px rgba(37,99,235,0.4);
 }
-.btn-submit:hover:not(:disabled){
+.btn-main-submit:hover:not(:disabled){
   transform:translateY(-3px);
-  box-shadow:0 16px 48px rgba(99,102,241,0.6);
+  box-shadow:0 16px 45px rgba(0,210,255,0.5);
 }
-.btn-submit:disabled{
+.btn-main-submit:disabled{
   opacity:0.6;cursor:not-allowed;
 }
 
 /* ═════════════════════════════════════════════════
-   THE BEAUTIFUL FEEDBACK CARD / CERTIFICATE (PDF Ready)
+   PDF CERTIFICATE / RESULT DISPLAY
 ═════════════════════════════════════════════════ */
-#result-container{
+#result-wrapper{
   display:none;
   animation:fadeInUp 0.6s ease both;
 }
-.success-banner{
+.result-success-box{
   background:rgba(16,185,129,0.12);
-  border:1px solid rgba(16,185,129,0.35);
+  border:1px solid rgba(16,185,129,0.4);
   border-radius:16px;
-  padding:16px 20px;
+  padding:14px 18px;
   color:#6ee7b7;
   font-weight:700;
-  font-size:0.95rem;
-  display:flex;align-items:center;gap:10px;
-  margin-bottom:24px;
+  font-size:0.92rem;
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:20px;
 }
 
-/* The actual card that gets converted to PDF */
-.pdf-card{
-  background:linear-gradient(145deg,#0a1128 0%,#0f172a 100%);
-  border:2px solid rgba(99,102,241,0.4);
-  border-radius:24px;
-  padding:36px 32px;
-  color:#f8fafc;
+/* The actual printable PDF card element */
+.pdf-printable-card{
+  background:linear-gradient(145deg,#07122b 0%,#050b18 100%);
+  border:2px solid #2563eb;
+  border-radius:22px;
+  padding:34px 28px;
+  color:#ffffff;
   box-shadow:0 24px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.15);
   position:relative;
   overflow:hidden;
-  margin-bottom:24px;
+  margin-bottom:20px;
 }
-.pdf-card::after{
-  content:'';position:absolute;bottom:-60px;right:-60px;
-  width:180px;height:180px;border-radius:50%;
-  background:radial-gradient(circle,rgba(236,72,153,0.15),transparent 70%);
+.pdf-printable-card::before{
+  content:'';position:absolute;top:-50px;left:-50px;
+  width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,210,255,0.25),transparent 70%);
   pointer-events:none;
 }
-.pdf-card::before{
-  content:'';position:absolute;top:-60px;left:-60px;
-  width:180px;height:180px;border-radius:50%;
-  background:radial-gradient(circle,rgba(99,102,241,0.2),transparent 70%);
+.pdf-printable-card::after{
+  content:'';position:absolute;bottom:-50px;right:-50px;
+  width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,rgba(37,99,235,0.25),transparent 70%);
   pointer-events:none;
 }
 
 /* Card Header */
-.pdf-head{
+.cert-head{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  border-bottom:1px solid rgba(255,255,255,0.1);
-  padding-bottom:20px;
-  margin-bottom:24px;
+  border-bottom:1px solid rgba(255,255,255,0.12);
+  padding-bottom:18px;
+  margin-bottom:20px;
 }
-.pdf-brand{
+.cert-brand{
   display:flex;align-items:center;gap:12px;
 }
-.pdf-logo{
+.cert-logo{
   font-size:2.2rem;
-  filter:drop-shadow(0 0 12px rgba(99,102,241,0.6));
+  filter:drop-shadow(0 0 10px rgba(0,210,255,0.6));
 }
-.pdf-brand-title{
+.cert-title{
+  font-size:1.1rem;
+  font-weight:900;
+  color:#ffffff;
+}
+.cert-sub{
+  font-size:0.75rem;
+  color:#93c5fd;
+  font-weight:600;
+}
+.cert-tag{
+  background:rgba(37,99,235,0.2);
+  border:1px solid rgba(0,210,255,0.4);
+  border-radius:50px;
+  padding:5px 14px;
+  font-size:0.75rem;
+  color:#e0f2fe;
+  font-weight:700;
+}
+
+/* User top bar in PDF */
+.cert-user-bar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;
+  padding:12px 18px;
+  margin-bottom:20px;
+}
+.cert-user-left{
+  display:flex;align-items:center;gap:10px;
+}
+.cert-avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,#1d4ed8,#00d2ff);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;
+}
+.cert-username{
   font-size:1.15rem;
   font-weight:900;
   color:#ffffff;
-  line-height:1.2;
 }
-.pdf-brand-sub{
-  font-size:0.75rem;
-  color:#94a3b8;
-  font-weight:600;
-}
-.pdf-seal{
-  background:rgba(99,102,241,0.15);
-  border:1px solid rgba(99,102,241,0.3);
-  border-radius:50px;
-  padding:6px 14px;
-  font-size:0.75rem;
-  color:#c7d2fe;
-  font-weight:700;
-  display:flex;align-items:center;gap:6px;
-}
-
-/* User top section in PDF */
-.pdf-user-bar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  background:rgba(255,255,255,0.03);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:16px;
-  padding:14px 20px;
-  margin-bottom:24px;
-}
-.pdf-user-info{
-  display:flex;align-items:center;gap:10px;
-}
-.pdf-avatar{
-  width:38px;height:38px;border-radius:50%;
-  background:linear-gradient(135deg,var(--primary),var(--accent));
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.2rem;
-}
-.pdf-username{
-  font-size:1.2rem;
-  font-weight:900;
-  color:#ffffff;
-}
-.pdf-stars{
-  font-size:1.3rem;
+.cert-stars{
+  font-size:1.25rem;
   color:var(--gold);
-  letter-spacing:2px;
 }
 
-/* Message body in PDF */
-.pdf-msg-box{
-  background:rgba(15,23,42,0.6);
-  border-right:4px solid var(--primary);
+/* Message in PDF */
+.cert-msg-box{
+  background:rgba(4,10,24,0.75);
+  border-right:4px solid var(--accent);
   border-radius:12px;
-  padding:20px 24px;
-  margin-bottom:24px;
-  position:relative;
+  padding:18px 22px;
+  margin-bottom:20px;
 }
-.pdf-quote-icon{
-  font-size:2rem;
-  color:rgba(99,102,241,0.3);
+.cert-quote-icon{
+  font-size:1.8rem;
+  color:rgba(0,210,255,0.4);
   line-height:1;
-  margin-bottom:8px;
+  margin-bottom:6px;
 }
-.pdf-text{
-  font-size:1.05rem;
+.cert-msg-text{
+  font-size:1rem;
   line-height:1.8;
   color:#f1f5f9;
   white-space:pre-wrap;
   word-break:break-word;
 }
 
-/* Footer info in PDF */
-.pdf-foot{
+/* Footer in PDF */
+.cert-foot{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  border-top:1px solid rgba(255,255,255,0.1);
-  padding-top:18px;
-  font-size:0.82rem;
+  border-top:1px solid rgba(255,255,255,0.12);
+  padding-top:16px;
+  font-size:0.8rem;
   color:#94a3b8;
   flex-wrap:wrap;
   gap:10px;
 }
-.pdf-time-tag{
+.cert-time{
   display:flex;align-items:center;gap:6px;
-  color:#cbd5e1;
-  font-weight:600;
+  color:#e2e8f0;font-weight:700;
 }
-.pdf-watermark{
+.cert-note{
   font-size:0.75rem;
   color:#64748b;
   font-weight:600;
 }
 
-/* Export action buttons */
-.export-actions{
+/* Action buttons */
+.cert-actions{
   display:flex;
   gap:12px;
   flex-wrap:wrap;
-  margin-top:16px;
 }
-.btn-export{
+.btn-act{
   flex:1;
-  min-width:180px;
-  padding:14px 20px;
+  min-width:160px;
+  padding:14px 18px;
   border-radius:14px;
   font-family:var(--font-ar);
-  font-size:0.95rem;
+  font-size:0.92rem;
   font-weight:700;
   cursor:pointer;
   transition:all 0.25s ease;
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
   border:none;
 }
-.btn-pdf{
-  background:linear-gradient(135deg,#dc2626,#ef4444);
+.btn-act-pdf{
+  background:linear-gradient(135deg,#0284c7,#0284c7,#0ea5e9);
   color:#fff;
-  box-shadow:0 8px 24px rgba(220,38,38,0.35);
+  box-shadow:0 6px 20px rgba(2,132,199,0.4);
 }
-.btn-pdf:hover{
+.btn-act-pdf:hover{
   transform:translateY(-2px);
-  box-shadow:0 12px 32px rgba(220,38,38,0.5);
+  box-shadow:0 10px 28px rgba(2,132,199,0.6);
 }
-.btn-png{
-  background:linear-gradient(135deg,#2563eb,#3b82f6);
+.btn-act-png{
+  background:linear-gradient(135deg,#1d4ed8,#2563eb);
   color:#fff;
-  box-shadow:0 8px 24px rgba(37,99,235,0.35);
+  box-shadow:0 6px 20px rgba(37,99,235,0.4);
 }
-.btn-png:hover{
+.btn-act-png:hover{
   transform:translateY(-2px);
-  box-shadow:0 12px 32px rgba(37,99,235,0.5);
+  box-shadow:0 10px 28px rgba(37,99,235,0.6);
 }
-.btn-reset{
+.btn-act-reset{
   background:rgba(255,255,255,0.06);
   color:var(--text);
   border:1px solid rgba(255,255,255,0.15);
 }
-.btn-reset:hover{
+.btn-act-reset:hover{
   background:rgba(255,255,255,0.12);
   transform:translateY(-2px);
 }
 
 /* Toast Notification */
-.toast-notif{
+.toast-bar{
   position:fixed;bottom:24px;right:24px;
-  background:rgba(15,23,42,0.95);
-  border:1px solid rgba(99,102,241,0.4);
+  background:rgba(7,16,38,0.95);
+  border:1px solid rgba(0,210,255,0.4);
   backdrop-filter:blur(16px);
   border-radius:14px;
   padding:14px 22px;
@@ -543,24 +725,50 @@ main{
   display:flex;align-items:center;gap:10px;
   transform:translateY(80px);opacity:0;
   transition:all 0.35s cubic-bezier(0.16,1,0.3,1);
-  box-shadow:0 16px 40px rgba(0,0,0,0.5);
+  box-shadow:0 16px 40px rgba(0,0,0,0.6);
 }
-.toast-notif.show{transform:translateY(0);opacity:1}
+.toast-bar.show{transform:translateY(0);opacity:1}
+
+/* Footer */
+footer{
+  text-align:center;
+  padding:30px 20px;
+  color:var(--muted);
+  font-size:0.85rem;
+  border-top:1px solid rgba(255,255,255,0.06);
+  position:relative;z-index:2;
+}
 
 @keyframes fadeInUp{from{opacity:0;transform:translateY(25px)}to{opacity:1;transform:translateY(0)}}
 
+/* Responsive */
+@media(max-width:980px){
+  .feedback-grid{
+    grid-template-columns:1fr;
+  }
+  .mascot-card{
+    position:static;
+    display:flex;align-items:center;gap:16px;
+    text-align:right;
+    padding:16px 20px;
+  }
+  .mascot-avatar-box{
+    width:80px;height:80px;margin:0;flex-shrink:0;
+  }
+  .mascot-speech-bubble::before{display:none}
+}
 @media(max-width:640px){
-  .top-nav{padding:16px 20px}
-  .glass-card{padding:28px 20px}
-  .pdf-card{padding:24px 18px}
-  .pdf-user-bar{flex-direction:column;align-items:flex-start;gap:10px}
-  .export-actions{flex-direction:column}
+  .banner-outer-frame{padding:6px;border-radius:18px}
+  .feedback-center-card{padding:24px 18px}
+  .cert-head{flex-direction:column;align-items:flex-start;gap:10px}
+  .cert-user-bar{flex-direction:column;align-items:flex-start;gap:8px}
+  .cert-actions{flex-direction:column}
 }
 </style>
 </head>
 <body>
 
-<!-- Animated background -->
+<!-- Animated Background -->
 <div class="bg-canvas">
   <div class="bg-orb orb1"></div>
   <div class="bg-orb orb2"></div>
@@ -569,161 +777,225 @@ main{
 <div class="grid-lines"></div>
 <div class="particles" id="particles"></div>
 
-<!-- Top Navigation -->
-<nav class="top-nav">
-  <a href="javascript:history.back()" class="back-btn">← العودة للوحة التحكم</a>
-  <div class="brand-badge">🔬 منصة Microscope</div>
-</nav>
+<!-- Top Title: MICROSCOPE TEAM & معاك يا دفعة 50 -->
+<header class="team-hero-header">
+  <h1 class="microscope-brand-title">MICROSCOPE TEAM</h1>
+  <div class="batch-pill">🎓 معاك يا دفعة 50</div>
+</header>
 
-<!-- Main Container -->
-<main>
-  <div class="feedback-wrapper">
-
-    <!-- Titles -->
-    <div class="page-title-box">
-      <div class="eyebrow">🛡️ صوتك مسموع ومحمي بالكامل</div>
-      <h1 class="main-title">رأيك يهمنا 💬</h1>
-      <p class="main-desc">شاركنا رأيك، اقتراحاتك، أو شكواك بكل حرية وبدون الكشف عن هويتك الحقيقية — رأيك هو اللي بيطور المنظومة.</p>
-    </div>
-
-    <!-- 1. FEEDBACK INPUT FORM -->
-    <div class="glass-card" id="form-card">
+<!-- 1. INTERACTIVE CURTAIN MASCOT BANNER -->
+<section class="banner-stage-section">
+  <div class="banner-outer-frame">
+    <div class="banner-container" id="banner-container" onclick="toggleBanner()">
       
-      <!-- Generated Anonymous Identity -->
-      <div class="identity-box">
-        <div class="identity-left">
-          <div class="identity-avatar">👤</div>
-          <div class="identity-meta">
-            <span class="identity-label">هويتك الرمزية المشفرة:</span>
-            <div class="identity-name"><span id="user-display-name">علومنجي #0000</span></div>
-          </div>
-        </div>
-        <button class="btn-randomize" type="button" onclick="generateNewIdentity()" title="توليد رقم عشوائي آخر">
-          🎲 رقم عشوائي آخر
-        </button>
+      <!-- Center revealed banner with "منورين علوم" and QR phone -->
+      <div class="banner-content-bg"></div>
+
+      <!-- Left door carrying Hacker Mascot -->
+      <div class="curtain-door door-left" id="door-left">
+        <img src="char_left.png" class="door-img" alt="Hacker Mascot" />
       </div>
 
-      <!-- Star Rating -->
-      <div class="rating-section">
-        <span class="section-lbl">تقييمك للمنظومة والتيم</span>
-        <div class="stars-container" id="stars-row">
-          <button type="button" class="star-btn" onclick="setRating(1)" title="1 من 5">⭐</button>
-          <button type="button" class="star-btn" onclick="setRating(2)" title="2 من 5">⭐</button>
-          <button type="button" class="star-btn" onclick="setRating(3)" title="3 من 5">⭐</button>
-          <button type="button" class="star-btn" onclick="setRating(4)" title="4 من 5">⭐</button>
-          <button type="button" class="star-btn" onclick="setRating(5)" title="5 من 5">⭐</button>
-        </div>
-        <div class="rating-text" id="rating-desc">اضغط على النجوم لتحديد تقييمك</div>
+      <!-- Right door carrying Doctor Mascot -->
+      <div class="curtain-door door-right" id="door-right">
+        <img src="char_right.png" class="door-img" alt="Scientist Mascot" />
       </div>
 
-      <!-- Message -->
-      <div class="form-group">
-        <label class="section-lbl" for="fb-text">رسالتك للتيم ✍️</label>
-        <textarea 
-          id="fb-text" 
-          class="fb-textarea" 
-          placeholder="اكتب كل اللي في بالك.. اقتراح جديد، رأيك في المحتوى، مشكلة واجهتك، أو كلمة تشجيع للتيم..."
-          oninput="updateCharCount()"
-        ></textarea>
-        <div class="textarea-foot">
-          <span>🔒 إرسال مشفر مباشرة لإدارة البوت</span>
-          <span id="char-count">0 حرف</span>
-        </div>
-      </div>
-
-      <!-- Submit Button -->
-      <button type="button" class="btn-submit" id="btn-submit" onclick="submitFeedback()">
-        <span>🚀 إرسال التقييم واعتماد الكارت</span>
+      <!-- Interactive Center Button -->
+      <button type="button" class="center-seal-btn" id="seal-btn" onclick="event.stopPropagation(); toggleBanner();">
+        <span id="seal-icon">✨</span>
+        <span id="seal-text">اضغط لفتح البانر • مرحباً دفعة 50</span>
       </button>
 
     </div>
+  </div>
+  <div class="banner-hint">
+    <span>💡</span>
+    <span>اضغط على البانر أو اسحب لفتحه واستكشاف كود الـ QR والترحيب!</span>
+  </div>
+</section>
 
-    <!-- 2. RESULT & CERTIFICATE VIEW (PDF READY) -->
-    <div id="result-container">
+<!-- 2. FEEDBACK SECTION WITH MASCOTS SPREAD ON BOTH SIDES -->
+<section class="feedback-main-section">
+  
+  <div class="section-header-box">
+    <div class="eyebrow-tag">🛡️ صوتك مسموع ومحمي بالكامل</div>
+    <h2 class="section-title-text">رأيك يهمنا 💬</h2>
+    <p class="section-sub-text">شاركنا رأيك، اقتراحاتك، أو شكواك بكل أريحية وبدون الكشف عن هويتك الحقيقية — رأيك هو سر تطوير المنظومة.</p>
+  </div>
 
-      <div class="success-banner">
-        <span>✅</span>
-        <span>تم إرسال رأيك وتوثيقه في لوحة التحكم بنجاح! يمكنك الآن تصدير الكارت كملف PDF.</span>
+  <div class="feedback-grid">
+
+    <!-- LEFT MASCOT: Coder / Hacker Mascot -->
+    <div class="mascot-card mascot-card-left">
+      <div class="mascot-avatar-box">
+        <img src="char_left_trans.png" alt="Microscope Tech Mascot" />
       </div>
+      <div class="mascot-info">
+        <div class="mascot-role-badge">المطور والتقني 💻</div>
+        <div class="mascot-speech-bubble">
+          "أهلاً بيك يا علومانجي! 🚀 كود المنظومة والبوت بيتحسن بآرائكم وملاحظاتكم.. شاركنا فكرتك في سرية وأمان تام!"
+        </div>
+      </div>
+    </div>
 
-      <!-- THE PDF CARD ELEMENT -->
-      <div class="pdf-card" id="pdf-export-card">
+    <!-- CENTER: Feedback Form / Certificate -->
+    <div class="feedback-center-card">
+      
+      <!-- Form Container -->
+      <div id="form-container">
         
-        <!-- Header -->
-        <div class="pdf-head">
-          <div class="pdf-brand">
-            <span class="pdf-logo">🔬</span>
-            <div>
-              <div class="pdf-brand-title">فريق Microscope التعليمي</div>
-              <div class="pdf-brand-sub">Microscope Official Feedback Record</div>
+        <!-- Anonymous Identity Badge -->
+        <div class="identity-bar">
+          <div class="identity-info">
+            <div class="identity-icon">👤</div>
+            <div class="identity-text-box">
+              <span class="identity-title-sm">هويتك الرمزية المشفرة:</span>
+              <div class="identity-code-val" id="user-display-name">علومنجي #0000</div>
             </div>
           </div>
-          <div class="pdf-seal">
-            <span>🛡️</span>
-            <span>توثيق رسمي موثوق</span>
+          <button class="btn-new-id" type="button" onclick="generateNewIdentity()" title="توليد رقم عشوائي آخر">
+            🎲 رقم عشوائي آخر
+          </button>
+        </div>
+
+        <!-- Star Rating -->
+        <div class="rating-box">
+          <span class="lbl-heading">تقييمك للمنظومة والتيم</span>
+          <div class="stars-row" id="stars-row">
+            <button type="button" class="star-btn" onclick="setRating(1)" title="1 من 5">⭐</button>
+            <button type="button" class="star-btn" onclick="setRating(2)" title="2 من 5">⭐</button>
+            <button type="button" class="star-btn" onclick="setRating(3)" title="3 من 5">⭐</button>
+            <button type="button" class="star-btn" onclick="setRating(4)" title="4 من 5">⭐</button>
+            <button type="button" class="star-btn" onclick="setRating(5)" title="5 من 5">⭐</button>
+          </div>
+          <div class="rating-status-lbl" id="rating-desc">اضغط على النجوم لتحديد تقييمك</div>
+        </div>
+
+        <!-- Message Textarea -->
+        <div class="textarea-group">
+          <label class="lbl-heading" for="fb-text">رسالتك للتيم ✍️</label>
+          <textarea 
+            id="fb-text" 
+            class="main-textarea" 
+            placeholder="اكتب كل اللي في بالك.. اقتراح جديد، رأيك في المحتوى، مشكلة واجهتك، أو كلمة تشجيع للتيم..."
+            oninput="updateCharCount()"
+          ></textarea>
+          <div class="textarea-details">
+            <span>🔒 إرسال مشفر مباشرة لإدارة البوت</span>
+            <span id="char-count">0 حرف</span>
           </div>
         </div>
 
-        <!-- User Top Section -->
-        <div class="pdf-user-bar">
-          <div class="pdf-user-info">
-            <div class="pdf-avatar">👤</div>
-            <div>
-              <div style="font-size:0.75rem;color:#94a3b8;font-weight:600">هوية الطالب المشارك:</div>
-              <div class="pdf-username" id="card-username">علومنجي #0000</div>
-            </div>
-          </div>
-          <div class="pdf-stars" id="card-stars">⭐⭐⭐⭐⭐</div>
-        </div>
-
-        <!-- Message Center Section -->
-        <div class="pdf-msg-box">
-          <div class="pdf-quote-icon">❝</div>
-          <div class="pdf-text" id="card-message">نص الفيدباك...</div>
-        </div>
-
-        <!-- Footer Date/Time Section -->
-        <div class="pdf-foot">
-          <div class="pdf-time-tag">
-            <span>🕒</span>
-            <span id="card-datetime">2025/01/01 — 12:00 م</span>
-          </div>
-          <div class="pdf-watermark">منظومة Microscope التعليمية • صوتك بيصنع الفارق 🔬</div>
-        </div>
+        <!-- Submit Button -->
+        <button type="button" class="btn-main-submit" id="btn-submit" onclick="submitFeedback()">
+          <span>🚀 أرسل التقييم واعتماد الكارت</span>
+        </button>
 
       </div>
 
-      <!-- Action Buttons -->
-      <div class="export-actions">
-        <button type="button" class="btn-export btn-pdf" onclick="downloadPdf()">
-          <span>📄 تصدير كـ PDF (تحميل فوري)</span>
-        </button>
-        <button type="button" class="btn-export btn-png" onclick="downloadImage()">
-          <span>🖼️ حفظ كصورة PNG</span>
-        </button>
-        <button type="button" class="btn-export btn-reset" onclick="resetForm()">
-          <span>🔄 كتابة رأي جديد</span>
-        </button>
+      <!-- Result View (Certificate & PDF) -->
+      <div id="result-wrapper">
+
+        <div class="result-success-box">
+          <span>✅</span>
+          <span>تم إرسال رأيك وتوثيقه في لوحة التحكم بنجاح! يمكنك الآن تصدير الكارت كملف PDF.</span>
+        </div>
+
+        <!-- THE PRINTABLE PDF CARD -->
+        <div class="pdf-printable-card" id="pdf-export-card">
+          
+          <div class="cert-head">
+            <div class="cert-brand">
+              <span class="cert-logo">🔬</span>
+              <div>
+                <div class="cert-title">MICROSCOPE TEAM</div>
+                <div class="cert-sub">معاك يا دفعة 50 • توثيق رسمي للرأي</div>
+              </div>
+            </div>
+            <div class="cert-tag">
+              <span>🛡️ هوية سرية موثقة</span>
+            </div>
+          </div>
+
+          <div class="cert-user-bar">
+            <div class="cert-user-left">
+              <div class="cert-avatar">👤</div>
+              <div>
+                <div style="font-size:0.75rem;color:#94a3b8;font-weight:600">هوية الطالب المشارك:</div>
+                <div class="cert-username" id="card-username">علومنجي #0000</div>
+              </div>
+            </div>
+            <div class="cert-stars" id="card-stars">⭐⭐⭐⭐⭐</div>
+          </div>
+
+          <div class="cert-msg-box">
+            <div class="cert-quote-icon">❝</div>
+            <div class="cert-msg-text" id="card-message">نص الفيدباك...</div>
+          </div>
+
+          <div class="cert-foot">
+            <div class="cert-time">
+              <span>🕒</span>
+              <span id="card-datetime">2025/01/01 — 12:00 م</span>
+            </div>
+            <div class="cert-note">منظومة Microscope التعليمية • صوتك بيصنع الفارق 🔬</div>
+          </div>
+
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="cert-actions">
+          <button type="button" class="btn-act btn-act-pdf" onclick="downloadPdf()">
+            <span>📄 تصدير كـ PDF (تحميل فوري)</span>
+          </button>
+          <button type="button" class="btn-act btn-act-png" onclick="downloadImage()">
+            <span>🖼️ حفظ كصورة PNG</span>
+          </button>
+          <button type="button" class="btn-act btn-act-reset" onclick="resetForm()">
+            <span>🔄 كتابة رأي جديد</span>
+          </button>
+        </div>
+
       </div>
 
     </div>
 
+    <!-- RIGHT MASCOT: Doctor / Scientist Mascot -->
+    <div class="mascot-card mascot-card-right">
+      <div class="mascot-avatar-box">
+        <img src="char_right_trans.png" alt="Microscope Science Mascot" />
+      </div>
+      <div class="mascot-info">
+        <div class="mascot-role-badge">المحتوى والملخصات 🧪</div>
+        <div class="mascot-speech-bubble">
+          "دفعة 50 الغاليين! 🎓 رأيكم في المواد والشروحات هو سر تميز المنظومة.. مستنيين تقييمكم بكل حب وفخر!"
+        </div>
+      </div>
+    </div>
+
   </div>
-</main>
+
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>© 2025 Microscope Team — معاك يا دفعة 50 خطوة بخطوة 🔬</p>
+</footer>
 
 <!-- Toast -->
-<div class="toast-notif" id="toast">
+<div class="toast-bar" id="toast">
   <span id="toast-icon">ℹ️</span>
-  <span id="toast-text">رسالة إشعار</span>
+  <span id="toast-text">إشعار</span>
 </div>
 
 <script>
-// Particles creation
+// Particles creation in blue and cyan
 const pc = document.getElementById('particles');
 for(let i=0; i<25; i++){
   const p = document.createElement('div');
   p.className = 'particle';
-  p.style.cssText = `left:${Math.random()*100}%;animation-delay:${Math.random()*7}s;animation-duration:${5+Math.random()*6}s;background:${['#6366f1','#ec4899','#06b6d4','#10b981'][Math.floor(Math.random()*4)]};`;
+  p.style.cssText = `left:${Math.random()*100}%;animation-delay:${Math.random()*7}s;animation-duration:${5+Math.random()*6}s;background:${['#2563eb','#00d2ff','#38bdf8','#60a5fa'][Math.floor(Math.random()*4)]};`;
   pc.appendChild(p);
 }
 
@@ -739,7 +1011,35 @@ const ratingLabels = [
   '⭐⭐⭐⭐⭐ رائع ومبهر جداً! 🌟'
 ];
 
-// Generate Random Anonymous Identity
+// Curtain Banner Toggle
+let isBannerOpen = false;
+function toggleBanner(){
+  const container = document.getElementById('banner-container');
+  const text = document.getElementById('seal-text');
+  const icon = document.getElementById('seal-icon');
+  isBannerOpen = !isBannerOpen;
+  
+  if(isBannerOpen){
+    container.classList.add('open');
+    text.textContent = 'إغلاق البانر ✖';
+    icon.textContent = '🔒';
+  } else {
+    container.classList.remove('open');
+    text.textContent = 'اضغط لفتح البانر • مرحباً دفعة 50';
+    icon.textContent = '✨';
+  }
+}
+
+// Auto open banner on scroll down if not already toggled
+let hasAutoOpened = false;
+window.addEventListener('scroll', () => {
+  if (!hasAutoOpened && window.scrollY > 80) {
+    hasAutoOpened = true;
+    if(!isBannerOpen) toggleBanner();
+  }
+}, { passive: true });
+
+// Generate Random Anonymous Identity (علومنجي #XXXX)
 function generateNewIdentity(){
   const rand = Math.floor(1000 + Math.random() * 90000);
   currentUsername = `علومنجي #${rand}`;
@@ -769,12 +1069,12 @@ function showToast(msg, isSuccess = true){
   const text = document.getElementById('toast-text');
   icon.textContent = isSuccess ? '✅' : '⚠️';
   text.textContent = msg;
-  toast.style.borderColor = isSuccess ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.5)';
+  toast.style.borderColor = isSuccess ? 'rgba(0,210,255,0.6)' : 'rgba(239,68,68,0.6)';
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3800);
 }
 
-// Format current date and time in Arabic format
+// Format current date and time
 function getFormattedDateTime(){
   const now = new Date();
   const optionsDate = { year: 'numeric', month: '2-digit', day: '2-digit' };
@@ -819,12 +1119,12 @@ async function submitFeedback(){
       document.getElementById('card-datetime').textContent = getFormattedDateTime();
 
       // Show Result View
-      document.getElementById('form-card').style.display = 'none';
-      const resultContainer = document.getElementById('result-container');
-      resultContainer.style.display = 'block';
-      resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('form-container').style.display = 'none';
+      const resultWrapper = document.getElementById('result-wrapper');
+      resultWrapper.style.display = 'block';
+      resultWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-      showToast('تم إرسال رأيك بنجاح! شكراً لك 🙏', true);
+      showToast('تم إرسال رأيك وتوثيقه بنجاح! شكراً لك 🙏', true);
     } else {
       showToast('تعذر إرسال التقييم، برجاء المحاولة لاحقاً', false);
     }
@@ -842,22 +1142,19 @@ async function downloadPdf(){
   showToast('⏳ جاري إنشاء ملف الـ PDF بأعلى دقة...', true);
 
   try {
-    // 1. Capture element to high-resolution canvas (scale 2 for crisp print quality)
     const canvas = await html2canvas(card, {
       scale: 2,
       useCORS: true,
       logging: false,
-      backgroundColor: '#0a1128'
+      backgroundColor: '#07122b'
     });
 
     const imgData = canvas.toDataURL('image/png');
     const { jsPDF } = window.jspdf;
 
-    // Calculate dimensions
     const pdfWidth = canvas.width;
     const pdfHeight = canvas.height;
 
-    // Initialize jsPDF with exact pixel dimensions
     const pdf = new jsPDF({
       orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
       unit: 'px',
@@ -866,7 +1163,6 @@ async function downloadPdf(){
 
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
     
-    // Clean filename
     const cleanId = currentUsername.replace(/[^\w\u0621-\u064A0-9]/g, '_');
     pdf.save(`Microscope_Feedback_${cleanId}.pdf`);
 
@@ -887,7 +1183,7 @@ async function downloadImage(){
       scale: 2,
       useCORS: true,
       logging: false,
-      backgroundColor: '#0a1128'
+      backgroundColor: '#07122b'
     });
 
     const link = document.createElement('a');
@@ -909,9 +1205,9 @@ function resetForm(){
   document.getElementById('fb-text').value = '';
   updateCharCount();
 
-  document.getElementById('result-container').style.display = 'none';
-  document.getElementById('form-card').style.display = 'block';
-  document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('result-wrapper').style.display = 'none';
+  document.getElementById('form-container').style.display = 'block';
+  document.getElementById('form-container').scrollIntoView({ behavior: 'smooth' });
 }
 
 // Initialize on load

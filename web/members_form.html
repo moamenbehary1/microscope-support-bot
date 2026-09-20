@@ -283,12 +283,11 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
   e.preventDefault();
   
   const fileInput = document.getElementById('picture');
-  const file = fileInput.files[0];
-  
-  if (!file) {
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
     alert('يرجى اختيار صورة');
-    return;
+    return false;
   }
+  const file = fileInput.files[0];
   
   const reader = new FileReader();
   reader.onload = async function(event) {
@@ -385,6 +384,8 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
       document.getElementById('memberForm').style.display = 'none';
       document.getElementById('successMessage').style.display = 'block';
     }, 1500);
+
+    return false;
   };
   
   reader.readAsDataURL(file);

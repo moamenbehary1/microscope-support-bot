@@ -122,6 +122,10 @@ input:focus, select:focus {
   background: rgba(37,99,235,0.08);
   box-shadow: 0 0 0 3px rgba(0,210,255,0.25);
 }
+select option {
+  background: #000000;
+  color: #ffffff;
+}
 input::placeholder {
   color: var(--muted);
 }
@@ -190,8 +194,8 @@ input::placeholder {
 <form class="form-card form-grid" id="memberForm">
   
   <div class="form-group full-width">
-    <label for="picture">صورة شخصية (رابط الصورة / Link)</label>
-    <input type="url" id="picture" placeholder="https://example.com/my-photo.jpg" required>
+    <label for="picture">صورة شخصية (ارفع صورتك)</label>
+    <input type="file" id="picture" accept="image/*" required>
   </div>
 
   <div class="form-group full-width">
@@ -208,23 +212,23 @@ input::placeholder {
     <label for="committee">اللجنة (Committee)</label>
     <select id="committee" required>
       <option value="" disabled selected>اختر لجنتك...</option>
-      <option value="Scientific">Scientific</option>
-      <option value="IT">IT</option>
-      <option value="PR">PR</option>
       <option value="HR">HR</option>
+      <option value="PR">PR</option>
+      <option value="PM">PM</option>
+      <option value="Scientific">Scientific</option>
       <option value="Social Media">Social Media</option>
-      <option value="Logistics">Logistics</option>
+      <option value="Charity">خيرية (Charity)</option>
     </select>
-  </div>
-
-  <div class="form-group">
-    <label for="phone">رقم الهاتف</label>
-    <input type="tel" id="phone" placeholder="01xxxxxxxxx" required>
   </div>
 
   <div class="form-group">
     <label for="whatsapp">رقم الواتساب</label>
     <input type="tel" id="whatsapp" placeholder="01xxxxxxxxx" required>
+  </div>
+
+  <div class="form-group">
+    <label for="phone">رقم آخر إن وجد</label>
+    <input type="tel" id="phone" placeholder="01xxxxxxxxx">
   </div>
 
   <div class="form-group full-width">
@@ -259,42 +263,55 @@ input::placeholder {
 document.getElementById('memberForm').addEventListener('submit', function(e) {
   e.preventDefault();
   
-  const memberData = {
-    id: Date.now().toString(),
-    picture: document.getElementById('picture').value,
-    fullName: document.getElementById('fullName').value,
-    nationalId: document.getElementById('nationalId').value,
-    committee: document.getElementById('committee').value,
-    phone: document.getElementById('phone').value,
-    whatsapp: document.getElementById('whatsapp').value,
-    address: document.getElementById('address').value,
-    collegeYear: document.getElementById('collegeYear').value,
-    email: document.getElementById('email').value,
-    timestamp: new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' })
-  };
-
-  // Get existing members or initialize empty array
-  let existingMembers = [];
-  try {
-    const rawData = localStorage.getItem('microscope_members_data');
-    if (rawData) {
-      existingMembers = JSON.parse(rawData);
-    }
-  } catch(e) {
-    console.error("Error reading from localStorage", e);
-  }
-
-  existingMembers.push(memberData);
-  localStorage.setItem('microscope_members_data', JSON.stringify(existingMembers));
-
-  // Show Toast
-  const toast = document.getElementById('toast');
-  toast.classList.add('show');
+  const fileInput = document.getElementById('picture');
+  const file = fileInput.files[0];
   
-  setTimeout(() => {
-    toast.classList.remove('show');
-    // document.getElementById('memberForm').reset();
-  }, 3000);
+  if (!file) {
+    alert('يرجى اختيار صورة');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const base64String = event.target.result;
+    
+    const memberData = {
+      id: Date.now().toString(),
+      picture: base64String,
+      fullName: document.getElementById('fullName').value,
+      nationalId: document.getElementById('nationalId').value,
+      committee: document.getElementById('committee').value,
+      phone: document.getElementById('phone').value,
+      whatsapp: document.getElementById('whatsapp').value,
+      address: document.getElementById('address').value,
+      collegeYear: document.getElementById('collegeYear').value,
+      email: document.getElementById('email').value,
+      timestamp: new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' })
+    };
+
+    let existingMembers = [];
+    try {
+      const rawData = localStorage.getItem('microscope_members_data');
+      if (rawData) {
+        existingMembers = JSON.parse(rawData);
+      }
+    } catch(e) {
+      console.error("Error reading from localStorage", e);
+    }
+
+    existingMembers.push(memberData);
+    localStorage.setItem('microscope_members_data', JSON.stringify(existingMembers));
+
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+      toast.classList.remove('show');
+      document.getElementById('memberForm').reset();
+    }, 3000);
+  };
+  
+  reader.readAsDataURL(file);
 });
 </script>
 

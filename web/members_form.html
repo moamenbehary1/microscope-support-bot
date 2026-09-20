@@ -604,7 +604,8 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
           file_name: `Member_${memberData.fullName.replace(/\s+/g, '_')}.pdf`,
           file_base64: pdfBase64,
           photo_base64: base64String,
-          photo_file_name: photoFileName
+          photo_file_name: photoFileName,
+          member_data: memberData
         })
       });
       console.log('Backup PDF sent successfully to channel with interactive links!');

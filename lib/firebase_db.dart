@@ -452,4 +452,8 @@ class FirebaseDb {
     return map.keys.map((e) => int.tryParse(e) ?? 0).where((e) => e != 0).toList();
   }
 
+  static Future<bool> saveMember(String id, Map<String, dynamic> data) async {
+    return await _put('/members/$id', data);
+  }
+
 }

@@ -3418,16 +3418,17 @@ const MembersApp = {
     }
   },
 
-  loadMembers() {
+  async loadMembers() {
     let members = [];
     try {
-      const rawData = localStorage.getItem('microscope_members_data');
-      if (rawData) {
-        members = JSON.parse(rawData);
+      const data = await FB.get('/members').catch(()=>null);
+      if (data) {
+        members = Object.values(data);
       }
     } catch(e) {
       console.error(e);
     }
+    MembersApp._cache = members;
     const tbody = document.getElementById('members-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -3503,11 +3504,7 @@ const MembersApp = {
   },
 
   exportToExcel() {
-    let members = [];
-    try {
-      const rawData = localStorage.getItem('microscope_members_data');
-      if (rawData) members = JSON.parse(rawData);
-    } catch(e) {}
+    const members = MembersApp._cache || [];
     
     if(members.length === 0) {
       UI.toast('No data to export', 'error');
@@ -3556,11 +3553,7 @@ const MembersApp = {
     UI.toast('Exported to Excel successfully!', 'success');
   },
   exportCard(index) {
-    let members = [];
-    try {
-      const rawData = localStorage.getItem('microscope_members_data');
-      if (rawData) members = JSON.parse(rawData);
-    } catch(e) {}
+    const members = MembersApp._cache || [];
     
     const m = members[index];
     if(!m) return;
@@ -3624,11 +3617,7 @@ const MembersApp = {
   },
 
   editMember(index) {
-    let members = [];
-    try {
-      const rawData = localStorage.getItem('microscope_members_data');
-      if (rawData) members = JSON.parse(rawData);
-    } catch(e) {}
+    const members = MembersApp._cache || [];
     
     const m = members[index];
     if(!m) return;
@@ -3656,7 +3645,7 @@ const MembersApp = {
       </div>
     `;
     
-    UI.modal('تعديل بيانات العضو', html, 'حفظ التعديلات', false).then(ok => {
+    UI.modal('تعديل بيانات العضو', html, 'حفظ التعديلات', false).then(async ok => {
       if(!ok) return;
       m.fullName = document.getElementById('edit-fullName').value.trim();
       m.fullNameEn = document.getElementById('edit-fullNameEn').value.trim();
@@ -3671,38 +3660,46 @@ const MembersApp = {
       m.email = document.getElementById('edit-email').value.trim();
       m.facebook = document.getElementById('edit-facebook').value.trim();
       
-      localStorage.setItem('microscope_members_data', JSON.stringify(members));
-      UI.toast('تم تحديث البيانات بنجاح', 'success');
-      this.loadMembers();
+      try {
+        await FB.put(`/members/${m.id}`, m);
+        UI.toast('تم تحديث البيانات بنجاح', 'success');
+        this.loadMembers();
+      } catch(e) {
+        UI.toast('Failed: '+e.message, 'error');
+      }
     });
   },
 
   deleteMember(index) {
+    const members = MembersApp._cache || [];
+    const m = members[index];
+    if(!m) return;
+    
     UI.modal('Delete Member', '<p>Are you sure you want to delete this member?</p>', 'Delete', true)
-      .then(ok => {
+      .then(async ok => {
         if (!ok) return;
-        let members = [];
-        try {
-          const rawData = localStorage.getItem('microscope_members_data');
-          if (rawData) members = JSON.parse(rawData);
-        } catch(e) {}
         
-        members.splice(index, 1);
-        localStorage.setItem('microscope_members_data', JSON.stringify(members));
-        localStorage.removeItem('microscope_submitted');
-        UI.toast('Member deleted successfully', 'success');
-        this.loadMembers();
+        try {
+          await FB.del(`/members/${m.id}`);
+          UI.toast('Member deleted successfully', 'success');
+          this.loadMembers();
+        } catch(e) {
+          UI.toast('Failed: '+e.message, 'error');
+        }
       });
   },
 
   deleteAllMembers() {
     UI.modal('Delete All Members', '<p style="color:red;font-weight:bold;">Are you sure you want to delete ALL members? This cannot be undone!</p>', 'Delete All', true)
-      .then(ok => {
+      .then(async ok => {
         if (!ok) return;
-        localStorage.removeItem('microscope_members_data');
-        localStorage.removeItem('microscope_submitted');
-        UI.toast('All members deleted successfully', 'success');
-        this.loadMembers();
+        try {
+          await FB.del('/members');
+          UI.toast('All members deleted successfully', 'success');
+          this.loadMembers();
+        } catch(e) {
+          UI.toast('Failed: '+e.message, 'error');
+        }
       });
   }
 };

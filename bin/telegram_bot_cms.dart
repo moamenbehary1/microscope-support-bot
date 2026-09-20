@@ -193,6 +193,16 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
           await File('web/uploads/members/$pName').writeAsBytes(pBytes);
         } catch (_) {}
       }
+
+      if (data.containsKey('member_data') && data['member_data'] != null) {
+        try {
+          final memberData = data['member_data'] as Map<String, dynamic>;
+          final id = memberData['id'].toString();
+          await FirebaseDb.saveMember(id, memberData);
+        } catch (e) {
+          print('Error saving member data to Firebase: $e');
+        }
+      }
       
       ChatID chatId = ChatID(Config.superAdminId);
       if (Config.backupChannelId.isNotEmpty && !Config.backupChannelId.contains('your_channel')) {

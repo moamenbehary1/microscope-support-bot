@@ -329,8 +329,7 @@ input[type="file"]::file-selector-button:hover {
       <option value="الفرقة الثانية">الفرقة الثانية</option>
       <option value="الفرقة الثالثة">الفرقة الثالثة</option>
       <option value="الفرقة الرابعة">الفرقة الرابعة</option>
-      <option value="الفرقة الخامسة">الفرقة الخامسة</option>
-      <option value="تخرج">خريج</option>
+      <option value="خريج">خريج</option>
     </select>
   </div>
 
@@ -438,7 +437,7 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
       <div style="text-align:center; margin-bottom: 20px;">
         <img src="${base64String}" style="width:150px; height:150px; border-radius:50%; object-fit:cover; border:3px solid #3b82f6;">
         <h1 style="color:#0f172a; margin:10px 0 5px 0;">${memberData.fullName}</h1>
-        <h3 style="color:#3b82f6; margin:0;">لجنة ${memberData.committee} (${memberData.role === 'Head' ? 'رئيس' : 'عضو'})</h3>
+        <h3 style="color:#3b82f6; margin:0;">${(memberData.role === 'Head' ? 'Head ' : '') + memberData.committee + ' Commit'}</h3>
       </div>
       <table style="width:100%; border-collapse:collapse; margin-top:20px; font-size:18px;" border="1" cellpadding="10">
         <tr><th style="background:#f8fafc; width:35%;">الرقم القومي</th><td>${memberData.nationalId}</td></tr>

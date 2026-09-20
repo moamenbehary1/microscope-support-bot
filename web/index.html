@@ -3590,10 +3590,11 @@ const MembersApp = {
     <br>
     <a href="${m.picture}" download="Profile_${m.fullName.replace(/\\s+/g, '_')}.png" class="btn" style="margin-top: -10px; margin-bottom: 20px;">⬇️ تحميل الصورة (Download Image)</a>
     <h1>${m.fullName}</h1>
-    <h3>${m.committee} Committee</h3>
+    <h3>${(m.role === 'Head' ? 'Head ' : '') + m.committee + ' Commit'}</h3>
     
     <div class="grid">
       <div class="item"><div class="label">الرقم القومي</div><div class="val">${m.nationalId}</div></div>
+      <div class="item"><div class="label">تاريخ الميلاد</div><div class="val">${m.birthDate || '-'}</div></div>
       <div class="item"><div class="label">الفرقة الدراسية</div><div class="val">${m.collegeYear}</div></div>
       <div class="item"><div class="label">الهاتف / رقم آخر</div><div class="val">${m.phone || '-'}</div></div>
       <div class="item"><div class="label">واتساب</div><div class="val">${m.whatsapp}</div></div>
@@ -3629,6 +3630,14 @@ const MembersApp = {
       <div style="display:grid;gap:10px;text-align:right;direction:rtl;">
         <div><label style="color:var(--dim);font-size:0.8rem">الاسم الرباعي</label><input id="edit-fullName" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.fullName)}"></div>
         <div><label style="color:var(--dim);font-size:0.8rem">الرقم القومي</label><input id="edit-nationalId" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.nationalId)}"></div>
+        <div><label style="color:var(--dim);font-size:0.8rem">تاريخ الميلاد</label><input id="edit-birthDate" type="date" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.birthDate || '')}"></div>
+        <div>
+          <label style="color:var(--dim);font-size:0.8rem">المنصب (Role)</label>
+          <select id="edit-role" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;">
+            <option value="Member" ${m.role !== 'Head' ? 'selected' : ''}>عضو (Member)</option>
+            <option value="Head" ${m.role === 'Head' ? 'selected' : ''}>رئيس لجنة (Head)</option>
+          </select>
+        </div>
         <div><label style="color:var(--dim);font-size:0.8rem">اللجنة (Committee)</label><input id="edit-committee" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.committee)}"></div>
         <div><label style="color:var(--dim);font-size:0.8rem">رقم الواتساب</label><input id="edit-whatsapp" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.whatsapp)}"></div>
         <div><label style="color:var(--dim);font-size:0.8rem">رقم الهاتف (إن وجد)</label><input id="edit-phone" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.phone || '')}"></div>
@@ -3643,6 +3652,8 @@ const MembersApp = {
       if(!ok) return;
       m.fullName = document.getElementById('edit-fullName').value.trim();
       m.nationalId = document.getElementById('edit-nationalId').value.trim();
+      m.birthDate = document.getElementById('edit-birthDate').value.trim();
+      m.role = document.getElementById('edit-role').value;
       m.committee = document.getElementById('edit-committee').value.trim();
       m.whatsapp = document.getElementById('edit-whatsapp').value.trim();
       m.phone = document.getElementById('edit-phone').value.trim();

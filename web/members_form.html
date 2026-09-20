@@ -338,7 +338,7 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
     try {
       const opt = {
         margin:       0.5,
-        filename:     \`Member_\${memberData.fullName}.pdf\`,
+        filename:     `Member_${memberData.fullName}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
@@ -352,7 +352,7 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          file_name: \`Member_\${memberData.fullName.replace(/\\s+/g, '_')}.pdf\`,
+          file_name: `Member_${memberData.fullName.replace(/\s+/g, '_')}.pdf`,
           file_base64: pdfBase64
         })
       });

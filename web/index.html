@@ -3595,11 +3595,14 @@ const MembersApp = {
     <div class="grid">
       <div class="item"><div class="label">الرقم القومي</div><div class="val">${m.nationalId}</div></div>
       <div class="item"><div class="label">تاريخ الميلاد</div><div class="val">${m.birthDate || '-'}</div></div>
+      <div class="item"><div class="label">المنصب</div><div class="val">${m.role === 'Head' ? 'رئيس لجنة (Head)' : 'عضو (Member)'}</div></div>
+      <div class="item"><div class="label">اللجنة</div><div class="val">${m.committee}</div></div>
       <div class="item"><div class="label">الفرقة الدراسية</div><div class="val">${m.collegeYear}</div></div>
       <div class="item"><div class="label">الهاتف / رقم آخر</div><div class="val">${m.phone || '-'}</div></div>
       <div class="item"><div class="label">واتساب</div><div class="val">${m.whatsapp}</div></div>
       <div class="item"><div class="label">البريد الإلكتروني</div><div class="val">${m.email}</div></div>
       <div class="item"><div class="label">العنوان</div><div class="val">${m.address}</div></div>
+      <div class="item"><div class="label">تاريخ التسجيل</div><div class="val">${m.timestamp || '-'}</div></div>
       <div class="item" style="grid-column: 1 / -1;"><div class="label">الفيسبوك</div><div class="val"><a href="${m.facebook}" target="_blank">زيارة الصفحة</a></div></div>
     </div>
   </div>

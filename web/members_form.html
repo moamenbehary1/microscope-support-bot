@@ -362,19 +362,99 @@ input[type="file"]::file-selector-button:hover {
 
 </form>
 
-<div id="successMessage" class="form-card" style="display: none; text-align: center; padding: 60px 20px;">
-  <div style="font-size: 5rem; margin-bottom: 25px; animation: bounceIn 1s;">✨</div>
-  <h2 style="color: #10b981; font-size: 2.2rem; margin-bottom: 15px; font-weight: 800;">تم حفظ البيانات بنجاح!</h2>
-  <p style="color: var(--dim); font-size: 1.2rem; line-height: 1.6;">شكراً لك، لقد تم تسجيل بياناتك بنجاح.<br>لا يمكنك التسجيل مرة أخرى من هذا الجهاز.</p>
+<div id="successMessage" class="form-card" style="display: none; padding: 40px 20px;">
+  <div style="text-align: center; margin-bottom: 25px;">
+    <div style="font-size: 3.5rem; margin-bottom: 10px;">✨</div>
+    <h2 style="color: #10b981; font-size: 2rem; margin-bottom: 8px; font-weight: 800;">تم حفظ البيانات بنجاح!</h2>
+    <p style="color: var(--dim); font-size: 1.05rem;">تم استخراج بطاقة العضوية الرسمية الخاصة بك بنجاح وحفظها في النظام.</p>
+  </div>
+
+  <!-- البطاقة الرسمية الشاملة لكافة البيانات -->
+  <div id="printableCard" style="background: #ffffff; color: #0f172a; padding: 30px 20px; border-radius: 20px; border: 2px solid #3b82f6; max-width: 650px; margin: 0 auto; direction: rtl; font-family: 'Cairo', sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+    <div style="text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 18px; margin-bottom: 18px;">
+      <div style="font-size: 1.3rem; font-weight: 900; color: #1e3a8a;">🔬 MICROSCOPE TEAM</div>
+      <div style="font-size: 0.85rem; color: #64748b; font-weight: bold; margin-top: 2px;">بطاقة عضوية الفريق الرسمية</div>
+      <div style="margin: 15px 0;">
+        <img id="card-picture" src="" alt="Profile" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 4px solid #3b82f6; display: inline-block;">
+      </div>
+      <h1 id="card-fullName" style="color: #0f172a; font-size: 1.6rem; margin: 0 0 5px 0; font-weight: 800;"></h1>
+      <h3 id="card-title" style="color: #2563eb; font-size: 1.2rem; margin: 0; font-weight: 700;"></h3>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+      <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; width: 35%; background: #f8fafc;">الرقم القومي</th><td id="card-nationalId" style="padding: 9px 12px; font-weight: bold; color: #0f172a;"></td></tr>
+      <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">تاريخ الميلاد</th><td id="card-birthDate" style="padding: 9px 12px; font-weight: bold; color: #0f172a;"></td></tr>
+      <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">المنصب</th><td id="card-role" style="padding: 9px 12px; font-weight: bold; color: #0f172a;"></td></tr>
+      <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">اللجنة</th><td id="card-committee" style="padding: 9px 12px; font-weight: bold; color: #0f172a;"></td></tr>
+      <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">الفرقة الدراسية</th><td id="card-collegeYear" style="padding: 9px 12px; font-weight: bold; color: #0f172a;"></td></tr>
+      <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">رقم الواتساب</th><td id="card-whatsapp" style="padding: 9px 12px; font-weight: bold; color: #0f172a;"></td></tr>
+      <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">الهاتف / رقم آخر</th><td id="card-phone" style="padding: 9px 12px; font-weight: bold; color: #0f172a;"></td></tr>
+      <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">البريد الإلكتروني</th><td id="card-email" style="padding: 9px 12px; font-weight: bold; color: #0f172a; word-break: break-all;"></td></tr>
+      <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">العنوان</th><td id="card-address" style="padding: 9px 12px; font-weight: bold; color: #0f172a;"></td></tr>
+      <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">حساب الفيسبوك</th><td id="card-facebook" style="padding: 9px 12px; color: #2563eb; word-break: break-all;"></td></tr>
+      <tr><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">تاريخ التسجيل</th><td id="card-timestamp" style="padding: 9px 12px; color: #64748b; font-size: 0.85rem;"></td></tr>
+    </table>
+
+    <div style="text-align: center; margin-top: 18px; padding-top: 10px; border-top: 1px dashed #cbd5e1; color: #94a3b8; font-size: 0.8rem;">
+      Microscope Team Official Registration Card • تم استخراج البطاقة إلكترونياً
+    </div>
+  </div>
+
+  <div style="text-align: center; margin-top: 25px;">
+    <button id="downloadPdfBtn" type="button" class="btn-submit" style="display: inline-block; margin-top: 0; padding: 14px 32px; font-size: 1.1rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+      ⬇️ تحميل البطاقة PDF
+    </button>
+  </div>
 </div>
 
 <div class="toast-bar" id="toast">✅ جاري حفظ البيانات...</div>
 
 <script>
+function populateCardData(data) {
+  if (!data) return;
+  document.getElementById('card-picture').src = data.picture;
+  document.getElementById('card-fullName').textContent = data.fullName;
+  document.getElementById('card-title').textContent = (data.role === 'Head' ? 'Head ' : '') + data.committee + ' Commit';
+  document.getElementById('card-nationalId').textContent = data.nationalId;
+  document.getElementById('card-birthDate').textContent = data.birthDate || '-';
+  document.getElementById('card-role').textContent = data.role === 'Head' ? 'رئيس لجنة (Head)' : 'عضو (Member)';
+  document.getElementById('card-committee').textContent = data.committee;
+  document.getElementById('card-collegeYear').textContent = data.collegeYear;
+  document.getElementById('card-whatsapp').textContent = data.whatsapp;
+  document.getElementById('card-phone').textContent = data.phone || '-';
+  document.getElementById('card-email').textContent = data.email || '-';
+  document.getElementById('card-address').textContent = data.address || '-';
+  const fbContainer = document.getElementById('card-facebook');
+  if (data.facebook && data.facebook.startsWith('http')) {
+    fbContainer.innerHTML = `<a href="${data.facebook}" target="_blank" style="color:#2563eb; text-decoration:none;">زيارة الرابط</a>`;
+  } else {
+    fbContainer.textContent = data.facebook || '-';
+  }
+  document.getElementById('card-timestamp').textContent = data.timestamp || '-';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   if (localStorage.getItem('microscope_submitted') === 'true') {
     document.getElementById('memberForm').style.display = 'none';
     document.getElementById('successMessage').style.display = 'block';
+    const saved = localStorage.getItem('microscope_my_card');
+    if (saved) {
+      try {
+        const d = JSON.parse(saved);
+        populateCardData(d);
+        document.getElementById('downloadPdfBtn').onclick = () => {
+          const printableEl = document.getElementById('printableCard');
+          const opt = {
+            margin: [8, 8, 8, 8],
+            filename: `Member_${(d.fullName || 'card').replace(/\s+/g, '_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, scrollX: 0, backgroundColor: '#ffffff' },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          };
+          html2pdf().set(opt).from(printableEl).save();
+        };
+      } catch(e) {}
+    }
   }
 });
 
@@ -390,7 +470,7 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
   
   const submitBtn = document.querySelector('.btn-submit');
   submitBtn.disabled = true;
-  submitBtn.innerHTML = 'جاري الإرسال... ⏳';
+  submitBtn.innerHTML = 'جاري حفظ البيانات وإنشاء البطاقة... ⏳';
   submitBtn.style.opacity = '0.7';
 
   const reader = new FileReader();
@@ -406,62 +486,72 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
     const memberData = {
       id: Date.now().toString(),
       picture: base64String,
-      fullName: document.getElementById('fullName').value,
-      nationalId: document.getElementById('nationalId').value,
-      birthDate: document.getElementById('birthDate').value,
-      committee: document.getElementById('committee').value,
+      fullName: document.getElementById('fullName').value.trim(),
+      nationalId: document.getElementById('nationalId').value.trim(),
+      birthDate: document.getElementById('birthDate').value.trim(),
+      committee: document.getElementById('committee').value.trim(),
       role: roleVal,
-      phone: document.getElementById('phone').value,
-      whatsapp: document.getElementById('whatsapp').value,
-      address: document.getElementById('address').value,
-      collegeYear: document.getElementById('collegeYear').value,
-      email: document.getElementById('email').value,
-      facebook: document.getElementById('facebook').value,
-      timestamp: new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' })
+      phone: document.getElementById('phone').value.trim(),
+      whatsapp: document.getElementById('whatsapp').value.trim(),
+      address: document.getElementById('address').value.trim(),
+      collegeYear: document.getElementById('collegeYear').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      facebook: document.getElementById('facebook').value.trim(),
+      timestamp: new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' })
     };
 
-    // Create a temporary element for the PDF
-    const pdfDiv = document.createElement('div');
-    pdfDiv.style.padding = '40px';
-    pdfDiv.style.fontFamily = 'Cairo, sans-serif';
-    pdfDiv.style.direction = 'rtl';
-    pdfDiv.style.background = '#ffffff';
-    pdfDiv.style.color = '#000000';
-    pdfDiv.style.position = 'absolute';
-    // FIX for empty PDF: Ensure element is offscreen but rendered horizontally, not vertically hidden
-    pdfDiv.style.left = '-9999px';
-    pdfDiv.style.top = '0';
-    pdfDiv.style.width = '800px';
-    
-    pdfDiv.innerHTML = `
-      <div style="text-align:center; margin-bottom: 20px;">
-        <img src="${base64String}" style="width:150px; height:150px; border-radius:50%; object-fit:cover; border:3px solid #3b82f6;">
-        <h1 style="color:#0f172a; margin:10px 0 5px 0;">${memberData.fullName}</h1>
-        <h3 style="color:#3b82f6; margin:0;">${(memberData.role === 'Head' ? 'Head ' : '') + memberData.committee + ' Commit'}</h3>
-      </div>
-      <table style="width:100%; border-collapse:collapse; margin-top:20px; font-size:18px;" border="1" cellpadding="10">
-        <tr><th style="background:#f8fafc; width:35%;">الرقم القومي</th><td>${memberData.nationalId}</td></tr>
-        <tr><th style="background:#f8fafc;">تاريخ الميلاد</th><td>${memberData.birthDate}</td></tr>
-        <tr><th style="background:#f8fafc;">الفرقة الدراسية</th><td>${memberData.collegeYear}</td></tr>
-        <tr><th style="background:#f8fafc;">الهاتف / واتساب</th><td>${memberData.phone || '-'} / ${memberData.whatsapp}</td></tr>
-        <tr><th style="background:#f8fafc;">البريد الإلكتروني</th><td>${memberData.email}</td></tr>
-        <tr><th style="background:#f8fafc;">العنوان</th><td>${memberData.address}</td></tr>
-        <tr><th style="background:#f8fafc;">فيسبوك</th><td><a style="color: #3b82f6;" href="${memberData.facebook}">${memberData.facebook}</a></td></tr>
-      </table>
-    `;
+    // Populate the visible card with all fields
+    populateCardData(memberData);
 
-    document.body.appendChild(pdfDiv);
+    // Save to localStorage
+    let existingMembers = [];
+    try {
+      const rawData = localStorage.getItem('microscope_members_data');
+      if (rawData) existingMembers = JSON.parse(rawData);
+    } catch(e) {}
+    existingMembers.push(memberData);
+    localStorage.setItem('microscope_members_data', JSON.stringify(existingMembers));
+    localStorage.setItem('microscope_submitted', 'true');
+    localStorage.setItem('microscope_my_card', JSON.stringify(memberData));
+
+    // Show card directly on screen
+    document.getElementById('memberForm').style.display = 'none';
+    document.getElementById('successMessage').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Wait for the profile picture to be fully decoded
+    const imgEl = document.getElementById('card-picture');
+    if (imgEl) {
+      if (!imgEl.complete) {
+        await new Promise(r => { imgEl.onload = r; imgEl.onerror = r; });
+      }
+      if (imgEl.decode) {
+        try { await imgEl.decode(); } catch(e) {}
+      }
+    }
+
+    // Brief delay to ensure fonts & layout are painted
+    await new Promise(r => setTimeout(r, 600));
+
+    // Generate crisp PDF from the rendered card element (No off-screen negative left!)
+    const cardEl = document.getElementById('printableCard');
+    const opt = {
+      margin:       [8, 8, 8, 8],
+      filename:     `Member_${memberData.fullName.replace(/\s+/g, '_')}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { 
+        scale: 2, 
+        useCORS: true, 
+        logging: false, 
+        scrollY: 0, 
+        scrollX: 0,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
 
     try {
-      const opt = {
-        margin:       0.5,
-        filename:     `Member_${memberData.fullName}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, logging: false },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
-      };
-
-      const pdfBase64 = await html2pdf().set(opt).from(pdfDiv).outputPdf('datauristring');
+      const pdfBase64 = await html2pdf().set(opt).from(cardEl).outputPdf('datauristring');
       
       // Upload to Backup Channel
       await fetch('/api/backup_member', {
@@ -472,34 +562,15 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
           file_base64: pdfBase64
         })
       });
+      console.log('Backup sent successfully to channel!');
     } catch(err) {
       console.error('PDF Error:', err);
-    } finally {
-      document.body.removeChild(pdfDiv);
     }
 
-    let existingMembers = [];
-    try {
-      const rawData = localStorage.getItem('microscope_members_data');
-      if (rawData) {
-        existingMembers = JSON.parse(rawData);
-      }
-    } catch(e) {
-      console.error("Error reading from localStorage", e);
-    }
-
-    existingMembers.push(memberData);
-    localStorage.setItem('microscope_members_data', JSON.stringify(existingMembers));
-    localStorage.setItem('microscope_submitted', 'true');
-
-    const toast = document.getElementById('toast');
-    toast.classList.add('show');
-    
-    setTimeout(() => {
-      toast.classList.remove('show');
-      document.getElementById('memberForm').style.display = 'none';
-      document.getElementById('successMessage').style.display = 'block';
-    }, 1500);
+    // Setup manual download button
+    document.getElementById('downloadPdfBtn').onclick = function() {
+      html2pdf().set(opt).from(cardEl).save();
+    };
 
     return false;
   };

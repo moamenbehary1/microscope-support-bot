@@ -248,6 +248,20 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
         ..write(jsonEncode({'success': false, 'error': e.toString()}));
     }
 
+  } else if (path == '/members_form.html' || path == '/members_form') {
+    // Serve the Members Data Registration page
+    final formFile = File('web/members_form.html');
+    if (await formFile.exists()) {
+      final html = await formFile.readAsString();
+      req.response
+        ..statusCode = 200
+        ..headers.contentType = ContentType.html
+        ..write(html);
+    } else {
+      req.response.statusCode = 404;
+      req.response.write('Members form page not found');
+    }
+
   } else if (path == '/team.html' || path == '/team') {
     // Serve the 3D team showcase page
     final teamFile = File('web/team.html');

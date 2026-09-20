@@ -144,6 +144,35 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
         ..write(jsonEncode({'success': false, 'error': e.toString()}));
     }
 
+  } else if (path == '/api/upload_member_photo' && req.method == 'POST') {
+    try {
+      final content = await utf8.decoder.bind(req).join();
+      final data = jsonDecode(content) as Map<String, dynamic>;
+      final photoBase64 = data['photo_base64'] as String;
+      final fileName = data['file_name'] as String? ?? 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      
+      final bytes = base64Decode(photoBase64.split(',').last);
+      final dir = Directory('web/uploads/members');
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+      final file = File('web/uploads/members/$fileName');
+      await file.writeAsBytes(bytes);
+      
+      req.response
+        ..statusCode = 200
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({
+          'success': true,
+          'url': '/web/uploads/members/$fileName'
+        }));
+    } catch (e) {
+      req.response
+        ..statusCode = 500
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'success': false, 'error': e.toString()}));
+    }
+
   } else if (path == '/api/backup_member' && req.method == 'POST') {
     try {
       final content = await utf8.decoder.bind(req).join();
@@ -153,6 +182,17 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
       final fileBase64 = data['file_base64'] as String;
       
       final bytes = base64Decode(fileBase64.split(',').last);
+
+      if (data.containsKey('photo_base64') && data['photo_base64'] != null) {
+        try {
+          final pBase64 = data['photo_base64'] as String;
+          final pName = data['photo_file_name'] as String? ?? 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final pBytes = base64Decode(pBase64.split(',').last);
+          final dir = Directory('web/uploads/members');
+          if (!await dir.exists()) await dir.create(recursive: true);
+          await File('web/uploads/members/$pName').writeAsBytes(pBytes);
+        } catch (_) {}
+      }
       
       ChatID chatId = ChatID(Config.superAdminId);
       if (Config.backupChannelId.isNotEmpty && !Config.backupChannelId.contains('your_channel')) {
@@ -317,8 +357,11 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
       final mime = ext == 'png' ? 'image/png' : ext == 'jpg' || ext == 'jpeg' ? 'image/jpeg' : ext == 'svg' ? 'image/svg+xml' : 'application/octet-stream';
       req.response
         ..statusCode = 200
-        ..headers.contentType = ContentType.parse(mime)
-        ..add(await file.readAsBytes());
+        ..headers.contentType = ContentType.parse(mime);
+      if (req.uri.queryParameters.containsKey('download')) {
+        req.response.headers.set('Content-Disposition', 'attachment; filename="${file.uri.pathSegments.last}"');
+      }
+      req.response.add(await file.readAsBytes());
     } else {
       req.response.statusCode = 404;
       req.response.write('Asset not found');

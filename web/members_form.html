@@ -367,10 +367,10 @@ input[type="file"]::file-selector-button:hover {
 
 </form>
 
-<div id="successMessage" class="form-card" style="display: none; text-align: center; padding: 60px 20px;">
-  <div style="font-size: 4.5rem; margin-bottom: 20px; animation: bounceIn 0.8s;">✅</div>
-  <h2 style="color: #10b981; font-size: 2.2rem; margin-bottom: 12px; font-weight: 800;">تم الحفظ بنجاح!</h2>
-  <p style="color: var(--dim); font-size: 1.15rem; line-height: 1.6;">شكراً لك، لقد تم تسجيل بياناتك بنجاح في النظام.<br>لا يمكنك التسجيل مرة أخرى من هذا الجهاز.</p>
+<div id="successMessage" class="form-card" style="display: none; text-align: center; padding: 45px 25px; max-width: 480px; margin: 30px auto; border-radius: 20px;">
+  <div style="font-size: 3.8rem; margin-bottom: 12px; animation: bounceIn 0.8s;">✅</div>
+  <h2 style="color: #10b981; font-size: 1.85rem; margin-bottom: 8px; font-weight: 800;">تم حفظ البيانات بنجاح!</h2>
+  <p style="color: var(--dim); font-size: 1.05rem; line-height: 1.6; margin: 0;">شكراً لك، لقد تم تسجيل بياناتك بنجاح في النظام.<br>لا يمكنك التسجيل مرة أخرى من هذا الجهاز.</p>
 </div>
 
 <div class="toast-bar" id="toast">✅ تم حفظ البيانات بنجاح!</div>
@@ -408,9 +408,32 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
       roleVal = 'Member';
     }
 
+    const memberId = Date.now().toString();
+    const photoFileName = `photo_${memberId}.jpg`;
+    let photoUrl = `${window.location.origin}/web/uploads/members/${photoFileName}?download=1`;
+
+    // Attempt to pre-upload photo to server so it is ready on disk
+    try {
+      const pRes = await fetch('/api/upload_member_photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          photo_base64: base64String,
+          file_name: photoFileName
+        })
+      });
+      const pData = await pRes.json();
+      if (pData.success && pData.url) {
+        photoUrl = `${window.location.origin}${pData.url}?download=1`;
+      }
+    } catch(err) {
+      console.warn('Pre-upload photo warning:', err);
+    }
+
     const memberData = {
-      id: Date.now().toString(),
+      id: memberId,
       picture: base64String,
+      photoUrl: photoUrl,
       fullName: document.getElementById('fullName').value.trim(),
       fullNameEn: document.getElementById('fullNameEn').value.trim(),
       nationalId: document.getElementById('nationalId').value.trim(),
@@ -441,6 +464,16 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
     document.getElementById('successMessage').style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
+    // Format URLs for clickable PDF links
+    let fbUrl = memberData.facebook ? memberData.facebook.trim() : '';
+    if (fbUrl && !fbUrl.startsWith('http://') && !fbUrl.startsWith('https://')) {
+      fbUrl = 'https://' + fbUrl;
+    }
+
+    let waNum = memberData.whatsapp.replace(/\D/g, '');
+    if (waNum.startsWith('01')) waNum = '2' + waNum;
+    const waUrl = waNum ? `https://wa.me/${waNum}` : '';
+
     // Render card in offscreen container for Backup Channel PDF
     const offscreen = document.createElement('div');
     offscreen.style.position = 'fixed';
@@ -457,9 +490,11 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
     offscreen.innerHTML = `
       <div style="text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 18px; margin-bottom: 18px;">
         <div style="font-size: 1.3rem; font-weight: 900; color: #1e3a8a;">🔬 MICROSCOPE TEAM</div>
-        <div style="font-size: 0.85rem; color: #64748b; font-weight: bold; margin-top: 2px;">بطاقة عضوية الفريق الرسمية</div>
+        <div style="font-size: 0.85rem; color: #64748b; font-weight: bold; margin-top: 2px;">بيانات عضو الفريق الرسمية</div>
         <div style="margin: 15px 0;">
-          <img src="${memberData.picture}" alt="Profile" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 4px solid #3b82f6; display: inline-block;">
+          <a id="pdfAvatarLink" href="${photoUrl}" target="_blank" style="display: inline-block;">
+            <img src="${memberData.picture}" alt="Profile" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 4px solid #3b82f6; display: inline-block;">
+          </a>
         </div>
         <h1 style="color: #0f172a; font-size: 1.6rem; margin: 0 0 2px 0; font-weight: 800;">${memberData.fullName}</h1>
         <div style="color: #64748b; font-size: 1.05rem; margin: 0 0 6px 0; font-weight: 600; font-family: sans-serif;">${memberData.fullNameEn || ''}</div>
@@ -473,16 +508,17 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
         <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">المنصب</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.role === 'Head' ? 'رئيس لجنة (Head)' : 'عضو (Member)'}</td></tr>
         <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">اللجنة</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.committee}</td></tr>
         <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">الفرقة الدراسية</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.collegeYear}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">رقم الواتساب</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.whatsapp}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">رقم الواتساب</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;"><a id="pdfWaLink" href="${waUrl || '#'}" target="_blank" style="color: #0f172a; text-decoration: none;">${memberData.whatsapp}</a></td></tr>
         <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">الهاتف / رقم آخر</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.phone || '-'}</td></tr>
         <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">البريد الإلكتروني</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a; word-break: break-all;">${memberData.email || '-'}</td></tr>
         <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">العنوان</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.address || '-'}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">حساب الفيسبوك</th><td style="padding: 9px 12px; color: #2563eb; word-break: break-all;">${memberData.facebook || '-'}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">حساب الفيسبوك</th><td style="padding: 9px 12px; color: #2563eb; word-break: break-all;"><a id="pdfFbLink" href="${fbUrl || '#'}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: bold; display: inline-block;">${memberData.facebook || '-'}</a></td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">رابط الصورة الشخصية</th><td style="padding: 9px 12px; color: #2563eb; word-break: break-all;"><a id="pdfPhotoLink" href="${photoUrl}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: bold; display: inline-block;">📥 عرض وتحميل الصورة الأصلية</a><div style="font-size: 0.72rem; color: #64748b; margin-top: 3px; font-family: monospace; word-break: break-all;">${photoUrl}</div></td></tr>
         <tr><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">تاريخ التسجيل</th><td style="padding: 9px 12px; color: #64748b; font-size: 0.85rem;">${memberData.timestamp}</td></tr>
       </table>
 
       <div style="text-align: center; margin-top: 18px; padding-top: 10px; border-top: 1px dashed #cbd5e1; color: #94a3b8; font-size: 0.8rem;">
-        Microscope Team Official Registration Card • تم استخراج البطاقة إلكترونياً
+        Microscope Team Official Record • تم تسجيل وحفظ البيانات بنجاح
       </div>
     `;
 
@@ -514,11 +550,6 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
         scrollX: 0
       });
 
-      if (offscreen.parentNode) {
-        document.body.removeChild(offscreen);
-      }
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -528,10 +559,40 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
 
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth - 20;
+      const imgMarginX = 10;
+      const imgMarginY = 10;
+      const imgWidth = pageWidth - (imgMarginX * 2);
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'JPEG', 10, 10, imgWidth, Math.min(imgHeight, pageHeight - 20));
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', imgMarginX, imgMarginY, imgWidth, Math.min(imgHeight, pageHeight - (imgMarginY * 2)));
+
+      // Calculate interactive links inside the PDF
+      const offscreenRect = offscreen.getBoundingClientRect();
+      const pdfScale = imgWidth / offscreen.offsetWidth;
+
+      function attachPdfLink(elementId, targetUrl) {
+        if (!targetUrl || targetUrl === '-' || targetUrl === '#') return;
+        const targetEl = offscreen.querySelector('#' + elementId);
+        if (!targetEl) return;
+        const targetRect = targetEl.getBoundingClientRect();
+        const linkX = imgMarginX + ((targetRect.left - offscreenRect.left) * pdfScale);
+        const linkY = imgMarginY + ((targetRect.top - offscreenRect.top) * pdfScale);
+        const linkW = targetRect.width * pdfScale;
+        const linkH = targetRect.height * pdfScale;
+        if (linkW > 0 && linkH > 0) {
+          pdf.link(linkX, linkY, linkW, linkH, { url: targetUrl });
+        }
+      }
+
+      attachPdfLink('pdfFbLink', fbUrl);
+      attachPdfLink('pdfPhotoLink', photoUrl);
+      attachPdfLink('pdfAvatarLink', photoUrl);
+      if (waUrl) attachPdfLink('pdfWaLink', waUrl);
+
+      if (offscreen.parentNode) {
+        document.body.removeChild(offscreen);
+      }
+
       const pdfBase64 = pdf.output('datauristring');
 
       // Upload to Backup Channel
@@ -540,10 +601,12 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           file_name: `Member_${memberData.fullName.replace(/\s+/g, '_')}.pdf`,
-          file_base64: pdfBase64
+          file_base64: pdfBase64,
+          photo_base64: base64String,
+          photo_file_name: photoFileName
         })
       });
-      console.log('Backup PDF sent successfully to channel!');
+      console.log('Backup PDF sent successfully to channel with interactive links!');
     } catch(err) {
       console.error('PDF Generation / Backup Error:', err);
       if (offscreen.parentNode) {

@@ -3450,7 +3450,7 @@ const MembersApp = {
       
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><img src="${encodeStr(m.picture)}" alt="pic" class="member-img-preview"></td>
+        <td><a href="${encodeStr(m.photoUrl || m.picture)}" target="_blank" title="View Full Photo"><img src="${encodeStr(m.picture)}" alt="pic" class="member-img-preview"></a></td>
         <td><strong>${encodeStr(m.fullName)}</strong>${m.fullNameEn ? `<br><small style="color:var(--dim);font-family:Inter,sans-serif">${encodeStr(m.fullNameEn)}</small>` : ''}</td>
         <td>${encodeStr(m.nationalId)}</td>
         <td>${encodeStr(m.birthDate || '-')}</td>

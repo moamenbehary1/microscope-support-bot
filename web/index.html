@@ -3401,9 +3401,10 @@ const MembersApp = {
         <td><a href="${encodeStr(m.facebook || '#')}" target="_blank" style="color:var(--accent)">FB Link</a></td>
         <td>${encodeStr(m.phone)}</td>
         <td>${encodeStr(m.collegeYear)}</td>
-        <td>
+        <td style="display: flex; gap: 5px; flex-wrap: wrap;">
           <button class="btn btn-primary btn-sm" onclick="MembersApp.exportCard(${idx})">📄 Extract Card</button>
-          <button class="btn btn-danger btn-sm" style="margin-left: 5px;" onclick="MembersApp.deleteMember(${idx})">🗑️</button>
+          <button class="btn btn-primary btn-sm" onclick="MembersApp.editMember(${idx})">✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="MembersApp.deleteMember(${idx})">🗑️ Delete</button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -3490,6 +3491,48 @@ const MembersApp = {
     UI.toast('Exported Member Card successfully!', 'success');
   },
 
+  editMember(index) {
+    let members = [];
+    try {
+      const rawData = localStorage.getItem('microscope_members_data');
+      if (rawData) members = JSON.parse(rawData);
+    } catch(e) {}
+    
+    const m = members[index];
+    if(!m) return;
+    
+    const html = `
+      <div style="display:grid;gap:10px;text-align:right;direction:rtl;">
+        <div><label style="color:var(--dim);font-size:0.8rem">الاسم الرباعي</label><input id="edit-fullName" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.fullName)}"></div>
+        <div><label style="color:var(--dim);font-size:0.8rem">الرقم القومي</label><input id="edit-nationalId" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.nationalId)}"></div>
+        <div><label style="color:var(--dim);font-size:0.8rem">اللجنة (Committee)</label><input id="edit-committee" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.committee)}"></div>
+        <div><label style="color:var(--dim);font-size:0.8rem">رقم الواتساب</label><input id="edit-whatsapp" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.whatsapp)}"></div>
+        <div><label style="color:var(--dim);font-size:0.8rem">رقم الهاتف (إن وجد)</label><input id="edit-phone" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.phone || '')}"></div>
+        <div><label style="color:var(--dim);font-size:0.8rem">العنوان</label><input id="edit-address" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.address)}"></div>
+        <div><label style="color:var(--dim);font-size:0.8rem">الفرقة الدراسية</label><input id="edit-collegeYear" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.collegeYear)}"></div>
+        <div><label style="color:var(--dim);font-size:0.8rem">البريد الإلكتروني</label><input id="edit-email" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.email)}"></div>
+        <div><label style="color:var(--dim);font-size:0.8rem">فيسبوك</label><input id="edit-facebook" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.facebook)}"></div>
+      </div>
+    `;
+    
+    UI.modal('تعديل بيانات العضو', html, 'حفظ التعديلات', false).then(ok => {
+      if(!ok) return;
+      m.fullName = document.getElementById('edit-fullName').value.trim();
+      m.nationalId = document.getElementById('edit-nationalId').value.trim();
+      m.committee = document.getElementById('edit-committee').value.trim();
+      m.whatsapp = document.getElementById('edit-whatsapp').value.trim();
+      m.phone = document.getElementById('edit-phone').value.trim();
+      m.address = document.getElementById('edit-address').value.trim();
+      m.collegeYear = document.getElementById('edit-collegeYear').value.trim();
+      m.email = document.getElementById('edit-email').value.trim();
+      m.facebook = document.getElementById('edit-facebook').value.trim();
+      
+      localStorage.setItem('microscope_members_data', JSON.stringify(members));
+      UI.toast('تم تحديث البيانات بنجاح', 'success');
+      this.loadMembers();
+    });
+  },
+
   deleteMember(index) {
     UI.modal('Delete Member', '<p>Are you sure you want to delete this member?</p>', 'Delete', true)
       .then(ok => {
@@ -3502,6 +3545,7 @@ const MembersApp = {
         
         members.splice(index, 1);
         localStorage.setItem('microscope_members_data', JSON.stringify(members));
+        localStorage.removeItem('microscope_submitted');
         UI.toast('Member deleted successfully', 'success');
         this.loadMembers();
       });
@@ -3512,6 +3556,7 @@ const MembersApp = {
       .then(ok => {
         if (!ok) return;
         localStorage.removeItem('microscope_members_data');
+        localStorage.removeItem('microscope_submitted');
         UI.toast('All members deleted successfully', 'success');
         this.loadMembers();
       });

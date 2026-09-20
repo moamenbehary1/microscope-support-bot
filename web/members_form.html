@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MICROSCOPE TEAM — تسجيل بيانات الأعضاء</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-deep:#030712;
+  --bg:#071026;
+  --surface:rgba(10,22,50,0.85);
+  --primary:#2563eb;
+  --accent:#00d2ff;
+  --border-blue:rgba(37,99,235,0.35);
+  --text:#ffffff;
+  --dim:#94a3b8;
+  --muted:#64748b;
+  --r:24px;
+  --font-ar:'Cairo',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-ar);
+  background:var(--bg-deep);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  position:relative;
+  padding: 40px 20px;
+}
+.bg-canvas{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(120px);opacity:0.18;animation:floatOrb 15s ease-in-out infinite}
+.orb1{width:650px;height:650px;background:#1d4ed8;top:-200px;right:-150px}
+.orb2{width:550px;height:550px;background:#00d2ff;bottom:-150px;left:-100px;animation-delay:-6s;opacity:0.12}
+@keyframes floatOrb{
+  0%,100%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(40px,-50px) scale(1.08)}
+  66%{transform:translate(-30px,40px) scale(0.92)}
+}
+.grid-lines{
+  position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(37,99,235,0.04) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(37,99,235,0.04) 1px,transparent 1px);
+  background-size:50px 50px;
+  pointer-events:none;
+}
+
+.header-container {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  margin-bottom: 40px;
+}
+.brand-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #00d2ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-transform: uppercase;
+  filter: drop-shadow(0 0 20px rgba(37,99,235,0.4));
+}
+.subtitle {
+  color: var(--dim);
+  font-size: 1.1rem;
+}
+
+.form-card {
+  position: relative;
+  z-index: 2;
+  background: var(--surface);
+  border: 1px solid var(--border-blue);
+  border-radius: var(--r);
+  padding: 40px;
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+  backdrop-filter: blur(24px);
+}
+.form-card::before{
+  content:'';position:absolute;top:0;left:24px;right:24px;height:2px;
+  background:linear-gradient(90deg,transparent,#2563eb,#00d2ff,transparent);
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+label {
+  font-weight: 700;
+  color: #cbd5e1;
+  font-size: 0.95rem;
+}
+input, select {
+  background: rgba(5,13,31,0.6);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 14px;
+  color: var(--text);
+  font-family: var(--font-ar);
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.25s ease;
+}
+input:focus, select:focus {
+  border-color: var(--accent);
+  background: rgba(37,99,235,0.08);
+  box-shadow: 0 0 0 3px rgba(0,210,255,0.25);
+}
+input::placeholder {
+  color: var(--muted);
+}
+.btn-submit {
+  grid-column: 1 / -1;
+  margin-top: 20px;
+  padding: 16px 28px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #00d2ff 100%);
+  color: #fff;
+  border: none;
+  font-family: var(--font-ar);
+  font-size: 1.15rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(37,99,235,0.4);
+}
+.btn-submit:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 45px rgba(0,210,255,0.5);
+}
+
+@media(max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .form-card {
+    padding: 24px 20px;
+  }
+}
+
+/* Toast */
+.toast-bar{
+  position:fixed;bottom:24px;right:24px;
+  background:rgba(7,16,38,0.95);
+  border:1px solid rgba(0,210,255,0.4);
+  backdrop-filter:blur(16px);
+  border-radius:14px;
+  padding:14px 22px;
+  color:#f8fafc;
+  font-weight:700;
+  font-size:0.92rem;
+  z-index:9999;
+  display:flex;align-items:center;gap:10px;
+  transform:translateY(80px);opacity:0;
+  transition:all 0.35s cubic-bezier(0.16,1,0.3,1);
+  box-shadow:0 16px 40px rgba(0,0,0,0.6);
+}
+.toast-bar.show{transform:translateY(0);opacity:1}
+</style>
+</head>
+<body>
+
+<div class="bg-canvas">
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
+</div>
+<div class="grid-lines"></div>
+
+<div class="header-container">
+  <h1 class="brand-title">MICROSCOPE TEAM</h1>
+  <p class="subtitle">استمارة تسجيل بيانات أعضاء الفريق</p>
+</div>
+
+<form class="form-card form-grid" id="memberForm">
+  
+  <div class="form-group full-width">
+    <label for="picture">صورة شخصية (رابط الصورة / Link)</label>
+    <input type="url" id="picture" placeholder="https://example.com/my-photo.jpg" required>
+  </div>
+
+  <div class="form-group full-width">
+    <label for="fullName">الاسم الرباعي</label>
+    <input type="text" id="fullName" placeholder="الاسم الرباعي باللغة العربية" required minlength="10">
+  </div>
+
+  <div class="form-group">
+    <label for="nationalId">الرقم القومي</label>
+    <input type="text" id="nationalId" placeholder="14 رقم" pattern="[0-9]{14}" required>
+  </div>
+
+  <div class="form-group">
+    <label for="committee">اللجنة (Committee)</label>
+    <select id="committee" required>
+      <option value="" disabled selected>اختر لجنتك...</option>
+      <option value="Scientific">Scientific</option>
+      <option value="IT">IT</option>
+      <option value="PR">PR</option>
+      <option value="HR">HR</option>
+      <option value="Social Media">Social Media</option>
+      <option value="Logistics">Logistics</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="phone">رقم الهاتف</label>
+    <input type="tel" id="phone" placeholder="01xxxxxxxxx" required>
+  </div>
+
+  <div class="form-group">
+    <label for="whatsapp">رقم الواتساب</label>
+    <input type="tel" id="whatsapp" placeholder="01xxxxxxxxx" required>
+  </div>
+
+  <div class="form-group full-width">
+    <label for="address">العنوان بالتفصيل</label>
+    <input type="text" id="address" placeholder="المحافظة - المركز - الشارع" required>
+  </div>
+
+  <div class="form-group">
+    <label for="collegeYear">الفرقة الدراسية</label>
+    <select id="collegeYear" required>
+      <option value="" disabled selected>اختر الفرقة...</option>
+      <option value="الفرقة الأولى">الفرقة الأولى</option>
+      <option value="الفرقة الثانية">الفرقة الثانية</option>
+      <option value="الفرقة الثالثة">الفرقة الثالثة</option>
+      <option value="الفرقة الرابعة">الفرقة الرابعة</option>
+      <option value="تخرج">خريج</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="email">البريد الإلكتروني</label>
+    <input type="email" id="email" placeholder="example@gmail.com" required>
+  </div>
+
+  <button type="submit" class="btn-submit">حفظ البيانات وإرسالها 🚀</button>
+
+</form>
+
+<div class="toast-bar" id="toast">✅ تم حفظ البيانات بنجاح!</div>
+
+<script>
+document.getElementById('memberForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const memberData = {
+    id: Date.now().toString(),
+    picture: document.getElementById('picture').value,
+    fullName: document.getElementById('fullName').value,
+    nationalId: document.getElementById('nationalId').value,
+    committee: document.getElementById('committee').value,
+    phone: document.getElementById('phone').value,
+    whatsapp: document.getElementById('whatsapp').value,
+    address: document.getElementById('address').value,
+    collegeYear: document.getElementById('collegeYear').value,
+    email: document.getElementById('email').value,
+    timestamp: new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' })
+  };
+
+  // Get existing members or initialize empty array
+  let existingMembers = [];
+  try {
+    const rawData = localStorage.getItem('microscope_members_data');
+    if (rawData) {
+      existingMembers = JSON.parse(rawData);
+    }
+  } catch(e) {
+    console.error("Error reading from localStorage", e);
+  }
+
+  existingMembers.push(memberData);
+  localStorage.setItem('microscope_members_data', JSON.stringify(existingMembers));
+
+  // Show Toast
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+    // document.getElementById('memberForm').reset();
+  }, 3000);
+});
+</script>
+
+</body>
+</html>

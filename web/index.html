@@ -446,6 +446,7 @@ input::placeholder{color:var(--muted)}
   .tree-row.type-row{margin-left:24px}
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -460,6 +461,7 @@ input::placeholder{color:var(--muted)}
     <div class="nav-item" data-s="curriculum"><span class="icon">📚</span><span data-i18n="Curriculum">Curriculum</span></div>
     <div class="nav-item" data-s="admins"><span class="icon">👑</span><span data-i18n="Admins">Admins</span></div>
     <div class="nav-item" data-s="users"><span class="icon">👥</span><span data-i18n="Users">Users</span></div>
+    <div class="nav-item" data-s="members"><span class="icon">📝</span><span data-i18n="Data Members">Data Members</span></div>
     <div class="nav-item" data-s="contributors"><span class="icon">🤝</span><span data-i18n="Contributors">Contributors</span></div>
     <div class="nav-item" data-s="requests">
       <span class="icon">📩</span><span data-i18n="Requests">Requests</span>
@@ -502,6 +504,38 @@ input::placeholder{color:var(--muted)}
     <div id="pg-curriculum"   class="page"></div>
     <div id="pg-admins"       class="page"></div>
     <div id="pg-users"        class="page"></div>
+    <div id="pg-members"      class="page">
+      <div class="sec-head">
+        <h2>📝 <span data-i18n="Data Members">Data Members</span></h2>
+        <div class="actions">
+          <button class="btn btn-success" onclick="MembersApp.exportToExcel()">
+            📊 Export All to Excel
+          </button>
+          <button class="btn btn-ghost" onclick="MembersApp.loadMembers()">
+            🔄 Refresh
+          </button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table id="members-table">
+            <thead>
+              <tr>
+                <th>Picture</th>
+                <th>Name</th>
+                <th>National ID</th>
+                <th>Committee</th>
+                <th>Phone</th>
+                <th>Year</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="members-tbody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
     <div id="pg-contributors" class="page"></div>
     <div id="pg-requests"     class="page"></div>
     <div id="pg-broadcast"    class="page"></div>
@@ -3309,6 +3343,87 @@ const S = {
     }
   }
 };
+
+const MembersApp = {
+  loadMembers() {
+    let members = [];
+    try {
+      const rawData = localStorage.getItem('microscope_members_data');
+      if (rawData) {
+        members = JSON.parse(rawData);
+      }
+    } catch(e) {
+      console.error(e);
+    }
+    const tbody = document.getElementById('members-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    if(members.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">No members found</td></tr>';
+      return;
+    }
+    
+    members.forEach((m, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><img src="${encodeStr(m.picture)}" alt="pic" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"></td>
+        <td><strong>${encodeStr(m.fullName)}</strong></td>
+        <td>${encodeStr(m.nationalId)}</td>
+        <td>${encodeStr(m.committee)}</td>
+        <td>${encodeStr(m.phone)}</td>
+        <td>${encodeStr(m.collegeYear)}</td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="MembersApp.exportText(${idx})">📄 Extract Text</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  },
+
+  exportToExcel() {
+    let members = [];
+    try {
+      const rawData = localStorage.getItem('microscope_members_data');
+      if (rawData) members = JSON.parse(rawData);
+    } catch(e) {}
+    
+    if(members.length === 0) {
+      UI.toast('No data to export', 'error');
+      return;
+    }
+    
+    const ws = XLSX.utils.json_to_sheet(members);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Members Data");
+    XLSX.writeFile(wb, "Microscope_Members.xlsx");
+    UI.toast('Exported to Excel successfully!', 'success');
+  },
+  
+  exportText(index) {
+    let members = [];
+    try {
+      const rawData = localStorage.getItem('microscope_members_data');
+      if (rawData) members = JSON.parse(rawData);
+    } catch(e) {}
+    
+    const m = members[index];
+    if(!m) return;
+    
+    const textData = `Member Details:\n-------------------\nName: ${m.fullName}\nNational ID: ${m.nationalId}\nCommittee: ${m.committee}\nPhone: ${m.phone}\nWhatsApp: ${m.whatsapp}\nAddress: ${m.address}\nYear: ${m.collegeYear}\nEmail: ${m.email}\nPicture Link: ${m.picture}\nTimestamp: ${m.timestamp}\n`;
+    const blob = new Blob([textData], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Member_${m.fullName.replace(/\\s+/g, '_')}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    UI.toast('Exported to Text successfully!', 'success');
+  }
+};
+
+window.S = window.S || {};
+window.S.members = { load: () => MembersApp.loadMembers() };
 
 /* ── Boot ── */
 document.addEventListener('DOMContentLoaded',()=>App.init());

@@ -532,6 +532,7 @@ input::placeholder{color:var(--muted)}
                 <th>Name</th>
                 <th>National ID</th>
                 <th>Committee</th>
+                <th>Facebook</th>
                 <th>Phone</th>
                 <th>Year</th>
                 <th>Action</th>
@@ -3378,6 +3379,7 @@ const MembersApp = {
         <td><strong>${encodeStr(m.fullName)}</strong></td>
         <td>${encodeStr(m.nationalId)}</td>
         <td>${encodeStr(m.committee)}</td>
+        <td><a href="${encodeStr(m.facebook || '#')}" target="_blank" style="color:var(--accent)">FB Link</a></td>
         <td>${encodeStr(m.phone)}</td>
         <td>${encodeStr(m.collegeYear)}</td>
         <td>
@@ -3417,7 +3419,7 @@ const MembersApp = {
     const m = members[index];
     if(!m) return;
     
-    const textData = `Member Details:\n-------------------\nName: ${m.fullName}\nNational ID: ${m.nationalId}\nCommittee: ${m.committee}\nPhone: ${m.phone}\nWhatsApp: ${m.whatsapp}\nAddress: ${m.address}\nYear: ${m.collegeYear}\nEmail: ${m.email}\nPicture Link: ${m.picture}\nTimestamp: ${m.timestamp}\n`;
+    const textData = `Member Details:\n-------------------\nName: ${m.fullName}\nNational ID: ${m.nationalId}\nCommittee: ${m.committee}\nFacebook: ${m.facebook || 'N/A'}\nPhone: ${m.phone}\nWhatsApp: ${m.whatsapp}\nAddress: ${m.address}\nYear: ${m.collegeYear}\nEmail: ${m.email}\nPicture Link: ${m.picture}\nTimestamp: ${m.timestamp}\n`;
     const blob = new Blob([textData], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

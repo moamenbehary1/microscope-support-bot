@@ -253,13 +253,31 @@ input::placeholder {
     <input type="email" id="email" placeholder="example@gmail.com" required>
   </div>
 
+  <div class="form-group full-width">
+    <label for="facebook">لينك صفحة الفيسبوك</label>
+    <input type="url" id="facebook" placeholder="https://facebook.com/..." required>
+  </div>
+
   <button type="submit" class="btn-submit">حفظ البيانات وإرسالها 🚀</button>
 
 </form>
 
-<div class="toast-bar" id="toast">✅ تم حفظ البيانات بنجاح!</div>
+<div id="successMessage" class="form-card" style="display: none; text-align: center; padding: 60px 20px;">
+  <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
+  <h2 style="color: #10b981; font-size: 2rem; margin-bottom: 15px;">تم حفظ البيانات بنجاح!</h2>
+  <p style="color: var(--dim); font-size: 1.1rem;">شكراً لك، لقد تم تسجيل بياناتك بنجاح. لا يمكنك التسجيل مرة أخرى من هذا الجهاز.</p>
+</div>
+
+<div class="toast-bar" id="toast">✅ جاري حفظ البيانات...</div>
 
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('microscope_submitted') === 'true') {
+    document.getElementById('memberForm').style.display = 'none';
+    document.getElementById('successMessage').style.display = 'block';
+  }
+});
+
 document.getElementById('memberForm').addEventListener('submit', function(e) {
   e.preventDefault();
   
@@ -286,6 +304,7 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
       address: document.getElementById('address').value,
       collegeYear: document.getElementById('collegeYear').value,
       email: document.getElementById('email').value,
+      facebook: document.getElementById('facebook').value,
       timestamp: new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' })
     };
 
@@ -301,14 +320,16 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
 
     existingMembers.push(memberData);
     localStorage.setItem('microscope_members_data', JSON.stringify(existingMembers));
+    localStorage.setItem('microscope_submitted', 'true');
 
     const toast = document.getElementById('toast');
     toast.classList.add('show');
     
     setTimeout(() => {
       toast.classList.remove('show');
-      document.getElementById('memberForm').reset();
-    }, 3000);
+      document.getElementById('memberForm').style.display = 'none';
+      document.getElementById('successMessage').style.display = 'block';
+    }, 1500);
   };
   
   reader.readAsDataURL(file);

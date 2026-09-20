@@ -525,7 +525,7 @@ input::placeholder{color:var(--muted)}
       <div class="sec-head">
         <h2>📝 <span data-i18n="Data Members">Data Members</span></h2>
         <div class="actions">
-          <button class="btn btn-primary" onclick="navigator.clipboard.writeText(new URL('members_form.html', window.location.href).href); UI.toast('Link copied to clipboard!', 'success');">
+          <button class="btn btn-primary" onclick="MembersApp.copyFormLink()">
             🔗 Copy Form Link
           </button>
           <a href="members_form.html" target="_blank" class="btn btn-ghost" style="border: 1px solid var(--primary); color: var(--text);">
@@ -3372,6 +3372,40 @@ const S = {
 };
 
 const MembersApp = {
+  copyFormLink() {
+    const link = new URL('members_form.html', window.location.href).href;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(link)
+        .then(() => UI.toast('Link copied to clipboard!', 'success'))
+        .catch(() => this.fallbackCopyText(link));
+    } else {
+      this.fallbackCopyText(link);
+    }
+  },
+  
+  fallbackCopyText(text) {
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.position = "fixed";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (successful) {
+        UI.toast('Link copied to clipboard!', 'success');
+      } else {
+        throw new Error('Copy command unsuccessful');
+      }
+    } catch (err) {
+      UI.toast('Copy failed, select and copy manually', 'error');
+      UI.modal('🔗 Form Link', \`<div style="background:var(--surface2);border:1px solid var(--border-blue);border-radius:8px;padding:12px;word-break:break-all;font-size:.78rem;color:var(--primary);font-family:monospace;user-select:all">\${text}</div>\`, 'OK');
+    }
+  },
+
   loadMembers() {
     let members = [];
     try {

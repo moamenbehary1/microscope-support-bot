@@ -5,21 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MICROSCOPE TEAM — تسجيل بيانات الأعضاء</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg-deep:#030712;
-  --bg:#071026;
-  --surface:rgba(10,22,50,0.85);
-  --primary:#2563eb;
-  --accent:#00d2ff;
-  --border-blue:rgba(37,99,235,0.35);
+  --bg-deep:#000000;
+  --bg:#070a14;
+  --surface:rgba(15,23,42,0.65);
+  --primary:#3b82f6;
+  --accent:#0ea5e9;
+  --border-blue:rgba(59,130,246,0.3);
   --text:#ffffff;
   --dim:#94a3b8;
-  --muted:#64748b;
-  --r:24px;
+  --muted:#475569;
+  --r:20px;
   --font-ar:'Cairo',sans-serif;
+  --font-en:'Outfit',sans-serif;
 }
 html{scroll-behavior:smooth}
 body{
@@ -31,22 +32,23 @@ body{
   flex-direction:column;
   align-items:center;
   position:relative;
-  padding: 40px 20px;
+  padding: 60px 20px;
+  overflow-x:hidden;
 }
-.bg-canvas{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
-.bg-orb{position:absolute;border-radius:50%;filter:blur(120px);opacity:0.18;animation:floatOrb 15s ease-in-out infinite}
-.orb1{width:650px;height:650px;background:#1d4ed8;top:-200px;right:-150px}
-.orb2{width:550px;height:550px;background:#00d2ff;bottom:-150px;left:-100px;animation-delay:-6s;opacity:0.12}
+.bg-canvas{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:var(--bg);}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(140px);opacity:0.25;animation:floatOrb 18s ease-in-out infinite}
+.orb1{width:700px;height:700px;background:#3b82f6;top:-250px;right:-200px}
+.orb2{width:600px;height:600px;background:#0ea5e9;bottom:-200px;left:-150px;animation-delay:-9s;opacity:0.2}
 @keyframes floatOrb{
   0%,100%{transform:translate(0,0) scale(1)}
-  33%{transform:translate(40px,-50px) scale(1.08)}
-  66%{transform:translate(-30px,40px) scale(0.92)}
+  33%{transform:translate(50px,-60px) scale(1.1)}
+  66%{transform:translate(-40px,50px) scale(0.9)}
 }
 .grid-lines{
   position:fixed;inset:0;z-index:0;
-  background-image:linear-gradient(rgba(37,99,235,0.04) 1px,transparent 1px),
-                   linear-gradient(90deg,rgba(37,99,235,0.04) 1px,transparent 1px);
-  background-size:50px 50px;
+  background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
+  background-size:60px 60px;
   pointer-events:none;
 }
 
@@ -54,22 +56,31 @@ body{
   position: relative;
   z-index: 2;
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 50px;
+  animation: fadeInDown 1s ease-out;
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .brand-title {
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  font-weight: 900;
-  margin-bottom: 10px;
-  background: linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #00d2ff 100%);
+  font-family: var(--font-en);
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #38bdf8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-transform: uppercase;
-  filter: drop-shadow(0 0 20px rgba(37,99,235,0.4));
+  filter: drop-shadow(0 0 30px rgba(59,130,246,0.5));
 }
 .subtitle {
   color: var(--dim);
-  font-size: 1.1rem;
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .form-card {
@@ -78,102 +89,156 @@ body{
   background: var(--surface);
   border: 1px solid var(--border-blue);
   border-radius: var(--r);
-  padding: 40px;
+  padding: 50px;
   width: 100%;
-  max-width: 800px;
-  box-shadow: 0 24px 70px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
-  backdrop-filter: blur(24px);
+  max-width: 850px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.15);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  animation: fadeInUp 1s ease-out 0.2s both;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .form-card::before{
-  content:'';position:absolute;top:0;left:24px;right:24px;height:2px;
-  background:linear-gradient(90deg,transparent,#2563eb,#00d2ff,transparent);
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,#3b82f6,#0ea5e9,transparent);
+  border-radius: var(--r) var(--r) 0 0;
 }
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 25px;
 }
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .form-group.full-width {
   grid-column: 1 / -1;
 }
 label {
-  font-weight: 700;
-  color: #cbd5e1;
-  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+label .req {
+  color: #f43f5e;
+  font-weight: bold;
 }
 input, select {
-  background: rgba(5,13,31,0.6);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 12px;
-  padding: 14px;
+  background: rgba(15,23,42,0.8);
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 14px;
+  padding: 16px 20px;
   color: var(--text);
   font-family: var(--font-ar);
-  font-size: 1rem;
+  font-size: 1.05rem;
   outline: none;
-  transition: all 0.25s ease;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+input[type="date"] {
+  font-family: var(--font-en);
 }
 input:focus, select:focus {
   border-color: var(--accent);
-  background: rgba(37,99,235,0.08);
-  box-shadow: 0 0 0 3px rgba(0,210,255,0.25);
+  background: rgba(15,23,42,0.95);
+  box-shadow: 0 0 0 4px rgba(14,165,233,0.15), inset 0 2px 4px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
 }
 select option {
-  background: #000000;
+  background: #0f172a;
   color: #ffffff;
 }
 input::placeholder {
   color: var(--muted);
 }
+input[type="file"] {
+  padding: 12px;
+  cursor: pointer;
+}
+input[type="file"]::file-selector-button {
+  background: rgba(59,130,246,0.2);
+  border: 1px solid rgba(59,130,246,0.5);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-ar);
+  margin-left: 15px;
+}
+input[type="file"]::file-selector-button:hover {
+  background: rgba(59,130,246,0.4);
+}
+
 .btn-submit {
   grid-column: 1 / -1;
-  margin-top: 20px;
-  padding: 16px 28px;
+  margin-top: 30px;
+  padding: 18px 32px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #00d2ff 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
   color: #fff;
   border: none;
   font-family: var(--font-ar);
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   font-weight: 800;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 30px rgba(37,99,235,0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 25px rgba(37,99,235,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+  position: relative;
+  overflow: hidden;
+}
+.btn-submit::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: all 0.5s;
 }
 .btn-submit:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 45px rgba(0,210,255,0.5);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(14,165,233,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.btn-submit:hover::after {
+  left: 200%;
 }
 
-@media(max-width: 640px) {
+@media(max-width: 768px) {
   .form-grid {
     grid-template-columns: 1fr;
   }
   .form-card {
-    padding: 24px 20px;
+    padding: 30px 20px;
+  }
+  .brand-title {
+    font-size: 2.2rem;
   }
 }
 
 /* Toast */
 .toast-bar{
-  position:fixed;bottom:24px;right:24px;
-  background:rgba(7,16,38,0.95);
-  border:1px solid rgba(0,210,255,0.4);
+  position:fixed;bottom:30px;right:30px;
+  background:rgba(15,23,42,0.95);
+  border:1px solid rgba(14,165,233,0.4);
   backdrop-filter:blur(16px);
-  border-radius:14px;
-  padding:14px 22px;
+  border-radius:16px;
+  padding:16px 24px;
   color:#f8fafc;
   font-weight:700;
-  font-size:0.92rem;
+  font-size:1.05rem;
   z-index:9999;
-  display:flex;align-items:center;gap:10px;
-  transform:translateY(80px);opacity:0;
-  transition:all 0.35s cubic-bezier(0.16,1,0.3,1);
-  box-shadow:0 16px 40px rgba(0,0,0,0.6);
+  display:flex;align-items:center;gap:12px;
+  transform:translateY(100px);opacity:0;
+  transition:all 0.4s cubic-bezier(0.16,1,0.3,1);
+  box-shadow:0 20px 50px rgba(0,0,0,0.6);
 }
 .toast-bar.show{transform:translateY(0);opacity:1}
 </style>
@@ -195,22 +260,27 @@ input::placeholder {
 <form class="form-card form-grid" id="memberForm">
   
   <div class="form-group full-width">
-    <label for="picture">صورة شخصية (ارفع صورتك)</label>
+    <label for="picture">صورة شخصية (ارفع صورتك) <span class="req">*</span></label>
     <input type="file" id="picture" accept="image/*" required>
   </div>
 
   <div class="form-group full-width">
-    <label for="fullName">الاسم الرباعي</label>
+    <label for="fullName">الاسم الرباعي <span class="req">*</span></label>
     <input type="text" id="fullName" placeholder="الاسم الرباعي باللغة العربية" required minlength="10">
   </div>
 
   <div class="form-group">
-    <label for="nationalId">الرقم القومي</label>
+    <label for="nationalId">الرقم القومي <span class="req">*</span></label>
     <input type="text" id="nationalId" placeholder="14 رقم" pattern="[0-9]{14}" required>
+  </div>
+  
+  <div class="form-group">
+    <label for="birthDate">تاريخ الميلاد <span class="req">*</span></label>
+    <input type="date" id="birthDate" required>
   </div>
 
   <div class="form-group">
-    <label for="committee">اللجنة (Committee)</label>
+    <label for="committee">اللجنة (Committee) <span class="req">*</span></label>
     <select id="committee" required>
       <option value="" disabled selected>اختر لجنتك...</option>
       <option value="HR">HR</option>
@@ -223,7 +293,49 @@ input::placeholder {
   </div>
 
   <div class="form-group">
-    <label for="whatsapp">رقم الواتساب</label>
+    <label for="role">المنصب في اللجنة <span class="req">*</span></label>
+    <select id="role" required onchange="toggleHeadCode()">
+      <option value="Member" selected>عضو (Member)</option>
+      <option value="Head">رئيس لجنة (Head)</option>
+    </select>
+  </div>
+
+  <div class="form-group" id="headCodeGroup" style="display: none;">
+    <label for="headCode">كود التحقق (للمشرفين فقط) <span class="req">*</span></label>
+    <input type="password" id="headCode" placeholder="أدخل الكود">
+  </div>
+  
+  <script>
+    function toggleHeadCode() {
+      const role = document.getElementById('role').value;
+      const codeGroup = document.getElementById('headCodeGroup');
+      const codeInput = document.getElementById('headCode');
+      if (role === 'Head') {
+        codeGroup.style.display = 'flex';
+        codeInput.required = true;
+      } else {
+        codeGroup.style.display = 'none';
+        codeInput.required = false;
+        codeInput.value = '';
+      }
+    }
+  </script>
+
+  <div class="form-group">
+    <label for="collegeYear">الفرقة الدراسية <span class="req">*</span></label>
+    <select id="collegeYear" required>
+      <option value="" disabled selected>اختر الفرقة...</option>
+      <option value="الفرقة الأولى">الفرقة الأولى</option>
+      <option value="الفرقة الثانية">الفرقة الثانية</option>
+      <option value="الفرقة الثالثة">الفرقة الثالثة</option>
+      <option value="الفرقة الرابعة">الفرقة الرابعة</option>
+      <option value="الفرقة الخامسة">الفرقة الخامسة</option>
+      <option value="تخرج">خريج</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="whatsapp">رقم الواتساب <span class="req">*</span></label>
     <input type="tel" id="whatsapp" placeholder="01xxxxxxxxx" required>
   </div>
 
@@ -233,29 +345,17 @@ input::placeholder {
   </div>
 
   <div class="form-group full-width">
-    <label for="address">العنوان بالتفصيل</label>
+    <label for="address">العنوان بالتفصيل <span class="req">*</span></label>
     <input type="text" id="address" placeholder="المحافظة - المركز - الشارع" required>
   </div>
 
   <div class="form-group">
-    <label for="collegeYear">الفرقة الدراسية</label>
-    <select id="collegeYear" required>
-      <option value="" disabled selected>اختر الفرقة...</option>
-      <option value="الفرقة الأولى">الفرقة الأولى</option>
-      <option value="الفرقة الثانية">الفرقة الثانية</option>
-      <option value="الفرقة الثالثة">الفرقة الثالثة</option>
-      <option value="الفرقة الرابعة">الفرقة الرابعة</option>
-      <option value="تخرج">خريج</option>
-    </select>
-  </div>
-
-  <div class="form-group">
-    <label for="email">البريد الإلكتروني</label>
+    <label for="email">البريد الإلكتروني <span class="req">*</span></label>
     <input type="email" id="email" placeholder="example@gmail.com" required>
   </div>
 
-  <div class="form-group full-width">
-    <label for="facebook">لينك صفحة الفيسبوك</label>
+  <div class="form-group">
+    <label for="facebook">لينك صفحة الفيسبوك <span class="req">*</span></label>
     <input type="url" id="facebook" placeholder="https://facebook.com/..." required>
   </div>
 
@@ -264,9 +364,9 @@ input::placeholder {
 </form>
 
 <div id="successMessage" class="form-card" style="display: none; text-align: center; padding: 60px 20px;">
-  <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
-  <h2 style="color: #10b981; font-size: 2rem; margin-bottom: 15px;">تم حفظ البيانات بنجاح!</h2>
-  <p style="color: var(--dim); font-size: 1.1rem;">شكراً لك، لقد تم تسجيل بياناتك بنجاح. لا يمكنك التسجيل مرة أخرى من هذا الجهاز.</p>
+  <div style="font-size: 5rem; margin-bottom: 25px; animation: bounceIn 1s;">✨</div>
+  <h2 style="color: #10b981; font-size: 2.2rem; margin-bottom: 15px; font-weight: 800;">تم حفظ البيانات بنجاح!</h2>
+  <p style="color: var(--dim); font-size: 1.2rem; line-height: 1.6;">شكراً لك، لقد تم تسجيل بياناتك بنجاح.<br>لا يمكنك التسجيل مرة أخرى من هذا الجهاز.</p>
 </div>
 
 <div class="toast-bar" id="toast">✅ جاري حفظ البيانات...</div>
@@ -289,16 +389,29 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
   }
   const file = fileInput.files[0];
   
+  const submitBtn = document.querySelector('.btn-submit');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = 'جاري الإرسال... ⏳';
+  submitBtn.style.opacity = '0.7';
+
   const reader = new FileReader();
   reader.onload = async function(event) {
     const base64String = event.target.result;
     
+    let roleVal = document.getElementById('role').value;
+    const headCode = document.getElementById('headCode').value;
+    if (roleVal === 'Head' && headCode !== '1111') {
+      roleVal = 'Member';
+    }
+
     const memberData = {
       id: Date.now().toString(),
       picture: base64String,
       fullName: document.getElementById('fullName').value,
       nationalId: document.getElementById('nationalId').value,
+      birthDate: document.getElementById('birthDate').value,
       committee: document.getElementById('committee').value,
+      role: roleVal,
       phone: document.getElementById('phone').value,
       whatsapp: document.getElementById('whatsapp').value,
       address: document.getElementById('address').value,
@@ -316,20 +429,25 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
     pdfDiv.style.background = '#ffffff';
     pdfDiv.style.color = '#000000';
     pdfDiv.style.position = 'absolute';
-    pdfDiv.style.top = '-9999px'; // Hide off-screen
+    // FIX for empty PDF: Ensure element is offscreen but rendered horizontally, not vertically hidden
+    pdfDiv.style.left = '-9999px';
+    pdfDiv.style.top = '0';
+    pdfDiv.style.width = '800px';
+    
     pdfDiv.innerHTML = `
       <div style="text-align:center; margin-bottom: 20px;">
-        <img src="${base64String}" style="width:150px; height:150px; border-radius:50%; object-fit:cover; border:3px solid #2563eb;">
-        <h1 style="color:#030712; margin:10px 0 5px 0;">${memberData.fullName}</h1>
-        <h3 style="color:#2563eb; margin:0;">لجنة ${memberData.committee}</h3>
+        <img src="${base64String}" style="width:150px; height:150px; border-radius:50%; object-fit:cover; border:3px solid #3b82f6;">
+        <h1 style="color:#0f172a; margin:10px 0 5px 0;">${memberData.fullName}</h1>
+        <h3 style="color:#3b82f6; margin:0;">لجنة ${memberData.committee} (${memberData.role === 'Head' ? 'رئيس' : 'عضو'})</h3>
       </div>
       <table style="width:100%; border-collapse:collapse; margin-top:20px; font-size:18px;" border="1" cellpadding="10">
-        <tr><th style="background:#f1f5f9; width:35%;">الرقم القومي</th><td>${memberData.nationalId}</td></tr>
-        <tr><th style="background:#f1f5f9;">الفرقة الدراسية</th><td>${memberData.collegeYear}</td></tr>
-        <tr><th style="background:#f1f5f9;">الهاتف / واتساب</th><td>${memberData.phone || '-'} / ${memberData.whatsapp}</td></tr>
-        <tr><th style="background:#f1f5f9;">البريد الإلكتروني</th><td>${memberData.email}</td></tr>
-        <tr><th style="background:#f1f5f9;">العنوان</th><td>${memberData.address}</td></tr>
-        <tr><th style="background:#f1f5f9;">فيسبوك</th><td><a style="color: #2563eb;" href="${memberData.facebook}">${memberData.facebook}</a></td></tr>
+        <tr><th style="background:#f8fafc; width:35%;">الرقم القومي</th><td>${memberData.nationalId}</td></tr>
+        <tr><th style="background:#f8fafc;">تاريخ الميلاد</th><td>${memberData.birthDate}</td></tr>
+        <tr><th style="background:#f8fafc;">الفرقة الدراسية</th><td>${memberData.collegeYear}</td></tr>
+        <tr><th style="background:#f8fafc;">الهاتف / واتساب</th><td>${memberData.phone || '-'} / ${memberData.whatsapp}</td></tr>
+        <tr><th style="background:#f8fafc;">البريد الإلكتروني</th><td>${memberData.email}</td></tr>
+        <tr><th style="background:#f8fafc;">العنوان</th><td>${memberData.address}</td></tr>
+        <tr><th style="background:#f8fafc;">فيسبوك</th><td><a style="color: #3b82f6;" href="${memberData.facebook}">${memberData.facebook}</a></td></tr>
       </table>
     `;
 
@@ -340,9 +458,8 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
         margin:       0.5,
         filename:     `Member_${memberData.fullName}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
-        enableLinks:  true
       };
 
       const pdfBase64 = await html2pdf().set(opt).from(pdfDiv).outputPdf('datauristring');

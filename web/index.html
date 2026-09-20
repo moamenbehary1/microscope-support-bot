@@ -8,6 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 /* ── Reset ── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -522,27 +524,35 @@ input::placeholder{color:var(--muted)}
     <div id="pg-admins"       class="page"></div>
     <div id="pg-users"        class="page"></div>
     <div id="pg-members"      class="page">
-      <div class="sec-head">
-        <h2>📝 <span data-i18n="Data Members">Data Members</span></h2>
-        <div class="actions">
-          <button class="btn btn-primary" onclick="MembersApp.copyFormLink()">
-            🔗 Copy Form Link
-          </button>
-          <a href="members_form.html" target="_blank" class="btn btn-ghost" style="border: 1px solid var(--primary); color: var(--text);">
-            ↗️ Open Form
-          </a>
-          <button class="btn btn-danger" onclick="MembersApp.deleteAllMembers()">
+      <div class="sec-head" style="justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+        <div>
+          <h2 style="font-size: 1.8rem; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 2.2rem;">📝</span> <span data-i18n="Data Members">Data Members</span>
+          </h2>
+          <p style="color: var(--dim); margin-top: 5px;">Manage and monitor registered team members and statistics.</p>
+        </div>
+        <div class="actions" style="display: flex; gap: 10px;">
+          <button class="btn btn-danger" onclick="MembersApp.deleteAllMembers()" style="border-radius: 10px; font-weight: 600;">
             🗑️ Delete All
           </button>
-          <button class="btn btn-success" onclick="MembersApp.exportToExcel()">
-            📊 Export All to Excel
+          <button class="btn btn-success" onclick="MembersApp.exportToExcel()" style="border-radius: 10px; font-weight: 600;">
+            📊 Export to Excel
           </button>
-          <button class="btn btn-ghost" onclick="MembersApp.loadMembers()">
+          <button class="btn btn-ghost" onclick="MembersApp.loadMembers()" style="border-radius: 10px; font-weight: 600;">
             🔄 Refresh
           </button>
         </div>
       </div>
-      <div class="card">
+      
+      <!-- Charts Section -->
+      <div class="card" style="margin-bottom: 25px; padding: 25px; background: rgba(15,23,42,0.8); border: 1px solid rgba(59,130,246,0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+        <h3 style="margin-bottom: 20px; color: #38bdf8;">📈 Registration Statistics</h3>
+        <div style="width: 100%; height: 300px;">
+          <canvas id="membersChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card" style="border: 1px solid rgba(255,255,255,0.1);">
         <div class="tbl-wrap">
           <table id="members-table">
             <thead>
@@ -550,6 +560,8 @@ input::placeholder{color:var(--muted)}
                 <th>Picture</th>
                 <th>Name</th>
                 <th>National ID</th>
+                <th>Birth Date</th>
+                <th>Role</th>
                 <th>Committee</th>
                 <th>Facebook</th>
                 <th>Phone</th>
@@ -3421,28 +3433,73 @@ const MembersApp = {
     tbody.innerHTML = '';
     
     if(members.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">No members found</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">No members found</td></tr>';
       return;
     }
     
+    // For chart stats
+    const committeeCount = {};
+    const yearCount = {};
+    
     members.forEach((m, idx) => {
+      // Accumulate stats
+      const c = m.committee || 'Unknown';
+      const y = m.collegeYear || 'Unknown';
+      committeeCount[c] = (committeeCount[c] || 0) + 1;
+      yearCount[y] = (yearCount[y] || 0) + 1;
+      
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><img src="${encodeStr(m.picture)}" alt="pic" class="member-img-preview"></td>
         <td><strong>${encodeStr(m.fullName)}</strong></td>
         <td>${encodeStr(m.nationalId)}</td>
+        <td>${encodeStr(m.birthDate || '-')}</td>
+        <td><span class="badge ${m.role === 'Head' ? 'badge-primary' : 'badge-ghost'}">${encodeStr(m.role || 'Member')}</span></td>
         <td>${encodeStr(m.committee)}</td>
         <td><a href="${encodeStr(m.facebook || '#')}" target="_blank" style="color:var(--accent)">FB Link</a></td>
         <td>${encodeStr(m.phone)}</td>
         <td>${encodeStr(m.collegeYear)}</td>
         <td style="display: flex; gap: 5px; flex-wrap: wrap;">
-          <button class="btn btn-primary btn-sm" onclick="MembersApp.exportCard(${idx})">📄 Extract Card</button>
+          <button class="btn btn-primary btn-sm" onclick="MembersApp.exportCard(${idx})">📄 Extract</button>
           <button class="btn btn-primary btn-sm" onclick="MembersApp.editMember(${idx})">✏️ Edit</button>
           <button class="btn btn-danger btn-sm" onclick="MembersApp.deleteMember(${idx})">🗑️ Delete</button>
         </td>
       `;
       tbody.appendChild(tr);
     });
+    
+    // Update Chart
+    setTimeout(() => {
+      const ctx = document.getElementById('membersChart');
+      if (ctx) {
+        if (window.membersChartInst) window.membersChartInst.destroy();
+        window.membersChartInst = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: Object.keys(committeeCount),
+            datasets: [{
+              label: 'Registered Members by Committee',
+              data: Object.values(committeeCount),
+              backgroundColor: 'rgba(59, 130, 246, 0.5)',
+              borderColor: 'rgba(59, 130, 246, 1)',
+              borderWidth: 1,
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { stepSize: 1, color: '#94a3b8' } },
+              x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+            },
+            plugins: {
+              legend: { labels: { color: '#e2e8f0' } }
+            }
+          }
+        });
+      }
+    }, 100);
   },
 
   exportToExcel() {
@@ -3457,9 +3514,42 @@ const MembersApp = {
       return;
     }
     
-    const ws = XLSX.utils.json_to_sheet(members);
+    // Map to a clean, coordinated format
+    const formattedData = members.map(m => ({
+      "الاسم الرباعي": m.fullName || "-",
+      "الرقم القومي": m.nationalId || "-",
+      "تاريخ الميلاد": m.birthDate || "-",
+      "المنصب": m.role === 'Head' ? 'رئيس لجنة' : 'عضو',
+      "اللجنة": m.committee || "-",
+      "الفرقة الدراسية": m.collegeYear || "-",
+      "رقم الواتساب": m.whatsapp || "-",
+      "رقم الهاتف": m.phone || "-",
+      "البريد الإلكتروني": m.email || "-",
+      "العنوان": m.address || "-",
+      "الفيسبوك": m.facebook || "-",
+      "تاريخ التسجيل": m.timestamp || "-"
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(formattedData);
+    
+    // Set column widths for a premium look
+    ws['!cols'] = [
+      { wch: 25 }, // Name
+      { wch: 18 }, // National ID
+      { wch: 15 }, // Birth Date
+      { wch: 12 }, // Role
+      { wch: 15 }, // Committee
+      { wch: 15 }, // College Year
+      { wch: 15 }, // WhatsApp
+      { wch: 15 }, // Phone
+      { wch: 30 }, // Email
+      { wch: 35 }, // Address
+      { wch: 40 }, // Facebook
+      { wch: 20 }  // Timestamp
+    ];
+    
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Members Data");
+    XLSX.utils.book_append_sheet(wb, ws, "بيانات الأعضاء");
     XLSX.writeFile(wb, "Microscope_Members.xlsx");
     UI.toast('Exported to Excel successfully!', 'success');
   },

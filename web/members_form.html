@@ -265,8 +265,13 @@ input[type="file"]::file-selector-button:hover {
   </div>
 
   <div class="form-group full-width">
-    <label for="fullName">الاسم الرباعي <span class="req">*</span></label>
+    <label for="fullName">الاسم الرباعي (باللغة العربية) <span class="req">*</span></label>
     <input type="text" id="fullName" placeholder="الاسم الرباعي باللغة العربية" required minlength="10">
+  </div>
+
+  <div class="form-group full-width">
+    <label for="fullNameEn">الاسم باللغة الإنجليزية (Full Name in English) <span class="req">*</span></label>
+    <input type="text" id="fullNameEn" placeholder="e.g. Ahmed Mohamed Ali" required minlength="5" style="direction: ltr; text-align: left;">
   </div>
 
   <div class="form-group">
@@ -377,12 +382,14 @@ input[type="file"]::file-selector-button:hover {
       <div style="margin: 15px 0;">
         <img id="card-picture" src="" alt="Profile" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 4px solid #3b82f6; display: inline-block;">
       </div>
-      <h1 id="card-fullName" style="color: #0f172a; font-size: 1.6rem; margin: 0 0 5px 0; font-weight: 800;"></h1>
+      <h1 id="card-fullName" style="color: #0f172a; font-size: 1.6rem; margin: 0 0 2px 0; font-weight: 800;"></h1>
+      <div id="card-fullNameEn" style="color: #64748b; font-size: 1.05rem; margin: 0 0 6px 0; font-weight: 600; font-family: 'Inter', sans-serif;"></div>
       <h3 id="card-title" style="color: #2563eb; font-size: 1.2rem; margin: 0; font-weight: 700;"></h3>
     </div>
 
     <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
-      <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; width: 35%; background: #f8fafc;">الرقم القومي</th><td id="card-nationalId" style="padding: 9px 12px; font-weight: bold; color: #0f172a;"></td></tr>
+      <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; width: 35%; background: #f8fafc;">الاسم بالإنجليزية</th><td id="card-nameEn" style="padding: 9px 12px; font-weight: bold; color: #0f172a; font-family: 'Inter', sans-serif;"></td></tr>
+      <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">الرقم القومي</th><td id="card-nationalId" style="padding: 9px 12px; font-weight: bold; color: #0f172a;"></td></tr>
       <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">تاريخ الميلاد</th><td id="card-birthDate" style="padding: 9px 12px; font-weight: bold; color: #0f172a;"></td></tr>
       <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">المنصب</th><td id="card-role" style="padding: 9px 12px; font-weight: bold; color: #0f172a;"></td></tr>
       <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">اللجنة</th><td id="card-committee" style="padding: 9px 12px; font-weight: bold; color: #0f172a;"></td></tr>
@@ -414,6 +421,8 @@ function populateCardData(data) {
   if (!data) return;
   document.getElementById('card-picture').src = data.picture;
   document.getElementById('card-fullName').textContent = data.fullName;
+  document.getElementById('card-fullNameEn').textContent = data.fullNameEn || '';
+  document.getElementById('card-nameEn').textContent = data.fullNameEn || '-';
   document.getElementById('card-title').textContent = (data.role === 'Head' ? 'Head ' : '') + data.committee + ' Commit';
   document.getElementById('card-nationalId').textContent = data.nationalId;
   document.getElementById('card-birthDate').textContent = data.birthDate || '-';
@@ -487,6 +496,7 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
       id: Date.now().toString(),
       picture: base64String,
       fullName: document.getElementById('fullName').value.trim(),
+      fullNameEn: document.getElementById('fullNameEn').value.trim(),
       nationalId: document.getElementById('nationalId').value.trim(),
       birthDate: document.getElementById('birthDate').value.trim(),
       committee: document.getElementById('committee').value.trim(),

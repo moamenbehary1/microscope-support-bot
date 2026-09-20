@@ -3451,7 +3451,7 @@ const MembersApp = {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><img src="${encodeStr(m.picture)}" alt="pic" class="member-img-preview"></td>
-        <td><strong>${encodeStr(m.fullName)}</strong></td>
+        <td><strong>${encodeStr(m.fullName)}</strong>${m.fullNameEn ? `<br><small style="color:var(--dim);font-family:Inter,sans-serif">${encodeStr(m.fullNameEn)}</small>` : ''}</td>
         <td>${encodeStr(m.nationalId)}</td>
         <td>${encodeStr(m.birthDate || '-')}</td>
         <td><span class="badge ${m.role === 'Head' ? 'badge-primary' : 'badge-ghost'}">${encodeStr(m.role || 'Member')}</span></td>
@@ -3517,6 +3517,7 @@ const MembersApp = {
     // Map to a clean, coordinated format
     const formattedData = members.map(m => ({
       "الاسم الرباعي": m.fullName || "-",
+      "الاسم بالإنجليزية": m.fullNameEn || "-",
       "الرقم القومي": m.nationalId || "-",
       "تاريخ الميلاد": m.birthDate || "-",
       "المنصب": m.role === 'Head' ? 'رئيس لجنة' : 'عضو',
@@ -3534,7 +3535,8 @@ const MembersApp = {
     
     // Set column widths for a premium look
     ws['!cols'] = [
-      { wch: 25 }, // Name
+      { wch: 25 }, // Name AR
+      { wch: 25 }, // Name EN
       { wch: 18 }, // National ID
       { wch: 15 }, // Birth Date
       { wch: 12 }, // Role
@@ -3590,9 +3592,11 @@ const MembersApp = {
     <br>
     <a href="${m.picture}" download="Profile_${m.fullName.replace(/\\s+/g, '_')}.png" class="btn" style="margin-top: -10px; margin-bottom: 20px;">⬇️ تحميل الصورة (Download Image)</a>
     <h1>${m.fullName}</h1>
+    ${m.fullNameEn ? `<div style="color: #94a3b8; font-size: 1.15rem; margin-top: -2px; margin-bottom: 8px; font-family: sans-serif;">${m.fullNameEn}</div>` : ''}
     <h3>${(m.role === 'Head' ? 'Head ' : '') + m.committee + ' Commit'}</h3>
     
     <div class="grid">
+      <div class="item"><div class="label">الاسم بالإنجليزية</div><div class="val">${m.fullNameEn || '-'}</div></div>
       <div class="item"><div class="label">الرقم القومي</div><div class="val">${m.nationalId}</div></div>
       <div class="item"><div class="label">تاريخ الميلاد</div><div class="val">${m.birthDate || '-'}</div></div>
       <div class="item"><div class="label">المنصب</div><div class="val">${m.role === 'Head' ? 'رئيس لجنة (Head)' : 'عضو (Member)'}</div></div>
@@ -3631,7 +3635,8 @@ const MembersApp = {
     
     const html = `
       <div style="display:grid;gap:10px;text-align:right;direction:rtl;">
-        <div><label style="color:var(--dim);font-size:0.8rem">الاسم الرباعي</label><input id="edit-fullName" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.fullName)}"></div>
+        <div><label style="color:var(--dim);font-size:0.8rem">الاسم الرباعي (بالعربية)</label><input id="edit-fullName" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.fullName)}"></div>
+        <div><label style="color:var(--dim);font-size:0.8rem">الاسم بالإنجليزية (English)</label><input id="edit-fullNameEn" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.fullNameEn || '')}"></div>
         <div><label style="color:var(--dim);font-size:0.8rem">الرقم القومي</label><input id="edit-nationalId" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.nationalId)}"></div>
         <div><label style="color:var(--dim);font-size:0.8rem">تاريخ الميلاد</label><input id="edit-birthDate" type="date" style="width:100%;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border-blue);border-radius:6px;" value="${encodeStr(m.birthDate || '')}"></div>
         <div>
@@ -3654,6 +3659,7 @@ const MembersApp = {
     UI.modal('تعديل بيانات العضو', html, 'حفظ التعديلات', false).then(ok => {
       if(!ok) return;
       m.fullName = document.getElementById('edit-fullName').value.trim();
+      m.fullNameEn = document.getElementById('edit-fullNameEn').value.trim();
       m.nationalId = document.getElementById('edit-nationalId').value.trim();
       m.birthDate = document.getElementById('edit-birthDate').value.trim();
       m.role = document.getElementById('edit-role').value;

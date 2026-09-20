@@ -177,6 +177,7 @@ input::placeholder {
 }
 .toast-bar.show{transform:translateY(0);opacity:1}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -290,7 +291,7 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
   }
   
   const reader = new FileReader();
-  reader.onload = function(event) {
+  reader.onload = async function(event) {
     const base64String = event.target.result;
     
     const memberData = {
@@ -307,6 +308,60 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
       facebook: document.getElementById('facebook').value,
       timestamp: new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' })
     };
+
+    // Create a temporary element for the PDF
+    const pdfDiv = document.createElement('div');
+    pdfDiv.style.padding = '40px';
+    pdfDiv.style.fontFamily = 'Cairo, sans-serif';
+    pdfDiv.style.direction = 'rtl';
+    pdfDiv.style.background = '#ffffff';
+    pdfDiv.style.color = '#000000';
+    pdfDiv.style.position = 'absolute';
+    pdfDiv.style.top = '-9999px'; // Hide off-screen
+    pdfDiv.innerHTML = `
+      <div style="text-align:center; margin-bottom: 20px;">
+        <img src="${base64String}" style="width:150px; height:150px; border-radius:50%; object-fit:cover; border:3px solid #2563eb;">
+        <h1 style="color:#030712; margin:10px 0 5px 0;">${memberData.fullName}</h1>
+        <h3 style="color:#2563eb; margin:0;">لجنة ${memberData.committee}</h3>
+      </div>
+      <table style="width:100%; border-collapse:collapse; margin-top:20px; font-size:18px;" border="1" cellpadding="10">
+        <tr><th style="background:#f1f5f9; width:35%;">الرقم القومي</th><td>${memberData.nationalId}</td></tr>
+        <tr><th style="background:#f1f5f9;">الفرقة الدراسية</th><td>${memberData.collegeYear}</td></tr>
+        <tr><th style="background:#f1f5f9;">الهاتف / واتساب</th><td>${memberData.phone || '-'} / ${memberData.whatsapp}</td></tr>
+        <tr><th style="background:#f1f5f9;">البريد الإلكتروني</th><td>${memberData.email}</td></tr>
+        <tr><th style="background:#f1f5f9;">العنوان</th><td>${memberData.address}</td></tr>
+        <tr><th style="background:#f1f5f9;">فيسبوك</th><td><a style="color: #2563eb;" href="${memberData.facebook}">${memberData.facebook}</a></td></tr>
+      </table>
+    `;
+
+    document.body.appendChild(pdfDiv);
+
+    try {
+      const opt = {
+        margin:       0.5,
+        filename:     \`Member_\${memberData.fullName}.pdf\`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+        enableLinks:  true
+      };
+
+      const pdfBase64 = await html2pdf().set(opt).from(pdfDiv).outputPdf('datauristring');
+      
+      // Upload to Backup Channel
+      await fetch('/api/backup_member', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_name: \`Member_\${memberData.fullName.replace(/\\s+/g, '_')}.pdf\`,
+          file_base64: pdfBase64
+        })
+      });
+    } catch(err) {
+      console.error('PDF Error:', err);
+    } finally {
+      document.body.removeChild(pdfDiv);
+    }
 
     let existingMembers = [];
     try {

@@ -144,6 +144,37 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
         ..write(jsonEncode({'success': false, 'error': e.toString()}));
     }
 
+  } else if (path == '/api/backup_member' && req.method == 'POST') {
+    try {
+      final content = await utf8.decoder.bind(req).join();
+      final data = jsonDecode(content) as Map<String, dynamic>;
+      
+      final fileName = data['file_name'] as String;
+      final fileBase64 = data['file_base64'] as String;
+      
+      final bytes = base64Decode(fileBase64.split(',').last);
+      
+      ChatID chatId = ChatID(Config.superAdminId);
+      if (Config.backupChannelId.isNotEmpty && !Config.backupChannelId.contains('your_channel')) {
+        final parsed = int.tryParse(Config.backupChannelId);
+        if (parsed != null) chatId = ChatID(parsed);
+      }
+      
+      final inputFile = InputFile.fromBytes(bytes, name: fileName);
+      await bot.api.sendDocument(chatId, inputFile);
+      
+      req.response
+        ..statusCode = 200
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'success': true}));
+    } catch (e) {
+      print('Backup Member Error: $e');
+      req.response
+        ..statusCode = 500
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'success': false, 'error': e.toString()}));
+    }
+
   } else if (path == '/api/broadcast_subject' && req.method == 'POST') {
     try {
       final content = await utf8.decoder.bind(req).join();

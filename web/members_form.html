@@ -368,20 +368,57 @@ input[type="file"]::file-selector-button:hover {
 
 </form>
 
-<div id="successMessage" class="form-card" style="display: none; text-align: center; padding: 45px 25px; max-width: 480px; margin: 30px auto; border-radius: 20px;">
-  <div style="font-size: 3.8rem; margin-bottom: 12px; animation: bounceIn 0.8s;">✅</div>
+<!-- ── Success Message ───────────────────────────────────────────────────── -->
+<div id="successMessage" class="form-card" style="display: none; text-align: center; padding: 45px 25px; max-width: 520px; margin: 30px auto; border-radius: 20px;">
+  <div style="font-size: 3.8rem; margin-bottom: 12px;">✅</div>
   <h2 style="color: #10b981; font-size: 1.85rem; margin-bottom: 8px; font-weight: 800;">تم حفظ البيانات بنجاح!</h2>
-  <p style="color: var(--dim); font-size: 1.05rem; line-height: 1.6; margin: 0;">شكراً لك، لقد تم تسجيل بياناتك بنجاح في النظام.<br>لا يمكنك التسجيل مرة أخرى من هذا الجهاز.</p>
+  <p style="color: var(--dim); font-size: 1.05rem; line-height: 1.6; margin: 0 0 28px 0;">شكراً لك، لقد تم تسجيل بياناتك بنجاح في النظام وحفظها على Google Drive.</p>
+
+  <!-- Add Another Registration button -->
+  <button
+    id="addAnotherBtn"
+    onclick="resetFormForAnother()"
+    style="
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 16px 32px; border-radius: 14px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff; border: none; cursor: pointer;
+      font-family: var(--font-ar); font-size: 1.1rem; font-weight: 800;
+      box-shadow: 0 8px 20px rgba(16,185,129,0.4);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    "
+    onmouseover="this.style.transform='translateY(-3px) scale(1.03)';this.style.boxShadow='0 12px 28px rgba(16,185,129,0.55)'"
+    onmouseout="this.style.transform='';this.style.boxShadow='0 8px 20px rgba(16,185,129,0.4)'"
+  >
+    📝 تسجيل عضو آخر
+  </button>
 </div>
 
 <div class="toast-bar" id="toast">✅ تم حفظ البيانات بنجاح!</div>
 
 <script>
+// ── Reset / "Add Another Registration" ──────────────────────────────────────
+function resetFormForAnother() {
+  // Hide success, show form
+  document.getElementById('successMessage').style.display = 'none';
+  document.getElementById('memberForm').style.display = 'grid';
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Reset all form inputs
+  document.getElementById('memberForm').reset();
+  // Reset role-dependent field visibility
+  document.getElementById('headCodeGroup').style.display = 'none';
+  document.getElementById('headCode').required = false;
+  // Re-enable submit button
+  const submitBtn = document.querySelector('.btn-submit');
+  submitBtn.disabled = false;
+  submitBtn.innerHTML = 'حفظ البيانات وإرسالها 🚀';
+  submitBtn.style.opacity = '1';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('microscope_submitted') === 'true') {
-    document.getElementById('memberForm').style.display = 'none';
-    document.getElementById('successMessage').style.display = 'block';
-  }
+  // NOTE: We no longer permanently block re-registration from the same device.
+  // The "Add Another" button handles new submissions within the same session.
 });
 
 document.getElementById('memberForm').addEventListener('submit', function(e) {
@@ -450,17 +487,9 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
       timestamp: new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' })
     };
 
-    // Save to localStorage for Admin Dashboard
-    let existingMembers = [];
-    try {
-      const rawData = localStorage.getItem('microscope_members_data');
-      if (rawData) existingMembers = JSON.parse(rawData);
-    } catch(e) {}
-    existingMembers.push(memberData);
-    localStorage.setItem('microscope_members_data', JSON.stringify(existingMembers));
-    localStorage.setItem('microscope_submitted', 'true');
-
-    // Show only success message to registrant (No card)
+    // ── Show success message immediately (non-blocking) ──────────────────
+    // The form is hidden and the success card shown right away so the user
+    // doesn't have to wait for the PDF generation / Drive upload.
     document.getElementById('memberForm').style.display = 'none';
     document.getElementById('successMessage').style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -596,21 +625,38 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
 
       const pdfBase64 = pdf.output('datauristring');
 
-      // Upload to Backup Channel
-      await fetch('/api/backup_member', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          file_name: `Member_${memberData.fullName.replace(/\s+/g, '_')}.pdf`,
-          file_base64: pdfBase64,
-          photo_base64: base64String,
-          photo_file_name: photoFileName,
-          member_data: memberData
-        })
-      });
-      console.log('Backup PDF sent successfully to channel with interactive links!');
+      // ── Send to /api/register_member (Firebase + Google Drive) ──────────
+      // NOTE: We do NOT send to /api/backup_member here.
+      //       The Backup Channel is exclusively for bot file uploads (unchanged).
+      //
+      // Build a clean member_data object WITHOUT the base64 picture blob.
+      // The photo was already uploaded to the server via /api/upload_member_photo.
+      const memberDataForServer = { ...memberData };
+      delete memberDataForServer.picture; // strip large base64 — photoUrl is kept
+
+      try {
+        const regRes = await fetch('/api/register_member', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file_name: `Member_${memberData.fullName.replace(/\s+/g, '_')}.pdf`,
+            file_base64: pdfBase64,
+            member_data: memberDataForServer
+          })
+        });
+        const regData = await regRes.json();
+        if (regData.success) {
+          console.log('✅ Member registered to Firebase + Google Drive. Drive ID:', regData.drive_file_id);
+        } else {
+          console.error('❌ Registration API error:', regData.error);
+        }
+      } catch(apiErr) {
+        console.error('❌ Failed to call /api/register_member:', apiErr);
+        // Non-fatal: success message is already shown to user
+      }
+
     } catch(err) {
-      console.error('PDF Generation / Backup Error:', err);
+      console.error('PDF Generation Error:', err);
       if (offscreen.parentNode) {
         document.body.removeChild(offscreen);
       }

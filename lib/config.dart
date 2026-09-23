@@ -26,6 +26,13 @@ class Config {
     final num = _get('WHATSAPP_SUPPORT_NUMBER') ?? '';
     return num.replaceAll(RegExp(r'[^\d+]'), '');
   }
+
+  /// Google Drive folder ID where registration PDFs will be uploaded.
+  static String get googleDriveFolderId => _get('GOOGLE_DRIVE_FOLDER_ID') ?? '';
+
+  /// Full JSON content of the Google Service Account key file (single-line).
+  static String get googleServiceAccountJson =>
+      _get('GOOGLE_SERVICE_ACCOUNT_JSON') ?? '';
 }
 
 // User Modes

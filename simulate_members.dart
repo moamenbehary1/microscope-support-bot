@@ -9,7 +9,7 @@ void main() async {
   final years = ['الفرقة الأولى', 'الفرقة الثانية', 'الفرقة الثالثة', 'الفرقة الرابعة', 'خريج'];
   final roles = ['Member', 'Head'];
   
-  for (int i = 1; i <= 65; i++) {
+  for (int i = 1; i <= 3; i++) {
     final id = DateTime.now().millisecondsSinceEpoch.toString() + i.toString();
     final isMale = random.nextBool();
     final name = 'Test User $i';

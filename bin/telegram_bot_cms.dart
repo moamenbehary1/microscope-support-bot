@@ -2,8 +2,6 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:televerse/televerse.dart';
 import 'package:http/http.dart' as http;
-import 'package:googleapis_auth/auth_io.dart' as auth;
-import 'package:googleapis/drive/v3.dart' as drive;
 import '../lib/config.dart';
 import '../lib/student_handlers.dart';
 import '../lib/admin_handlers.dart';
@@ -476,26 +474,151 @@ Future<String?> _uploadToDrive(List<int> bytes, String fileName) async {
     return null;
   }
 
+  // 1. Get OAuth2 access token
+  final accessToken = await _getGoogleAccessToken(saJson);
+  if (accessToken == null) {
+    print('[Drive] Failed to obtain access token');
+    return null;
+  }
+
+  // 2. Multipart upload to Drive API v3
+  //    We use a simple multipart body: metadata part + media part
+  const boundary = '-------MicroscopeDriveBoundary7MA4YWxkTrZu0gW';
+  final metadata = jsonEncode({
+    'name': fileName,
+    'mimeType': 'application/pdf',
+    'parents': [folderId],
+  });
+
+  final metadataPart = '--$boundary\r\n'
+      'Content-Type: application/json; charset=UTF-8\r\n\r\n'
+      '$metadata\r\n';
+  final mediaPart = '--$boundary\r\n'
+      'Content-Type: application/pdf\r\n\r\n';
+  final closing = '\r\n--$boundary--';
+
+  final bodyBytes = [
+    ...utf8.encode(metadataPart),
+    ...utf8.encode(mediaPart),
+    ...bytes,
+    ...utf8.encode(closing),
+  ];
+
+  final uploadUrl = Uri.parse(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+  );
+
+  final response = await http.post(
+    uploadUrl,
+    headers: {
+      'Authorization': 'Bearer $accessToken',
+      'Content-Type': 'multipart/related; boundary="$boundary"',
+      'Content-Length': '${bodyBytes.length}',
+    },
+    body: bodyBytes,
+  ).timeout(const Duration(seconds: 60));
+
+  if (response.statusCode == 200 || response.statusCode == 201) {
+    final result = jsonDecode(response.body) as Map<String, dynamic>;
+    return result['id'] as String?;
+  } else {
+    print('[Drive] Upload failed ${response.statusCode}: ${response.body}');
+    return null;
+  }
+}
+
+/// Builds a signed JWT, exchanges it for an OAuth2 access token, and returns it.
+/// Implements RFC 7519 / Google Service Account flow without extra packages.
+Future<String?> _getGoogleAccessToken(String serviceAccountJson) async {
   try {
-    final credentials = auth.ServiceAccountCredentials.fromJson(saJson);
-    final scopes = [drive.DriveApi.driveFileScope];
-    final client = await auth.clientViaServiceAccount(credentials, scopes);
+    final sa = jsonDecode(serviceAccountJson) as Map<String, dynamic>;
+    final clientEmail = sa['client_email'] as String;
+    final privateKeyPem = (sa['private_key'] as String)
+        .replaceAll('\\n', '\n'); // handle escaped newlines from .env
 
-    final driveApi = drive.DriveApi(client);
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final exp = now + 3600;
 
-    final driveFile = drive.File()
-      ..name = fileName
-      ..parents = [folderId]
-      ..mimeType = 'application/pdf';
+    final header = base64Url.encode(utf8.encode(jsonEncode({
+      'alg': 'RS256',
+      'typ': 'JWT',
+    }))).replaceAll('=', '');
 
-    final media = drive.Media(Stream.value(bytes), bytes.length);
+    final claims = base64Url.encode(utf8.encode(jsonEncode({
+      'iss': clientEmail,
+      'scope': 'https://www.googleapis.com/auth/drive.file',
+      'aud': 'https://oauth2.googleapis.com/token',
+      'iat': now,
+      'exp': exp,
+    }))).replaceAll('=', '');
 
-    final result = await driveApi.files.create(driveFile, uploadMedia: media);
-    
-    client.close();
-    return result.id;
+    final signingInput = '$header.$claims';
+
+    // Sign using RSA-SHA256
+    final signature = _rsaSha256Sign(signingInput, privateKeyPem);
+    if (signature == null) return null;
+
+    final jwt = '$signingInput.$signature';
+
+    // Exchange JWT for access token
+    final tokenRes = await http.post(
+      Uri.parse('https://oauth2.googleapis.com/token'),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {
+        'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        'assertion': jwt,
+      },
+    ).timeout(const Duration(seconds: 30));
+
+    if (tokenRes.statusCode == 200) {
+      final json = jsonDecode(tokenRes.body) as Map<String, dynamic>;
+      return json['access_token'] as String?;
+    } else {
+      print('[Drive] Token exchange failed ${tokenRes.statusCode}: ${tokenRes.body}');
+      return null;
+    }
   } catch (e) {
-    print('[Drive] Upload error: $e');
+    print('[Drive] _getGoogleAccessToken error: $e');
+    return null;
+  }
+}
+
+/// Signs [message] with the RSA private key [pemKey] using SHA-256.
+/// Dart's built-in dart:io / dart:convert don't have RSA — we shell out to
+/// the system openssl which is available on Linux/Docker (Replit/Cloud Run).
+String? _rsaSha256Sign(String message, String pemKey) {
+  try {
+    // Write key to a temp file
+    final tmpDir = Directory.systemTemp;
+    final keyFile = File('${tmpDir.path}/sa_key_${DateTime.now().millisecondsSinceEpoch}.pem');
+    final msgFile = File('${tmpDir.path}/sa_msg_${DateTime.now().millisecondsSinceEpoch}.txt');
+    keyFile.writeAsStringSync(pemKey);
+    msgFile.writeAsStringSync(message);
+
+    final result = Process.runSync('openssl', [
+      'dgst', '-sha256', '-sign', keyFile.path,
+      '-out', '${msgFile.path}.sig',
+      msgFile.path,
+    ]);
+
+    if (result.exitCode != 0) {
+      print('[Drive] openssl sign error: ${result.stderr}');
+      keyFile.deleteSync();
+      msgFile.deleteSync();
+      return null;
+    }
+
+    final sigBytes = File('${msgFile.path}.sig').readAsBytesSync();
+    final sig = base64Url.encode(sigBytes).replaceAll('=', '');
+
+    // Cleanup
+    keyFile.deleteSync();
+    msgFile.deleteSync();
+    try { File('${msgFile.path}.sig').deleteSync(); } catch (_) {}
+
+    return sig;
+  } catch (e) {
+    print('[Drive] _rsaSha256Sign error: $e');
     return null;
   }
 }

@@ -380,8 +380,9 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
 
   } else if (path == '/api/register_member' && req.method == 'POST') {
     // ── Registration Form Submissions ───────────────────────────────────────
-    // Saves member data to Firebase + uploads PDF to Google Drive.
-    // Does NOT forward anything to the Backup Channel (bot uploads handle that).
+    // Saves member data to Firebase + sends PDF to Telegram Backup Channel.
+    // Note: Google Drive Service Accounts have no personal storage quota —
+    //       Telegram backup channel is the reliable alternative.
     try {
       final content = await utf8.decoder.bind(req).join();
       final data = jsonDecode(content) as Map<String, dynamic>;
@@ -418,15 +419,23 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
         }
       }
 
-      // 3. Upload PDF to Google Drive
-      String? driveFileId;
+      // 3. Send PDF to Telegram Backup Channel
+      // (Google Drive Service Accounts have no personal storage quota)
+      String? telegramFileId;
       if (fileBase64.isNotEmpty) {
         try {
           final pdfBytes = base64Decode(fileBase64.split(',').last);
-          driveFileId = await _uploadToDrive(pdfBytes, fileName);
-          print('[register_member] Uploaded PDF to Drive: $driveFileId');
+          ChatID chatId = ChatID(Config.superAdminId);
+          if (Config.backupChannelId.isNotEmpty && !Config.backupChannelId.contains('your_channel')) {
+            final parsed = int.tryParse(Config.backupChannelId);
+            if (parsed != null) chatId = ChatID(parsed);
+          }
+          final inputFile = InputFile.fromBytes(pdfBytes, name: fileName);
+          final msg = await bot.api.sendDocument(chatId, inputFile);
+          telegramFileId = msg.document?.fileId;
+          print('[register_member] ✅ PDF sent to Backup Channel. File ID: $telegramFileId');
         } catch (e) {
-          print('[register_member] Drive upload error: $e');
+          print('[register_member] ⚠️ Telegram backup error: $e');
           // Non-fatal — Firebase save already succeeded
         }
       }
@@ -437,7 +446,7 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
         ..write(jsonEncode({
           'success': true,
           'firebase_id': firebaseId,
-          'drive_file_id': driveFileId,
+          'telegram_file_id': telegramFileId,
         }));
     } catch (e) {
       print('[register_member] Error: $e');

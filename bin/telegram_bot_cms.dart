@@ -546,7 +546,7 @@ Future<String?> _getGoogleAccessToken(String serviceAccountJson) async {
 
     final claims = base64Url.encode(utf8.encode(jsonEncode({
       'iss': clientEmail,
-      'scope': 'https://www.googleapis.com/auth/drive.file',
+      'scope': 'https://www.googleapis.com/auth/drive',
       'aud': 'https://oauth2.googleapis.com/token',
       'iat': now,
       'exp': exp,

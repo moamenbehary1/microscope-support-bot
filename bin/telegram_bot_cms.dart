@@ -465,21 +465,26 @@ Future<String?> _uploadToDrive(List<int> bytes, String fileName) async {
   final folderId = Config.googleDriveFolderId;
   final saJson = Config.googleServiceAccountJson;
 
+  print('[Drive] ▶ Starting upload: $fileName → folder: $folderId');
+
   if (saJson.isEmpty) {
-    print('[Drive] GOOGLE_SERVICE_ACCOUNT_JSON is not set — skipping upload');
+    print('[Drive] ❌ GOOGLE_SERVICE_ACCOUNT_JSON is not set — skipping upload');
     return null;
   }
   if (folderId.isEmpty) {
-    print('[Drive] GOOGLE_DRIVE_FOLDER_ID is not set — skipping upload');
+    print('[Drive] ❌ GOOGLE_DRIVE_FOLDER_ID is not set — skipping upload');
     return null;
   }
+  print('[Drive] ✅ Config OK — SA JSON length: ${saJson.length}, folder: $folderId');
 
   // 1. Get OAuth2 access token
+  print('[Drive] 🔑 Requesting OAuth2 access token...');
   final accessToken = await _getGoogleAccessToken(saJson);
   if (accessToken == null) {
-    print('[Drive] Failed to obtain access token');
+    print('[Drive] ❌ Failed to obtain access token — check Service Account JSON and openssl');
     return null;
   }
+  print('[Drive] ✅ Access token obtained (length: ${accessToken.length})');
 
   // 2. Multipart upload to Drive API v3
   //    We use a simple multipart body: metadata part + media part
@@ -518,11 +523,14 @@ Future<String?> _uploadToDrive(List<int> bytes, String fileName) async {
     body: bodyBytes,
   ).timeout(const Duration(seconds: 60));
 
+  print('[Drive] 📤 Upload response: ${response.statusCode}');
   if (response.statusCode == 200 || response.statusCode == 201) {
     final result = jsonDecode(response.body) as Map<String, dynamic>;
-    return result['id'] as String?;
+    final fileId = result['id'] as String?;
+    print('[Drive] ✅ File uploaded successfully! ID: $fileId');
+    return fileId;
   } else {
-    print('[Drive] Upload failed ${response.statusCode}: ${response.body}');
+    print('[Drive] ❌ Upload failed ${response.statusCode}: ${response.body}');
     return null;
   }
 }
@@ -595,6 +603,7 @@ String? _rsaSha256Sign(String message, String pemKey) {
     keyFile.writeAsStringSync(pemKey);
     msgFile.writeAsStringSync(message);
 
+    print('[Drive] 🔐 Running openssl sign...');
     final result = Process.runSync('openssl', [
       'dgst', '-sha256', '-sign', keyFile.path,
       '-out', '${msgFile.path}.sig',
@@ -602,11 +611,12 @@ String? _rsaSha256Sign(String message, String pemKey) {
     ]);
 
     if (result.exitCode != 0) {
-      print('[Drive] openssl sign error: ${result.stderr}');
+      print('[Drive] ❌ openssl sign error (exit ${result.exitCode}): ${result.stderr}');
       keyFile.deleteSync();
       msgFile.deleteSync();
       return null;
     }
+    print('[Drive] ✅ openssl signed successfully');
 
     final sigBytes = File('${msgFile.path}.sig').readAsBytesSync();
     final sig = base64Url.encode(sigBytes).replaceAll('=', '');

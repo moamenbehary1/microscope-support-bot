@@ -358,6 +358,20 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
       req.response.write('Team page not found');
     }
 
+  } else if (path == '/hr.html' || path == '/hr') {
+    // Serve the HR Evaluation module
+    final hrFile = File('web/hr.html');
+    if (await hrFile.exists()) {
+      final html = await hrFile.readAsString();
+      req.response
+        ..statusCode = 200
+        ..headers.contentType = ContentType.html
+        ..write(html);
+    } else {
+      req.response.statusCode = 404;
+      req.response.write('HR module not found');
+    }
+
   } else if (path.startsWith('/web/') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.webp') || path.endsWith('.svg')) {
     // Serve static images and web assets
     final cleanPath = path.startsWith('/') ? path.substring(1) : path;

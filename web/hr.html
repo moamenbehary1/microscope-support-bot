@@ -1778,6 +1778,7 @@ const Pages = {
           <div style="display:flex;gap:4px">
             <button class="btn btn-ghost btn-xs" onclick="Pages['members-mgmt'].editModal('${m.id}')">✏️</button>
             <button class="btn btn-${m.active?'warning':'success'} btn-xs" onclick="Pages['members-mgmt'].toggleActive('${m.id}',${m.active})">${m.active?'تعطيل':'تفعيل'}</button>
+            <button class="btn btn-danger btn-xs" onclick="App.deleteItem('members', '${m.id}', 'members-mgmt')" title="حذف العضو نهائياً">🗑️</button>
           </div>
         </td>
       </tr>`;

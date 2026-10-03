@@ -420,6 +420,7 @@ textarea{resize:vertical;min-height:80px}
       <div class="nav-item active hr-only" data-s="hr-dashboard"><span class="icon">🏠</span><span>لوحة التحكم</span></div>
       <div class="nav-item hr-only" data-s="hr-evaluate"><span class="icon">📝</span><span>تقييم الأعضاء</span></div>
       <div class="nav-item hr-only" data-s="hr-history"><span class="icon">📋</span><span>سجل التقييمات</span></div>
+      <div class="nav-item hr-only" data-s="hr-comments"><span class="icon">💬</span><span>التعليقات</span></div>
       <div class="nav-sep hr-only"></div>
 
       <!-- Admin/Head nav items -->
@@ -470,6 +471,7 @@ textarea{resize:vertical;min-height:80px}
       <div id="pg-hr-dashboard"    class="page active"></div>
       <div id="pg-hr-evaluate"     class="page"></div>
       <div id="pg-hr-history"      class="page"></div>
+      <div id="pg-hr-comments" class="page"></div>
       <!-- Admin/Head Pages -->
       <div id="pg-admin-dashboard" class="page"></div>
       <div id="pg-members-mgmt"    class="page"></div>
@@ -697,6 +699,20 @@ const App = {
     this.setSection(defaultSection);
   },
 
+  async deleteItem(collection, id, refreshPage) {
+    if(!await Modal.open('تأكيد الحذف', 'هل أنت متأكد من حذف هذا العنصر؟ لا يمكن التراجع.', 'حذف', true)) return;
+    try { await FS.del(collection, id); Toast.show('تم الحذف', 'success'); Pages[refreshPage].load(document.getElementById('pg-'+refreshPage)); } 
+    catch(e) { Toast.show('خطأ: ' + e.message, 'error'); }
+  },
+  async deleteAll(collection, refreshPage) {
+    if(!await Modal.open('حذف الكل', '⚠️ هل أنت متأكد من حذف <b>جميع</b> العناصر في هذا القسم؟ لا يمكن التراجع أبداً!', 'حذف الكل', true)) return;
+    try {
+      const all = await FS.list(collection);
+      for(const item of all) await FS.del(collection, item.id);
+      Toast.show('تم حذف الكل', 'success');
+      Pages[refreshPage].load(document.getElementById('pg-'+refreshPage));
+    } catch(e) { Toast.show('خطأ: ' + e.message, 'error'); }
+  },
   setSection(s) {
     this.cur = s;
     document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
@@ -708,6 +724,7 @@ const App = {
       'hr-dashboard': 'لوحة تحكم الـ HR',
       'hr-evaluate': 'تقييم الأعضاء',
       'hr-history': 'سجل التقييمات',
+      'hr-comments': 'التعليقات المباشرة',
       'admin-dashboard': 'لوحة الإدارة',
       'members-mgmt': 'إدارة الأعضاء',
       'hr-mgmt': 'إدارة الـ HR',
@@ -819,10 +836,12 @@ const MockFunctions = {
   createHRUser: async (data) => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     await FS.add('users', { name: data.name, role: data.role, headId: data.headId, code: code, active: true });
+    return { accessCode: code };
   },
   rotateAccessCode: async (data) => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     await FS.update('users', data.uid, { code: code });
+    return { accessCode: code };
   },
   disableAccessCode: async (data) => {
     await FS.update('users', data.uid, { active: false });
@@ -1642,9 +1661,7 @@ const Pages = {
       pg.innerHTML = `
         <div class="sec-head">
           <h2>👥 الأعضاء</h2>
-          <div class="actions">
-            <button class="btn btn-primary" onclick="Pages['members-mgmt'].addModal()">+ إضافة عضو</button>
-          </div>
+          <div class="actions"><button class="btn btn-danger" onclick="App.deleteAll('members', 'members-mgmt')">🗑️ حذف الكل</button><button class="btn btn-primary" onclick="Pages['members-mgmt'].addModal()">+ إضافة عضو</button></div>
         </div>
         <div class="filters">
           <input id="member-search" placeholder="بحث..." oninput="Pages['members-mgmt'].filter()" style="max-width:200px">
@@ -1762,6 +1779,70 @@ const Pages = {
     }
   },
 
+  /* ─── HR Comments ─── */
+  'hr-comments': {
+    async load(pg) {
+      pg.innerHTML = `<div class="loading-msg"><span class="spin"></span></div>`;
+      const comments = await FS.list('comments', ['orderBy', 'timestamp', 'desc']);
+      
+      let html = `
+        <div class="sec-head">
+          <h2>💬 التعليقات والملاحظات</h2>
+          <div class="actions">
+             <button class="btn btn-primary" onclick="Pages['hr-comments'].addModal()">+ إضافة تعليق</button>
+             <button class="btn btn-ghost" onclick="Pages['hr-comments'].load(document.getElementById('pg-hr-comments'))">🔄 تحديث</button>
+          </div>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+      `;
+      
+      if(comments.length === 0) {
+        html += `<div class="empty"><span class="ico">📭</span><p>لا توجد تعليقات حتى الآن</p></div>`;
+      } else {
+        for(const c of comments) {
+          html += `
+            <div style="background:var(--surface2);padding:16px;border-radius:12px;border:1px solid var(--border);">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div>
+                  <strong style="color:var(--primary);font-size:1rem;">${encStr(c.senderName)}</strong>
+                  <span class="badge badge-muted" style="margin-right:8px;">لجنة: ${encStr(c.committee)}</span>
+                </div>
+                <div style="font-size:0.75rem;color:var(--dim);">${fmtDatetime(c.timestamp)}</div>
+              </div>
+              <p style="color:var(--text);line-height:1.6;white-space:pre-wrap;">${encStr(c.content)}</p>
+              ${HRAuth.isSuperAdmin() || HRAuth.uid === c.senderId ? `<div style="text-align:left;margin-top:8px;"><button class="btn btn-danger btn-xs" onclick="App.deleteItem('comments', '${c.id}', 'hr-comments')">🗑️ حذف</button></div>` : ''}
+            </div>
+          `;
+        }
+      }
+      
+      html += `</div>`;
+      pg.innerHTML = html;
+    },
+    async addModal() {
+      const ok = await Modal.open('+ إضافة تعليق جديد', `
+        <div class="form-group"><label>اللجنة التي تتبع لها</label><input id="c-committee" placeholder="مثال: PR, IT, Logistics..."></div>
+        <div class="form-group"><label>التعليق / الملاحظة</label><textarea id="c-content" placeholder="اكتب تعليقك هنا..." style="height:120px"></textarea></div>
+      `, 'إرسال التعليق');
+      if (!ok) return;
+      const committee = document.getElementById('c-committee').value.trim();
+      const content = document.getElementById('c-content').value.trim();
+      if (!content || !committee) { Toast.show('يرجى تعبئة جميع الحقول', 'error'); return; }
+      
+      try {
+        await FS.add('comments', {
+          senderId: HRAuth.uid,
+          senderName: HRAuth.name,
+          committee: committee,
+          content: content,
+          timestamp: FS.ts()
+        });
+        Toast.show('تم إضافة التعليق بنجاح', 'success');
+        this.load(document.getElementById('pg-hr-comments'));
+      } catch(e) { Toast.show('فشل: ' + e.message, 'error'); }
+    }
+  },
+
   /* ─── HR Management ─── */
   'hr-mgmt': {
     async load(pg) {
@@ -1774,7 +1855,7 @@ const Pages = {
       pg.innerHTML = `
         <div class="sec-head">
           <h2>🧑‍💼 إدارة الـ HR</h2>
-          ${HRAuth.isSuperAdmin() ? '<div class="actions"><button class="btn btn-primary" onclick="Pages[\'hr-mgmt\'].addModal()">+ إضافة HR</button></div>' : ''}
+          ${HRAuth.isSuperAdmin() ? '<div class="actions"><button class="btn btn-danger" onclick="App.deleteAll(\'users\', \'hr-mgmt\')">🗑️ حذف الكل</button><button class="btn btn-primary" onclick="Pages[\'hr-mgmt\'].addModal()">+ إضافة HR</button></div>' : ''}
         </div>
         <div class="card tbl-wrap">
           <table>
@@ -1789,7 +1870,7 @@ const Pages = {
                     ${HRAuth.isSuperAdmin() ? `
                     <div style="display:flex;gap:4px">
                       <button class="btn btn-ghost btn-xs" onclick="Pages['hr-mgmt'].manageCode('${hr.id}','${encStr(hr.name)}')">🔑 الكود</button>
-                      <button class="btn btn-${hr.active !== false ? 'warning' : 'success'} btn-xs" onclick="Pages['hr-mgmt'].toggleActive('${hr.id}',${hr.active !== false})">${hr.active !== false ? 'تعطيل' : 'تفعيل'}</button>
+                      <button class="btn btn-${hr.active !== false ? 'warning' : 'success'} btn-xs" onclick="Pages['hr-mgmt'].toggleActive('${hr.id}',${hr.active !== false})">${hr.active !== false ? 'تعطيل' : 'تفعيل'}</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('users', '${hr.id}', 'hr-mgmt')">🗑️</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('users', '${hr.id}', 'hr-mgmt')">🗑️</button>
                     </div>` : '—'}
                   </td>
                 </tr>`).join('')}
@@ -1894,9 +1975,7 @@ const Pages = {
       pg.innerHTML = `
         <div class="sec-head">
           <h2>🔗 التعيينات</h2>
-          <div class="actions">
-            <button class="btn btn-ghost btn-sm" onclick="Pages['assignments'].load(document.getElementById('pg-assignments'))">🔄 تحديث</button>
-          </div>
+          <div class="actions"><button class="btn btn-danger btn-sm" onclick="App.deleteAll('assignments', 'assignments')">🗑️ حذف الكل</button><button class="btn btn-ghost btn-sm" onclick="Pages['assignments'].load(document.getElementById('pg-assignments'))">🔄 تحديث</button></div>
         </div>
         <div class="card" style="margin-bottom:20px">
           <div style="font-weight:700;margin-bottom:12px">نقل جماعي</div>
@@ -2209,7 +2288,7 @@ const Pages = {
                 <td>${c.active !== false ? '<span class="badge badge-success">نشط</span>' : '<span class="badge badge-muted">معطّل</span>'}</td>
                 <td>
                   <div style="display:flex;gap:4px">
-                    <button class="btn btn-ghost btn-xs" onclick="Pages['criteria'].editModal('${c.id}')">✏️</button>
+                    <button class="btn btn-ghost btn-xs" onclick="Pages['criteria'].editModal('${c.id}')">✏️</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('criteria', '${c.id}', 'criteria')">🗑️</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('criteria', '${c.id}', 'criteria')">🗑️</button>
                     <button class="btn btn-${c.active!==false?'warning':'success'} btn-xs" onclick="Pages['criteria'].toggle('${c.id}',${c.active!==false})">${c.active!==false?'تعطيل':'تفعيل'}</button>
                   </div>
                 </td>
@@ -2422,7 +2501,7 @@ const Pages = {
                   <td>${r.active !== false ? '<span class="badge badge-success">نشطة</span>' : '<span class="badge badge-muted">معطّلة</span>'}</td>
                   <td>
                     <div style="display:flex;gap:4px">
-                      <button class="btn btn-ghost btn-xs" onclick="Pages['penalty-rules'].editModal('${r.id}')">✏️</button>
+                      <button class="btn btn-ghost btn-xs" onclick="Pages['penalty-rules'].editModal('${r.id}')">✏️</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('penaltyRules', '${r.id}', 'penalty-rules')">🗑️</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('penaltyRules', '${r.id}', 'penalty-rules')">🗑️</button>
                       <button class="btn btn-${r.active!==false?'warning':'success'} btn-xs" onclick="Pages['bonus-rules'].toggle('${r.id}',${r.active!==false},'penaltyRules')">${r.active!==false?'تعطيل':'تفعيل'}</button>
                     </div>
                   </td>

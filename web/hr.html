@@ -773,6 +773,7 @@ const FS = {
       if (c[0] === 'where') {
         arr = arr.filter(item => {
           if (c[2] === '==') return item[c[1]] === c[3];
+          if (c[2] === '!=') return item[c[1]] !== c[3];
           if (c[2] === 'in') return c[3].includes(item[c[1]]);
           if (c[2] === 'array-contains') return Array.isArray(item[c[1]]) && item[c[1]].includes(c[3]);
           return true;
@@ -949,13 +950,15 @@ const Pages = {
       const cycles = await FS.list('cycles', ['where', 'status', '==', 'Active'], ['limit', 1]);
       const cycle = cycles[0] || null;
 
-      // Get my members
-      const members = await FS.list('members', ['where', 'assignedHrId', '==', uid], ['where', 'active', '!=', false]);
+      // Get my members (Super Admin sees all)
+      const membersQ = HRAuth.isSuperAdmin() ? [['where', 'active', '!=', false]] : [['where', 'assignedHrId', '==', uid], ['where', 'active', '!=', false]];
+      const members = await FS.list('members', ...membersQ);
 
       // Get evaluations in current cycle
       let evals = [];
       if (cycle) {
-        evals = await FS.list('evaluations', ['where', 'hrId', '==', uid], ['where', 'cycleId', '==', cycle.id]);
+        const evalsQ = HRAuth.isSuperAdmin() ? [['where', 'cycleId', '==', cycle.id]] : [['where', 'hrId', '==', uid], ['where', 'cycleId', '==', cycle.id]];
+        evals = await FS.list('evaluations', ...evalsQ);
       }
 
       const submitted = evals.filter(e => e.status === 'submitted').length;
@@ -1058,8 +1061,11 @@ const Pages = {
         pg.innerHTML = `<div class="empty"><span class="ico">💤</span><p>لا توجد دورة تقييم نشطة.</p></div>`;
         return;
       }
-      const members = await FS.list('members', ['where', 'assignedHrId', '==', uid], ['where', 'active', '!=', false]);
-      const evals = await FS.list('evaluations', ['where', 'hrId', '==', uid], ['where', 'cycleId', '==', cycle.id]);
+      const membersQ = HRAuth.isSuperAdmin() ? [['where', 'active', '!=', false]] : [['where', 'assignedHrId', '==', uid], ['where', 'active', '!=', false]];
+      const members = await FS.list('members', ...membersQ);
+      
+      const evalsQ = HRAuth.isSuperAdmin() ? [['where', 'cycleId', '==', cycle.id]] : [['where', 'hrId', '==', uid], ['where', 'cycleId', '==', cycle.id]];
+      const evals = await FS.list('evaluations', ...evalsQ);
 
       pg.innerHTML = `
         <div class="sec-head">

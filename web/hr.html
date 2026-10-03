@@ -635,7 +635,7 @@ const HRAuth = {
       if (!user) throw new Error('INVALID_CODE');
       if (user.active === false) throw new Error('DISABLED');
       this.currentUser = { uid: user.uid, role: user.role, name: user.name, headId: user.headId };
-      localStorage.setItem('hr_session', JSON.stringify(this.currentUser));
+      sessionStorage.setItem('hr_session', JSON.stringify(this.currentUser));
       await this._onSignedIn();
     } catch(e) {
       console.error(e);
@@ -651,7 +651,7 @@ const HRAuth = {
     App.initAfterAuth();
   },
   logout() {
-    localStorage.removeItem('hr_session');
+    sessionStorage.removeItem('hr_session');
     location.reload();
   },
   get role() { return this.currentUser?.role || 'hr'; },
@@ -2945,7 +2945,7 @@ document.head.appendChild(style);
 document.addEventListener('DOMContentLoaded', async () => {
   const ok = initFirebase();
   if (!ok) return;
-  const session = localStorage.getItem('hr_session');
+  const session = sessionStorage.getItem('hr_session');
   if (session) {
     HRAuth.currentUser = JSON.parse(session);
     document.getElementById('app').classList.add('show');

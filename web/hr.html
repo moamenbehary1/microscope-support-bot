@@ -812,19 +812,55 @@ const MockFunctions = {
   signInWithCode: async () => {},
   saveEvaluationDraft: async (data) => {
     data.status = 'draft';
+    data.id = `${data.cycleId}_${data.memberId}`;
+    data.hrId = HRAuth.uid;
+    data.hrName = HRAuth.name;
+    const member = await FS.get('members', data.memberId);
+    data.memberName = member?.name || 'Unknown';
     await FS.set('evaluations', data.id, data);
     return { id: data.id };
   },
   submitEvaluation: async (data) => {
     data.status = 'submitted';
     data.submittedAt = FS.now();
-    await FS.update('evaluations', data.evalId, data);
+    data.id = `${data.cycleId}_${data.memberId}`;
+    data.hrId = HRAuth.uid;
+    data.hrName = HRAuth.name;
+    const member = await FS.get('members', data.memberId);
+    data.memberName = member?.name || 'Unknown';
+    data.committee = member?.committee || '';
+    
+    // Compute scores breakdown
+    let criteriaTotal = 0;
+    (data.criteriaResults || []).forEach(cr => { 
+      // For rating mode, score may not be set yet — compute from ratingMap
+      const score = cr.score ?? 0;
+      cr.score = score;
+      criteriaTotal += score;
+    });
+    const bonusTotal = (data.bonusApplied || []).reduce((s, b) => s + b.points * b.count, 0);
+    const penaltyTotal = (data.penaltyApplied || []).reduce((s, p) => s + p.points * p.count, 0);
+    data.criteriaTotal = criteriaTotal;
+    data.bonusTotal = bonusTotal;
+    data.penaltyTotal = penaltyTotal;
+    data.finalScore = Math.max(0, criteriaTotal + bonusTotal - penaltyTotal);
+    
+    // Determine performance level
+    const cycle = await FS.get('cycles', data.cycleId);
+    const levels = (cycle?.configSnapshot?.levels || []).sort((a, b) => b.minScore - a.minScore);
+    const level = levels.find(l => data.finalScore >= l.minScore);
+    if (level) { data.levelName = level.name; data.levelColor = level.color || ''; }
+
+    await FS.update('evaluations', data.id, data);
     return { success: true };
   },
   requestEvalReopen: async (data) => {
+    // support both evalId and evaluationId
+    const eid = data.evalId || data.evaluationId;
+    const parts = eid ? eid.split('_') : [];
     await FS.add('reopenRequests', {
-      evalId: data.evalId, memberId: data.memberId, cycleId: data.cycleId,
-      hrId: HRAuth.uid, hrName: HRAuth.name, reason: data.reason, status: 'pending', timestamp: FS.now()
+      evalId: eid, memberId: data.memberId || parts[1] || '', cycleId: data.cycleId || parts[0] || '',
+      hrId: HRAuth.uid, hrName: HRAuth.name, reason: data.reason, status: 'pending', createdAt: FS.now()
     });
     return { success: true };
   },
@@ -857,12 +893,22 @@ const MockFunctions = {
   },
   assignMember: async (data) => {
     const ts = FS.now();
-    await FS.add('assignments', { hrId: data.hrId, memberId: data.memberId, timestamp: ts });
-    await FS.update('members', data.memberId, { assignedHrId: data.hrId });
+    // support both hrId and newHrId
+    const hrId = data.hrId || data.newHrId;
+    await FS.add('assignments', { hrId, memberId: data.memberId, timestamp: ts });
+    await FS.update('members', data.memberId, { assignedHrId: hrId, headId: data.headId || data.newHeadId || '' });
   },
   bulkAssign: async (data) => {
-    for (const memId of data.memberIds) {
-      await MockFunctions.assignMember({ hrId: data.hrId, memberId: memId });
+    // support { fromHrId, toHrId } bulk transfer
+    if (data.fromHrId && data.toHrId) {
+      const members = await FS.list('members', ['where', 'assignedHrId', '==', data.fromHrId]);
+      for (const m of members) {
+        await MockFunctions.assignMember({ hrId: data.toHrId, memberId: m.id });
+      }
+    } else if (data.memberIds) {
+      for (const memId of data.memberIds) {
+        await MockFunctions.assignMember({ hrId: data.hrId, memberId: memId });
+      }
     }
   },
   activateCycle: async (data) => {
@@ -872,6 +918,8 @@ const MockFunctions = {
     const criteria = await FS.list('criteria', ['orderBy', 'order']);
     const bonusRules = await FS.list('bonusRules');
     const penaltyRules = await FS.list('penaltyRules');
+    const settingsDoc = await FS.get('settings', 'performanceLevels');
+    const levels = settingsDoc?.levels || [];
     let maxScore = 0;
     criteria.forEach(c => maxScore += (c.maxScore || 0));
 
@@ -879,18 +927,24 @@ const MockFunctions = {
       criteria: criteria,
       bonusRules: bonusRules,
       penaltyRules: penaltyRules,
+      levels: levels,
       maxScore: maxScore
     };
     
     await FS.update('cycles', data.cycleId, { status: 'Active', configSnapshot, snapshotAt: FS.now() });
   },
   reopenEvaluation: async (data) => {
-    await FS.update('evaluations', data.evalId, { status: 'reopened' });
+    // support both evalId and evaluationId
+    const eid = data.evalId || data.evaluationId;
+    await FS.update('evaluations', eid, { status: 'reopened' });
   },
   decideReopenRequest: async (data) => {
-    await FS.update('reopenRequests', data.reqId, { status: data.approved ? 'approved' : 'rejected' });
-    if (data.approved) {
-      const req = await FS.get('reopenRequests', data.reqId);
+    // support both reqId/requestId and approved/decision
+    const reqId = data.reqId || data.requestId;
+    const approved = data.approved !== undefined ? data.approved : (data.decision === 'approved');
+    await FS.update('reopenRequests', reqId, { status: approved ? 'approved' : 'rejected' });
+    if (approved) {
+      const req = await FS.get('reopenRequests', reqId);
       await FS.update('evaluations', req.evalId, { status: 'reopened' });
     }
   },
@@ -1898,7 +1952,7 @@ const Pages = {
                     ${HRAuth.isSuperAdmin() ? `
                     <div style="display:flex;gap:4px">
                       <button class="btn btn-ghost btn-xs" onclick="Pages['hr-mgmt'].manageCode('${hr.id}','${encStr(hr.name)}')">🔑 الكود</button>
-                      <button class="btn btn-${hr.active !== false ? 'warning' : 'success'} btn-xs" onclick="Pages['hr-mgmt'].toggleActive('${hr.id}',${hr.active !== false})">${hr.active !== false ? 'تعطيل' : 'تفعيل'}</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('users', '${hr.id}', 'hr-mgmt')">🗑️</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('users', '${hr.id}', 'hr-mgmt')">🗑️</button>
+                      <button class="btn btn-${hr.active !== false ? 'warning' : 'success'} btn-xs" onclick="Pages['hr-mgmt'].toggleActive('${hr.id}',${hr.active !== false})">${hr.active !== false ? 'تعطيل' : 'تفعيل'}</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('users', '${hr.id}', 'hr-mgmt')">🗑️</button>
                     </div>` : '—'}
                   </td>
                 </tr>`).join('')}
@@ -2316,7 +2370,7 @@ const Pages = {
                 <td>${c.active !== false ? '<span class="badge badge-success">نشط</span>' : '<span class="badge badge-muted">معطّل</span>'}</td>
                 <td>
                   <div style="display:flex;gap:4px">
-                    <button class="btn btn-ghost btn-xs" onclick="Pages['criteria'].editModal('${c.id}')">✏️</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('criteria', '${c.id}', 'criteria')">🗑️</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('criteria', '${c.id}', 'criteria')">🗑️</button>
+                    <button class="btn btn-ghost btn-xs" onclick="Pages['criteria'].editModal('${c.id}')">✏️</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('criteria', '${c.id}', 'criteria')">🗑️</button>
                     <button class="btn btn-${c.active!==false?'warning':'success'} btn-xs" onclick="Pages['criteria'].toggle('${c.id}',${c.active!==false})">${c.active!==false?'تعطيل':'تفعيل'}</button>
                   </div>
                 </td>
@@ -2529,7 +2583,7 @@ const Pages = {
                   <td>${r.active !== false ? '<span class="badge badge-success">نشطة</span>' : '<span class="badge badge-muted">معطّلة</span>'}</td>
                   <td>
                     <div style="display:flex;gap:4px">
-                      <button class="btn btn-ghost btn-xs" onclick="Pages['penalty-rules'].editModal('${r.id}')">✏️</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('penaltyRules', '${r.id}', 'penalty-rules')">🗑️</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('penaltyRules', '${r.id}', 'penalty-rules')">🗑️</button>
+                      <button class="btn btn-ghost btn-xs" onclick="Pages['penalty-rules'].editModal('${r.id}')">✏️</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('penaltyRules', '${r.id}', 'penalty-rules')">🗑️</button>
                       <button class="btn btn-${r.active!==false?'warning':'success'} btn-xs" onclick="Pages['bonus-rules'].toggle('${r.id}',${r.active!==false},'penaltyRules')">${r.active!==false?'تعطيل':'تفعيل'}</button>
                     </div>
                   </td>
@@ -2701,7 +2755,7 @@ const Pages = {
       // By HR
       const byHR = {};
       filtered.forEach(e => {
-        if (!byHR[e.hrId]) byHR[e.hrId] = { scores: [], hrName: e.hrId };
+        if (!byHR[e.hrId]) byHR[e.hrId] = { scores: [], hrName: e.hrName || e.hrId };
         byHR[e.hrId].scores.push(e.finalScore || 0);
       });
       const hrAvgs = Object.values(byHR).map(h => ({

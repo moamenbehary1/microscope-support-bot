@@ -362,7 +362,10 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
     // Serve the HR Evaluation module
     final hrFile = File('web/hr.html');
     if (await hrFile.exists()) {
-      final html = await hrFile.readAsString();
+      String html = await hrFile.readAsString();
+      html = html
+          .replaceFirst('{{FB_URL}}', Config.firebaseDatabaseUrl)
+          .replaceFirst('{{FB_SECRET}}', Config.firebaseSecret);
       req.response
         ..statusCode = 200
         ..headers.contentType = ContentType.html

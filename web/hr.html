@@ -6,10 +6,6 @@
 <title>🏢 نظام تقييم HR — Microscope</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
 <style>
 /* ── Reset ── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -516,55 +512,45 @@ textarea{resize:vertical;min-height:80px}
 /* ═══════════════════════════════════════════════
    Firebase Config — reads from injected server vars or localStorage
 ═══════════════════════════════════════════════ */
-const FIREBASE_CONFIG = {
-  // These should be set to your actual Firebase project config.
-  // They are PUBLIC client config, NOT secrets. Safe in frontend.
-  apiKey:            "{{FB_API_KEY}}",
-  authDomain:        "{{FB_AUTH_DOMAIN}}",
-  projectId:         "{{FB_PROJECT_ID}}",
-  storageBucket:     "{{FB_STORAGE_BUCKET}}",
-  messagingSenderId: "{{FB_MESSAGING_SENDER_ID}}",
-  appId:             "{{FB_APP_ID}}"
+const FB = {
+  url: '{{FB_URL}}',
+  secret: '{{FB_SECRET}}',
+  async get(path) {
+    const res = await fetch(`${this.url}${path}.json?auth=${this.secret}`);
+    return res.json();
+  },
+  async set(path, data) {
+    const res = await fetch(`${this.url}${path}.json?auth=${this.secret}`, {
+      method: 'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)
+    });
+    return res.json();
+  },
+  async update(path, data) {
+    const res = await fetch(`${this.url}${path}.json?auth=${this.secret}`, {
+      method: 'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)
+    });
+    return res.json();
+  },
+  async push(path, data) {
+    const res = await fetch(`${this.url}${path}.json?auth=${this.secret}`, {
+      method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)
+    });
+    return res.json();
+  },
+  async del(path) {
+    await fetch(`${this.url}${path}.json?auth=${this.secret}`, { method: 'DELETE' });
+  }
 };
 
-// Fallback: read from localStorage (set by admin panel setup)
-function getFirebaseConfig() {
-  const injected = Object.entries(FIREBASE_CONFIG).every(([k,v]) => !v.startsWith('{{'));
-  if (injected) return FIREBASE_CONFIG;
-  // try localStorage fallback
-  const stored = {};
-  const keys = ['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'];
-  keys.forEach(k => { const v = localStorage.getItem('hr_fb_' + k); if(v) stored[k] = v; });
-  if (stored.apiKey) return stored;
-  return FIREBASE_CONFIG; // will fail, user sees config prompt
-}
-
-let firebaseApp, auth, db, functions;
-
 function initFirebase() {
-  const cfg = getFirebaseConfig();
-  if (!cfg.apiKey || cfg.apiKey.startsWith('{{')) {
-    showFirebaseSetup();
+  if (FB.url.startsWith('{{') || FB.secret.startsWith('{{')) {
+    document.getElementById('auth-screen').classList.add('show');
+    document.getElementById('auth-err').textContent = '⚙️ يرجى إعداد الـ Secret من الـ Backend أولاً.';
     return false;
   }
-  try {
-    firebaseApp = firebase.initializeApp(cfg);
-    auth = firebase.auth();
-    db = firebase.firestore();
-    functions = firebase.functions();
-    // Use emulators in dev if needed:
-    // functions.useEmulator('localhost', 5001);
-    return true;
-  } catch(e) {
-    console.error('Firebase init error:', e);
-    return false;
-  }
+  return true;
 }
 
-function showFirebaseSetup() {
-  document.getElementById('auth-screen').classList.add('show');
-  document.getElementById('auth-err').textContent = '⚙️ يرجى إعداد Firebase أولاً. تواصل مع الأدمن لإعداد النظام.';
-}
 
 /* ═══════════════════════════════════════════════
    Toast & Modal
@@ -620,80 +606,59 @@ document.getElementById('overlay').addEventListener('click', e => {
    HR Auth — Access Code via Cloud Function
 ═══════════════════════════════════════════════ */
 const HRAuth = {
-  currentUser: null,   // { uid, role, name, headId? }
-  _superAdminIds: [],  // Telegram Admin IDs that map to superAdmin in HR
-
+  currentUser: null,
   async login() {
     const input = document.getElementById('code-input');
     const errEl = document.getElementById('auth-err');
     const btn   = document.getElementById('auth-btn');
-    const code  = input.value.trim();
-
+    const code  = input.value.trim().toUpperCase();
     if (!code) { errEl.textContent = '⚠️ أدخل رمز الوصول.'; return; }
-
     btn.disabled = true;
     btn.textContent = 'جاري التحقق...';
     errEl.textContent = '';
-
     try {
-      // Call Cloud Function to verify code and get custom token
-      const signIn = functions.httpsCallable('signInWithCode');
-      const result = await signIn({ code });
-      const { customToken, uid, role, name, headId } = result.data;
-
-      // Sign in with custom token
-      await auth.signInWithCustomToken(customToken);
-
-      this.currentUser = { uid, role, name, headId };
+      const users = await FB.get('/hr_users') || {};
+      let user = null;
+      for (const uid in users) {
+        if (users[uid].codeHash === code || users[uid].code === code) {
+          user = { uid, ...users[uid] };
+          break;
+        }
+      }
+      if (!user && Object.keys(users).length === 0) {
+        const uid = 'usr_' + Date.now();
+        user = { uid, name: 'Super Admin', role: 'superAdmin', active: true, code: code };
+        await FB.set('/hr_users/' + uid, user);
+      }
+      if (!user) throw new Error('INVALID_CODE');
+      if (user.active === false) throw new Error('DISABLED');
+      this.currentUser = { uid: user.uid, role: user.role, name: user.name, headId: user.headId };
+      localStorage.setItem('hr_session', JSON.stringify(this.currentUser));
       await this._onSignedIn();
     } catch(e) {
-      console.error('Login error:', e);
-      const msg = e.message || '';
-      if (msg.includes('invalid') || msg.includes('wrong') || msg.includes('INVALID_CODE')) {
-        errEl.textContent = '❌ رمز الوصول غير صحيح.';
-      } else if (msg.includes('locked') || msg.includes('LOCKED')) {
-        errEl.textContent = '🔒 تم قفل حسابك مؤقتًا، حاول لاحقًا.';
-      } else if (msg.includes('disabled') || msg.includes('DISABLED')) {
-        errEl.textContent = '❌ هذا الحساب معطّل، تواصل مع الأدمن.';
-      } else {
-        errEl.textContent = '❌ خطأ: ' + msg;
-      }
+      console.error(e);
+      errEl.textContent = '❌ رمز الوصول غير صحيح.';
     } finally {
       btn.disabled = false;
       btn.textContent = '🔑 دخول النظام';
     }
   },
-
   async _onSignedIn() {
     document.getElementById('auth-screen').classList.remove('show');
     document.getElementById('app').classList.add('show');
-
-    // Load user profile from Firestore
-    if (!this.currentUser) {
-      const user = auth.currentUser;
-      if (!user) { this.logout(); return; }
-      const snap = await db.collection('users').doc(user.uid).get();
-      if (snap.exists) {
-        const d = snap.data();
-        this.currentUser = { uid: user.uid, role: d.role, name: d.name, headId: d.headId };
-      }
-    }
-
     App.initAfterAuth();
   },
-
   logout() {
-    auth.signOut().then(() => location.reload());
+    localStorage.removeItem('hr_session');
+    location.reload();
   },
-
   get role() { return this.currentUser?.role || 'hr'; },
-  get uid()  { return this.currentUser?.uid || auth.currentUser?.uid; },
+  get uid()  { return this.currentUser?.uid; },
   get name() { return this.currentUser?.name || 'مستخدم'; },
   isSuperAdmin() { return this.role === 'superAdmin'; },
   isHead()       { return this.role === 'head' || this.role === 'superAdmin'; },
   isHR()         { return ['hr','head','superAdmin'].includes(this.role); },
 };
-
 /* ═══════════════════════════════════════════════
    App Controller
 ═══════════════════════════════════════════════ */
@@ -781,30 +746,125 @@ const App = {
 ═══════════════════════════════════════════════ */
 const FS = {
   async get(collection, id) {
-    const snap = await db.collection(collection).doc(id).get();
-    return snap.exists ? { id: snap.id, ...snap.data() } : null;
+    const data = await FB.get(`/hr_${collection}/${id}`);
+    return data ? { id, ...data } : null;
   },
   async list(collection, ...constraints) {
-    let q = db.collection(collection);
-    constraints.forEach(c => { q = q[c[0]](...c.slice(1)); });
-    const snap = await q.get();
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const data = await FB.get(`/hr_${collection}`) || {};
+    let arr = Object.keys(data).map(k => ({ id: k, ...data[k] }));
+    for (const c of constraints) {
+      if (c[0] === 'where') {
+        arr = arr.filter(item => {
+          if (c[2] === '==') return item[c[1]] === c[3];
+          if (c[2] === 'in') return c[3].includes(item[c[1]]);
+          if (c[2] === 'array-contains') return Array.isArray(item[c[1]]) && item[c[1]].includes(c[3]);
+          return true;
+        });
+      } else if (c[0] === 'orderBy') {
+        arr.sort((a,b) => {
+          const va = a[c[1]] || 0; const vb = b[c[1]] || 0;
+          return c[2] === 'desc' ? (vb > va ? 1 : -1) : (va > vb ? 1 : -1);
+        });
+      } else if (c[0] === 'limit') {
+        arr = arr.slice(0, c[1]);
+      }
+    }
+    return arr;
   },
   async add(collection, data) {
-    const ref = await db.collection(collection).add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-    return ref.id;
+    data.createdAt = new Date().toISOString();
+    const res = await FB.push(`/hr_${collection}`, data);
+    return res.name;
   },
   async set(collection, id, data) {
-    await db.collection(collection).doc(id).set(data, { merge: true });
+    await FB.update(`/hr_${collection}/${id}`, data);
   },
   async update(collection, id, data) {
-    await db.collection(collection).doc(id).update({ ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    data.updatedAt = new Date().toISOString();
+    await FB.update(`/hr_${collection}/${id}`, data);
   },
   async del(collection, id) {
-    await db.collection(collection).doc(id).delete();
+    await FB.del(`/hr_${collection}/${id}`);
   },
-  ts() { return firebase.firestore.FieldValue.serverTimestamp(); },
+  ts() { return new Date().toISOString(); },
   now() { return new Date().toISOString(); },
+};
+
+const MockFunctions = {
+  signInWithCode: async () => {},
+  saveEvaluationDraft: async (data) => {
+    data.status = 'draft';
+    await FS.set('evaluations', data.id, data);
+    return { id: data.id };
+  },
+  submitEvaluation: async (data) => {
+    data.status = 'submitted';
+    data.submittedAt = FS.now();
+    await FS.update('evaluations', data.evalId, data);
+    return { success: true };
+  },
+  requestEvalReopen: async (data) => {
+    await FS.add('reopenRequests', {
+      evalId: data.evalId, memberId: data.memberId, cycleId: data.cycleId,
+      hrId: HRAuth.uid, hrName: HRAuth.name, reason: data.reason, status: 'pending', timestamp: FS.now()
+    });
+    return { success: true };
+  },
+  addMember: async (data) => {
+    await FS.add('members', {
+      telegramId: data.telegramId, name: data.name, university: data.university,
+      team: data.team, subTeam: data.subTeam || null, status: data.status
+    });
+  },
+  createHRUser: async (data) => {
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    await FS.add('users', { name: data.name, role: data.role, headId: data.headId, code: code, active: true });
+  },
+  rotateAccessCode: async (data) => {
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    await FS.update('users', data.uid, { code: code });
+  },
+  disableAccessCode: async (data) => {
+    await FS.update('users', data.uid, { active: false });
+  },
+  assignMember: async (data) => {
+    const ts = FS.now();
+    await FS.add('assignments', { hrId: data.hrId, memberId: data.memberId, timestamp: ts });
+    await FS.update('members', data.memberId, { assignedHrId: data.hrId });
+  },
+  bulkAssign: async (data) => {
+    for (const memId of data.memberIds) {
+      await MockFunctions.assignMember({ hrId: data.hrId, memberId: memId });
+    }
+  },
+  activateCycle: async (data) => {
+    const cycles = await FS.list('cycles', ['where', 'status', '==', 'Active']);
+    for (const c of cycles) await FS.update('cycles', c.id, { status: 'Closed' });
+    await FS.update('cycles', data.cycleId, { status: 'Active' });
+  },
+  reopenEvaluation: async (data) => {
+    await FS.update('evaluations', data.evalId, { status: 'reopened' });
+  },
+  decideReopenRequest: async (data) => {
+    await FS.update('reopenRequests', data.reqId, { status: data.approved ? 'approved' : 'rejected' });
+    if (data.approved) {
+      const req = await FS.get('reopenRequests', data.reqId);
+      await FS.update('evaluations', req.evalId, { status: 'reopened' });
+    }
+  },
+  getGoogleOAuthUrl: async () => { return { url: 'data:text/html,<html><body><script>window.opener.postMessage({type:\'GOOGLE_OAUTH_CODE\', code:\'local_export\'}, \'*\');<\/script></body></html>' }; },
+  exportToSheets: async (data) => { 
+    const evals = await FS.list('evaluations', ['where', 'cycleId', '==', data.cycleId]);
+    let csv = "Member,HR,Final Score,Status\n";
+    evals.forEach(e => csv += `${e.memberName},${e.hrName},${e.finalScore||0},${e.status}\n`);
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    return { sheetUrl: URL.createObjectURL(blob) };
+  }
+};
+const functions = {
+  httpsCallable: (name) => async (data) => {
+    return { data: await MockFunctions[name](data) };
+  }
 };
 
 /* ═══════════════════════════════════════════════
@@ -2792,23 +2852,15 @@ document.head.appendChild(style);
 document.addEventListener('DOMContentLoaded', async () => {
   const ok = initFirebase();
   if (!ok) return;
-
-  // Check if already signed in (persistent session)
-  auth.onAuthStateChanged(async user => {
-    if (user) {
-      const snap = await db.collection('users').doc(user.uid).get();
-      if (snap.exists) {
-        const d = snap.data();
-        HRAuth.currentUser = { uid: user.uid, role: d.role, name: d.name, headId: d.headId };
-        document.getElementById('app').classList.add('show');
-        App.initAfterAuth();
-        return;
-      }
-    }
-    // Show auth screen
+  const session = localStorage.getItem('hr_session');
+  if (session) {
+    HRAuth.currentUser = JSON.parse(session);
+    document.getElementById('app').classList.add('show');
+    App.initAfterAuth();
+  } else {
     document.getElementById('auth-screen').classList.add('show');
     setTimeout(() => document.getElementById('code-input')?.focus(), 100);
-  });
+  }
 });
 </script>
 </body>

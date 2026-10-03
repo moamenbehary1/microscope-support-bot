@@ -1930,23 +1930,24 @@ const Pages = {
   'hr-mgmt': {
     async load(pg) {
       pg.innerHTML = `<div class="loading-msg"><span class="spin"></span></div>`;
-      const hrs = await FS.list('users', ['where', 'role', '==', 'hr']);
-      const heads = await FS.list('users', ['where', 'role', '==', 'head']);
+      const hrs = await FS.list('users', ['where', 'role', 'in', ['hr', 'head']]);
+      const heads = hrs.filter(u => u.role === 'head');
       const headMap = {};
       heads.forEach(h => headMap[h.id] = h.name);
 
       pg.innerHTML = `
         <div class="sec-head">
           <h2>🧑‍💼 إدارة الـ HR</h2>
-          ${HRAuth.isSuperAdmin() ? '<div class="actions"><button class="btn btn-danger" onclick="App.deleteAll(\'users\', \'hr-mgmt\')">🗑️ حذف الكل</button><button class="btn btn-primary" onclick="Pages[\'hr-mgmt\'].addModal()">+ إضافة HR</button></div>' : ''}
+          ${HRAuth.isSuperAdmin() ? '<div class="actions"><button class="btn btn-danger" onclick="App.deleteAll(\'users\', \'hr-mgmt\')">🗑️ حذف الكل</button><button class="btn btn-primary" onclick="Pages[\'hr-mgmt\'].addModal()">+ إضافة عضو</button></div>' : ''}
         </div>
         <div class="card tbl-wrap">
           <table>
-            <thead><tr><th>الاسم</th><th>الـ Head المسؤول</th><th>الحالة</th><th>إجراء</th></tr></thead>
+            <thead><tr><th>الاسم</th><th>الدور</th><th>الـ Head المسؤول</th><th>الحالة</th><th>إجراء</th></tr></thead>
             <tbody>
               ${hrs.length === 0 ? '<tr><td colspan="4" style="text-align:center;color:var(--muted)">لا يوجد HR members بعد</td></tr>' :
                 hrs.map(hr => `<tr>
                   <td><strong>${encStr(hr.name)}</strong><div style="font-size:.75rem;color:var(--muted)">${hr.id}</div></td>
+                  <td>${hr.role === 'head' ? '<span class="badge badge-warning">Head HR</span>' : '<span class="badge badge-primary">HR Member</span>'}</td>
                   <td>${encStr(headMap[hr.headId] || '—')}</td>
                   <td>${hr.active !== false ? '<span class="badge badge-success">نشط</span>' : '<span class="badge badge-muted">معطّل</span>'}</td>
                   <td>
@@ -1967,22 +1968,31 @@ const Pages = {
     async addModal() {
       const heads = await FS.list('users', ['where', 'role', '==', 'head']);
       const headOpts = heads.map(h => `<option value="${h.id}">${encStr(h.name)}</option>`).join('');
-      const ok = await Modal.open('+ إضافة HR Member', `
-        <div class="form-group"><label>الاسم</label><input id="hr-name" placeholder="اسم الـ HR"></div>
+      const ok = await Modal.open('+ إضافة عضو لفريق الـ HR', `
+        <div class="form-row cols-2">
+          <div class="form-group"><label>الاسم</label><input id="hr-name" placeholder="اسم الـ HR"></div>
+          <div class="form-group"><label>الدور</label>
+            <select id="hr-role">
+              <option value="hr">HR Member</option>
+              <option value="head">Head HR</option>
+            </select>
+          </div>
+        </div>
         <div class="form-group"><label>الـ Head المسؤول</label>
           <select id="hr-head"><option value="">— بدون head —</option>${headOpts}</select>
         </div>
         <div style="background:var(--surface2);border-radius:8px;padding:12px;color:var(--dim);font-size:.8rem;margin-top:8px">
           ⚠️ بعد الإضافة، سيتم إنشاء رمز وصول تلقائيًا ويُعرض مرة واحدة فقط.
         </div>
-      `, 'إنشاء HR');
+      `, 'إنشاء الحساب');
       if (!ok) return;
       const name = document.getElementById('hr-name').value.trim();
+      const role = document.getElementById('hr-role').value;
       const headId = document.getElementById('hr-head').value;
       if (!name) { Toast.show('أدخل الاسم', 'error'); return; }
       try {
         const createHR = functions.httpsCallable('createHRUser');
-        const result = await createHR({ name, headId, role: 'hr' });
+        const result = await createHR({ name, headId, role });
         const code = result.data?.accessCode;
         await Modal.open('✅ تم إنشاء حساب الـ HR', `
           <div style="text-align:center">
@@ -2152,6 +2162,7 @@ const Pages = {
                   ${c.status === 'Draft' ? `<button class="btn btn-success btn-sm" onclick="Pages['cycles'].activate('${c.id}')">🚀 تفعيل</button>` : ''}
                   ${c.status === 'Active' ? `<button class="btn btn-warning btn-sm" onclick="Pages['cycles'].editDeadline('${c.id}','${c.name}')">📅 تمديد</button>
                     <button class="btn btn-danger btn-sm" onclick="Pages['cycles'].close('${c.id}')">🔒 إغلاق</button>` : ''}
+                  <button class="btn btn-danger btn-sm" onclick="App.deleteItem('cycles', '${c.id}', 'cycles')" title="حذف الدورة">🗑️</button>
                   ` : ''}
                 </div>
               </div>

@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Check if user is authenticated via custom token from HR system
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check roles
+    function isSuperAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'superAdmin';
+    }
+    
+    function isHead() {
+      return isAuthenticated() && (request.auth.token.role == 'head' || request.auth.token.role == 'superAdmin');
+    }
+    
+    function isHR() {
+      return isAuthenticated() && (request.auth.token.role == 'hr' || request.auth.token.role == 'head' || request.auth.token.role == 'superAdmin');
+    }
+
+    // Rules for 'users' collection (HR accounts)
+    match /users/{userId} {
+      allow read: if isHead();
+      allow write: if isSuperAdmin();
+    }
+
+    // Rules for 'members' collection
+    match /members/{memberId} {
+      // Any HR can read all members (or restrict to head/assigned hr)
+      // To simplify, HR needs to see their own members, but often need to see others for assignment
+      allow read: if isHR();
+      // Only heads can add/edit members
+      allow write: if isHead();
+    }
+
+    // Rules for 'cycles' collection
+    match /cycles/{cycleId} {
+      allow read: if isHR();
+      allow write: if isSuperAdmin();
+    }
+
+    // Rules for 'settings' (e.g. performance levels)
+    match /settings/{docId} {
+      allow read: if isHR();
+      allow write: if isSuperAdmin();
+    }
+
+    // Rules for 'criteria' collection
+    match /criteria/{criterionId} {
+      allow read: if isHR();
+      allow write: if isSuperAdmin();
+    }
+
+    // Rules for 'bonusRules' and 'penaltyRules'
+    match /bonusRules/{ruleId} {
+      allow read: if isHR();
+      allow write: if isSuperAdmin();
+    }
+    match /penaltyRules/{ruleId} {
+      allow read: if isHR();
+      allow write: if isSuperAdmin();
+    }
+
+    // Rules for 'evaluations' collection
+    match /evaluations/{evalId} {
+      allow read: if isHR(); // Additional checks could be added to ensure HR only sees their own or head sees their HRs
+      // All writes to evaluations MUST go through Cloud Functions (to enforce security, status locks, and score calculation)
+      allow write: if false; 
+    }
+
+    // Rules for 'reopenRequests'
+    match /reopenRequests/{reqId} {
+      allow read: if isHR();
+      allow write: if false; // Via functions only
+    }
+
+    // Rules for 'auditLogs'
+    match /auditLogs/{logId} {
+      allow read: if isSuperAdmin();
+      allow write: if false; // Via functions only
+    }
+  }
+}

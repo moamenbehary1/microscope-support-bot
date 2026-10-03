@@ -499,6 +499,14 @@ input::placeholder{color:var(--muted)}
     <div class="nav-item" data-s="settings"><span class="icon">⚙️</span><span data-i18n="Settings">Settings</span></div>
   </div>
   <div class="sidebar-foot">
+    <!-- HR Evaluation System Button (Admin only) -->
+    <a href="/hr.html" target="_blank" class="btn btn-ghost" id="hr-system-btn"
+       style="width:100%;justify-content:center;text-decoration:none;margin-bottom:8px;
+              background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.15));
+              border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;font-weight:600;
+              display:none">
+      🏢 نظام تقييم HR
+    </a>
     <a href="/team.html" target="_blank" class="btn btn-ghost" style="width:100%;justify-content:center;text-decoration:none;margin-bottom:8px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(236,72,153,0.1));border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;">🌐 صفحة التيم</a>
     <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="App.setSection('settings')">⚙️ <span data-i18n="Master Settings">Master Settings</span></button>
   </div>
@@ -877,6 +885,9 @@ const App = {
   async initAfterAuth(){
     await I18n.init();
     I18n.apply();
+    // Show HR system button (all logged-in users here are admins)
+    const hrBtn = document.getElementById('hr-system-btn');
+    if(hrBtn) hrBtn.style.display = '';
     this.start();
   },
 
@@ -1208,6 +1219,15 @@ const S = {
           </div>`).join('')}
         </div>
         <div style="height:20px"></div>
+        <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(236,72,153,0.05)); border: 1px solid rgba(99,102,241,0.2);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">🏢 نظام تقييم HR (HR Evaluation System)</h2>
+              <p style="color: var(--dim); font-size: 0.85rem;">وصول سريع إلى نظام التقييم الخاص بأعضاء فريق الـ HR.</p>
+            </div>
+            <a href="/hr.html" target="_blank" class="btn btn-primary" style="text-decoration: none;">🚀 فتح نظام HR ←</a>
+          </div>
+        </div>
         <div class="grid grid-2">
           <div class="card">
             <div class="sec-head" style="margin-bottom:12px">

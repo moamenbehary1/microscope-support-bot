@@ -849,11 +849,11 @@ const MockFunctions = {
   },
   rotateAccessCode: async (data) => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    await FS.update('users', data.uid, { code: code });
+    await FS.update('users', data.uid || data.userId, { code: code });
     return { accessCode: code };
   },
   disableAccessCode: async (data) => {
-    await FS.update('users', data.uid, { active: false });
+    await FS.update('users', data.uid || data.userId, { active: false });
   },
   assignMember: async (data) => {
     const ts = FS.now();
@@ -2852,49 +2852,21 @@ const Pages = {
       const cycleId = document.getElementById('ex-cycle')?.value || null;
       const resultEl = document.getElementById('export-result');
       document.getElementById('export-btn').disabled = true;
-      resultEl.innerHTML = `<div class="loading-msg"><span class="spin"></span> جاري فتح نافذة Google OAuth...</div>`;
+      resultEl.innerHTML = `<div class="loading-msg"><span class="spin"></span> جاري التصدير وتجهيز الشيت...</div>`;
 
       try {
-        // Get OAuth URL from Cloud Function
-        const getOAuthUrl = functions.httpsCallable('getGoogleOAuthUrl');
-        const { data } = await getOAuthUrl({ cycleId });
-        const oauthUrl = data?.url;
-        if (!oauthUrl) throw new Error('لم يتم الحصول على رابط OAuth');
+        const exportFn = functions.httpsCallable('exportToSheets');
+        const result = await exportFn({ authCode: 'auto', cycleId });
+        const sheetUrl = result.data?.sheetUrl;
 
-        // Open OAuth popup
-        const popup = window.open(oauthUrl, 'google_oauth', 'width=500,height=600');
+        if (!sheetUrl) throw new Error('فشل التصدير');
 
-        // Listen for OAuth callback message
-        const handler = async (event) => {
-          if (event.data?.type !== 'GOOGLE_OAUTH_CODE') return;
-          window.removeEventListener('message', handler);
-          popup?.close();
-
-          const authCode = event.data.code;
-          resultEl.innerHTML = `<div class="loading-msg"><span class="spin"></span> جاري إنشاء الـ Spreadsheet...</div>`;
-
-          const exportFn = functions.httpsCallable('exportToSheets');
-          const result = await exportFn({ authCode, cycleId });
-          const sheetUrl = result.data?.sheetUrl;
-
-          resultEl.innerHTML = `
-            <div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:16px">
-              <div style="color:var(--success);font-weight:700;margin-bottom:8px">✅ تم التصدير بنجاح!</div>
-              <a href="${encStr(sheetUrl)}" target="_blank" class="btn btn-success">📊 فتح الـ Spreadsheet</a>
-            </div>
-          `;
-        };
-
-        window.addEventListener('message', handler);
-
-        // Fallback timeout
-        setTimeout(() => {
-          window.removeEventListener('message', handler);
-          if (resultEl.innerHTML.includes('spin')) {
-            resultEl.innerHTML = `<div style="color:var(--danger)">انتهت مهلة OAuth. حاول مرة أخرى.</div>`;
-          }
-        }, 120000);
-
+        resultEl.innerHTML = `
+          <div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:16px">
+            <div style="color:var(--success);font-weight:700;margin-bottom:8px">✅ تم التصدير بنجاح!</div>
+            <a href="${encStr(sheetUrl)}" target="_blank" class="btn btn-success" download="evaluations.csv">📊 تحميل الشيت (CSV)</a>
+          </div>
+        `;
       } catch(e) {
         resultEl.innerHTML = `<div style="color:var(--danger)">❌ فشل: ${encStr(e.message)}</div>`;
       } finally {

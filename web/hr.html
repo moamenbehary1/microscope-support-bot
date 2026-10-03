@@ -829,8 +829,16 @@ const MockFunctions = {
   },
   addMember: async (data) => {
     await FS.add('members', {
-      telegramId: data.telegramId, name: data.name, university: data.university,
-      team: data.team, subTeam: data.subTeam || null, status: data.status
+      name: data.name || '',
+      committee: data.committee || '',
+      assignedHrId: data.assignedHrId || '',
+      headId: data.headId || '',
+      active: true,
+      telegramId: data.telegramId || '',
+      university: data.university || '',
+      team: data.team || '',
+      subTeam: data.subTeam || null,
+      status: data.status || ''
     });
   },
   createHRUser: async (data) => {
@@ -942,7 +950,7 @@ const Pages = {
       const cycle = cycles[0] || null;
 
       // Get my members
-      const members = await FS.list('members', ['where', 'assignedHrId', '==', uid], ['where', 'active', '==', true]);
+      const members = await FS.list('members', ['where', 'assignedHrId', '==', uid], ['where', 'active', '!=', false]);
 
       // Get evaluations in current cycle
       let evals = [];
@@ -1050,7 +1058,7 @@ const Pages = {
         pg.innerHTML = `<div class="empty"><span class="ico">💤</span><p>لا توجد دورة تقييم نشطة.</p></div>`;
         return;
       }
-      const members = await FS.list('members', ['where', 'assignedHrId', '==', uid], ['where', 'active', '==', true]);
+      const members = await FS.list('members', ['where', 'assignedHrId', '==', uid], ['where', 'active', '!=', false]);
       const evals = await FS.list('evaluations', ['where', 'hrId', '==', uid], ['where', 'cycleId', '==', cycle.id]);
 
       pg.innerHTML = `
@@ -1965,7 +1973,7 @@ const Pages = {
     async load(pg) {
       pg.innerHTML = `<div class="loading-msg"><span class="spin"></span></div>`;
       const [members, hrs] = await Promise.all([
-        FS.list('members', ['where', 'active', '==', true], ['orderBy', 'name']),
+        FS.list('members', ['where', 'active', '!=', false], ['orderBy', 'name']),
         FS.list('users', ['where', 'role', '==', 'hr'])
       ]);
       const hrMap = {};

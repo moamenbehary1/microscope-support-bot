@@ -1074,7 +1074,7 @@ const Pages = {
       const [member, cycle, evalDoc] = await Promise.all([
         FS.get('members', memberId),
         FS.get('cycles', cycleId),
-        db.collection('evaluations').doc(`${cycleId}_${memberId}`).get().then(s => s.exists ? {id:s.id,...s.data()} : null)
+        FS.get('evaluations', `${cycleId}_${memberId}`)
       ]);
 
       const snapshot = cycle?.configSnapshot || {};
@@ -2456,8 +2456,8 @@ const Pages = {
   /* ─── Performance Levels ─── */
   'perf-levels': {
     async load(pg) {
-      const snap = await db.collection('settings').doc('performanceLevels').get();
-      const levels = (snap.exists ? snap.data().levels : []) || [];
+      const doc = await FS.get('settings', 'performanceLevels');
+      const levels = doc ? doc.levels || [] : [];
       const defaults = [
         { name: 'Outstanding', minScore: 95, finalNote: 'أداء استثنائي!', color: '#10b981' },
         { name: 'Excellent',   minScore: 85, finalNote: 'أداء ممتاز',    color: '#6366f1' },
@@ -2511,7 +2511,7 @@ const Pages = {
     },
     async saveAll() {
       const sorted = [...this._levels].sort((a, b) => b.minScore - a.minScore);
-      await db.collection('settings').doc('performanceLevels').set({ levels: sorted });
+      await FS.set('settings', 'performanceLevels', { levels: sorted });
       Toast.show('تم حفظ المستويات', 'success');
     }
   },

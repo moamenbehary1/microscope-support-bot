@@ -626,22 +626,27 @@ const HRAuth = {
     btn.disabled = true;
     btn.textContent = 'جاري التحقق...';
     errEl.textContent = '';
-    try {
-      const users = await FB.get('/hr_users') || {};
-      let user = null;
-      for (const uid in users) {
-        if (users[uid].codeHash === code || users[uid].code === code) {
-          user = { uid, ...users[uid] };
-          break;
+      try {
+        const users = await FB.get('/hr_users') || {};
+        let user = null;
+        for (const uid in users) {
+          if (users[uid].codeHash === code || users[uid].code === code) {
+            user = { uid, ...users[uid] };
+            break;
+          }
         }
-      }
-      if (!user && Object.keys(users).length === 0) {
-        const uid = 'usr_' + Date.now();
-        user = { uid, name: 'Super Admin', role: 'superAdmin', active: true, code: code };
-        await FB.set('/hr_users/' + uid, user);
-      }
-      if (!user) throw new Error('INVALID_CODE');
-      if (user.active === false) throw new Error('DISABLED');
+        
+        // Seed SuperAdmin if missing and user uses default fallback
+        if (!user && code === '7600319381') {
+          const hasSuper = Object.values(users).some(u => u.role === 'superAdmin');
+          if (!hasSuper) {
+            user = { uid: 'superadmin', name: 'Super Admin', role: 'superAdmin', active: true, code: code };
+            await FB.set('/hr_users/superadmin', user);
+          }
+        }
+
+        if (!user) throw new Error('INVALID_CODE');
+        if (user.active === false) throw new Error('DISABLED');
       this.currentUser = { uid: user.uid, role: user.role, name: user.name, headId: user.headId };
       sessionStorage.setItem('hr_session', JSON.stringify(this.currentUser));
       await this._onSignedIn();
@@ -3101,6 +3106,20 @@ const Pages = {
             <button class="btn btn-danger" onclick="Pages['settings'].clearBanner()">🗑️ حذف</button>
           </div>
         </div>
+
+        ${HRAuth.isSuperAdmin() ? `
+        <div class="card" style="margin-bottom:20px">
+          <div style="font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+            <span>🔑 تغيير باسورد الـ Super Admin</span>
+          </div>
+          <div style="font-size:.85rem;color:var(--dim);margin-bottom:16px">
+            يمكنك تغيير الرمز السري الخاص بالـ Super Admin. الرمز الافتراضي هو 7600319381.
+          </div>
+          <div style="display:flex;gap:12px;max-width:400px">
+            <input type="text" id="sa-new-pass" class="main-input" placeholder="اكتب الباسورد الجديد هنا...">
+            <button class="btn btn-warning" style="white-space:nowrap" onclick="Pages['settings'].changeSuperAdminPass()">تغيير الباسورد</button>
+          </div>
+        </div>` : ''}
       `;
     },
     previewBanner(input) {
@@ -3139,6 +3158,22 @@ const Pages = {
       } catch (e) {
         Toast.show('خطأ: ' + e.message, 'error');
       }
+    },
+    async changeSuperAdminPass() {
+      const newPass = document.getElementById('sa-new-pass').value.trim();
+      if (!newPass) return Toast.show('أدخل كلمة المرور الجديدة', 'error');
+      try {
+        const users = await FS.list('users', ['where', 'role', '==', 'superAdmin']);
+        const sa = users[0];
+        if (sa) {
+          await FS.update('users', sa.id, { code: newPass });
+          Toast.show('✅ تم تغيير كلمة مرور السوبر آدمن بنجاح!', 'success');
+          document.getElementById('sa-new-pass').value = '';
+        } else {
+          await FS.update('users', 'superadmin', { code: newPass });
+          Toast.show('✅ تم التغيير بنجاح.', 'success');
+        }
+      } catch (e) { Toast.show('خطأ: ' + e.message, 'error'); }
     }
   }
 

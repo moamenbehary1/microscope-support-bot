@@ -826,6 +826,7 @@ const MockFunctions = {
     let member = await FS.get('members', data.memberId);
     if (!member) member = await FS.get('users', data.memberId);
     data.memberName = member?.name || 'Unknown';
+    data.headId = member?.headId || '';
     await FS.set('evaluations', data.id, data);
     return { id: data.id };
   },
@@ -839,6 +840,7 @@ const MockFunctions = {
     if (!member) member = await FS.get('users', data.memberId);
     data.memberName = member?.name || 'Unknown';
     data.committee = member?.committee || member?.role || '';
+    data.headId = member?.headId || '';
     
     // Compute scores breakdown
     let criteriaTotal = 0;
@@ -1060,8 +1062,12 @@ const Pages = {
       const total = members.length;
 
       pg.innerHTML = `
-        <div class="sec-head">
-          <h2>🏠 مرحبًا، ${encStr(HRAuth.name)}</h2>
+        <div class="welcome-banner" style="background:linear-gradient(135deg, var(--primary), var(--accent)); padding: 24px; border-radius: 16px; margin-bottom: 24px; color: white; display: flex; align-items: center; gap: 16px; box-shadow: 0 10px 30px rgba(59,130,246,0.3)">
+          <div style="font-size: 3rem;">👋</div>
+          <div>
+            <h2 style="margin: 0; font-size: 1.8rem; font-weight: 900;">Welcome, ${encStr(HRAuth.name)}!</h2>
+            <p style="margin: 4px 0 0; opacity: 0.9;">مرحباً بك في لوحة تحكم الـ HR. نتمنى لك يوماً سعيداً!</p>
+          </div>
         </div>
 
         ${cycle ? `
@@ -1682,7 +1688,7 @@ const Pages = {
         FS.list('cycles', ['orderBy', 'createdAt', 'desc'], ['limit', 5]),
         membersQ ? FS.list('members', membersQ) : FS.list('members'),
         hrsQ ? FS.list('users', ['where', 'role', '==', 'hr'], hrsQ) : FS.list('users', ['where', 'role', '==', 'hr']),
-        isHead
+        !isSuperAdmin
           ? FS.list('evaluations', ['where', 'headId', '==', uid])
           : FS.list('evaluations')
       ]);

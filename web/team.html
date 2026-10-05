@@ -728,34 +728,10 @@ footer{
   <div class="batch-pill">🎓 معاك يا دفعة 50</div>
 </header>
 
-<!-- 1. HERO / BANNER CURTAIN SLIDER -->
+<!-- 1. HERO / BANNER -->
 <section class="banner-section">
-  <div class="banner-container" id="banner-container" onclick="toggleBanner()">
-    
-    <!-- Full original banner with QR and mascots sitting nicely at the bottom -->
-    <img src="team_banner.png" class="banner-bg-img" alt="منورين علوم Microscope Team" />
-
-    <!-- Left door carrying Hacker Mascot -->
-    <div class="curtain-door door-left" id="door-left">
-      <img src="char_left_trans.png" class="door-mascot-img mascot-left" alt="Hacker Mascot" />
-    </div>
-
-    <!-- Right door carrying Doctor Mascot -->
-    <div class="curtain-door door-right" id="door-right">
-      <img src="char_right_trans.png" class="door-mascot-img mascot-right" alt="Scientist Mascot" />
-    </div>
-
-    <!-- Interactive Center Seal -->
-    <button type="button" class="center-seal-btn" id="seal-btn" onclick="toggleBanner(); event.stopPropagation();">
-      <span id="seal-icon">✨</span>
-      <span id="seal-text">اضغط لفتح البانر • مرحباً دفعة 50</span>
-    </button>
-
-  </div>
-
-  <div class="banner-hint">
-    <span>💡</span>
-    <span>اضغط على البانر أو ارفع الصفحة لفتحه واستكشاف كود الـ QR والترحيب!</span>
+  <div class="banner-container" id="banner-container" style="cursor:default">
+    <img id="team-banner-img" src="team_banner.png" class="banner-bg-img" alt="منورين علوم Microscope Team" style="width:100%; height:100%; object-fit:cover; border-radius: 18px;" />
   </div>
 </section>
 
@@ -902,6 +878,29 @@ footer{
 </div>
 
 <script>
+// Firebase Config injected by server
+const FB = {
+  url: '{{FB_URL}}',
+  secret: '{{FB_SECRET}}',
+  async get(path) {
+    const res = await fetch(`${this.url}${path}.json?auth=${this.secret}`);
+    return res.json();
+  }
+};
+
+async function loadDynamicBanner() {
+  try {
+    if (FB.url.startsWith('{{')) return; // No backend
+    const data = await FB.get('/hr_settings/teamPage');
+    if (data && data.bannerBase64) {
+      document.getElementById('team-banner-img').src = data.bannerBase64;
+    }
+  } catch (e) {
+    console.error('Failed to load banner', e);
+  }
+}
+loadDynamicBanner();
+
 // Particles creation in blue and cyan
 const pc = document.getElementById('particles');
 for(let i=0; i<25; i++){
@@ -923,34 +922,7 @@ const ratingLabels = [
   '⭐⭐⭐⭐⭐ رائع ومبهر جداً! 🌟'
 ];
 
-// ═══════════════════════════════════════════════════
-// Curtain Banner Toggle
-let isBannerOpen = false;
-function toggleBanner(){
-  const container = document.getElementById('banner-container');
-  const text = document.getElementById('seal-text');
-  const icon = document.getElementById('seal-icon');
-  isBannerOpen = !isBannerOpen;
-  
-  if(isBannerOpen){
-    container.classList.add('open');
-    if(text) text.textContent = 'إغلاق البانر ✖';
-    if(icon) icon.textContent = '🔒';
-  } else {
-    container.classList.remove('open');
-    if(text) text.textContent = 'اضغط لفتح البانر • مرحباً دفعة 50';
-    if(icon) icon.textContent = '✨';
-  }
-}
 
-// Auto open on scroll down if not already opened
-let hasAutoOpened = false;
-window.addEventListener('scroll', () => {
-  if (!hasAutoOpened && window.scrollY > 40) {
-    hasAutoOpened = true;
-    if(!isBannerOpen) toggleBanner();
-  }
-}, { passive: true });
 
 // Generate Random Anonymous Identity (علومنجي #XXXX)
 function generateNewIdentity(){

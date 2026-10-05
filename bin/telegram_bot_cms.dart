@@ -348,7 +348,10 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
     // Serve the 3D team showcase page
     final teamFile = File('web/team.html');
     if (await teamFile.exists()) {
-      final html = await teamFile.readAsString();
+      String html = await teamFile.readAsString();
+      html = html
+          .replaceFirst('{{FB_URL}}', Config.firebaseDatabaseUrl)
+          .replaceFirst('{{FB_SECRET}}', Config.firebaseSecret);
       req.response
         ..statusCode = 200
         ..headers.contentType = ContentType.html

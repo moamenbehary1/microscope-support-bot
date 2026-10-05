@@ -815,7 +815,8 @@ const MockFunctions = {
     data.id = `${data.cycleId}_${data.memberId}`;
     data.hrId = HRAuth.uid;
     data.hrName = HRAuth.name;
-    const member = await FS.get('members', data.memberId);
+    let member = await FS.get('members', data.memberId);
+    if (!member) member = await FS.get('users', data.memberId);
     data.memberName = member?.name || 'Unknown';
     await FS.set('evaluations', data.id, data);
     return { id: data.id };
@@ -826,9 +827,10 @@ const MockFunctions = {
     data.id = `${data.cycleId}_${data.memberId}`;
     data.hrId = HRAuth.uid;
     data.hrName = HRAuth.name;
-    const member = await FS.get('members', data.memberId);
+    let member = await FS.get('members', data.memberId);
+    if (!member) member = await FS.get('users', data.memberId);
     data.memberName = member?.name || 'Unknown';
-    data.committee = member?.committee || '';
+    data.committee = member?.committee || member?.role || '';
     
     // Compute scores breakdown
     let criteriaTotal = 0;
@@ -880,7 +882,7 @@ const MockFunctions = {
   },
   createHRUser: async (data) => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    await FS.add('users', { name: data.name, role: data.role, headId: data.headId, code: code, active: true });
+    await FS.add('users', { name: data.name, role: data.role, headId: data.headId, committee: data.committee || '', code: code, active: true });
     return { accessCode: code };
   },
   rotateAccessCode: async (data) => {
@@ -1018,15 +1020,27 @@ const Pages = {
       const cycles = await FS.list('cycles', ['where', 'status', '==', 'Active'], ['limit', 1]);
       const cycle = cycles[0] || null;
 
-      // Get my members (Super Admin sees all)
-      const membersQ = HRAuth.isSuperAdmin() ? [['where', 'active', '!=', false]] : [['where', 'assignedHrId', '==', uid], ['where', 'active', '!=', false]];
-      const members = await FS.list('members', ...membersQ);
+      // Get my members (Super Admin sees all, Head sees their HRs and members, HR sees assigned members)
+      let myPeople = [];
+      if (HRAuth.isSuperAdmin()) {
+        const allM = await FS.list('members');
+        const allU = await FS.list('users');
+        myPeople = [...allM, ...allU.filter(u => u.role === 'head' || u.role === 'hr')];
+      } else if (HRAuth.role === 'head') {
+        const allM = await FS.list('members', ['where', 'headId', '==', uid]);
+        const allU = await FS.list('users', ['where', 'headId', '==', uid]);
+        myPeople = [...allM, ...allU.filter(u => u.role === 'hr')];
+      } else {
+        myPeople = await FS.list('members', ['where', 'assignedHrId', '==', uid]);
+      }
+      const members = myPeople.filter(m => m.active !== false);
 
       // Get evaluations in current cycle
       let evals = [];
       if (cycle) {
-        const evalsQ = HRAuth.isSuperAdmin() ? [['where', 'cycleId', '==', cycle.id]] : [['where', 'hrId', '==', uid], ['where', 'cycleId', '==', cycle.id]];
-        evals = await FS.list('evaluations', ...evalsQ);
+        const cycleEvals = await FS.list('evaluations', ['where', 'cycleId', '==', cycle.id]);
+        const memberIds = members.map(m => m.id);
+        evals = cycleEvals.filter(e => memberIds.includes(e.memberId));
       }
 
       const submitted = evals.filter(e => e.status === 'submitted').length;
@@ -1129,11 +1143,24 @@ const Pages = {
         pg.innerHTML = `<div class="empty"><span class="ico">💤</span><p>لا توجد دورة تقييم نشطة.</p></div>`;
         return;
       }
-      const membersQ = HRAuth.isSuperAdmin() ? [['where', 'active', '!=', false]] : [['where', 'assignedHrId', '==', uid], ['where', 'active', '!=', false]];
-      const members = await FS.list('members', ...membersQ);
+      let myPeople = [];
+      if (HRAuth.isSuperAdmin()) {
+        const allM = await FS.list('members');
+        const allU = await FS.list('users');
+        myPeople = [...allM, ...allU.filter(u => u.role === 'head' || u.role === 'hr')];
+      } else if (HRAuth.role === 'head') {
+        const allM = await FS.list('members', ['where', 'headId', '==', uid]);
+        const allU = await FS.list('users', ['where', 'headId', '==', uid]);
+        myPeople = [...allM, ...allU.filter(u => u.role === 'hr')];
+      } else {
+        myPeople = await FS.list('members', ['where', 'assignedHrId', '==', uid]);
+      }
+      const members = myPeople.filter(m => m.active !== false);
       
-      const evalsQ = HRAuth.isSuperAdmin() ? [['where', 'cycleId', '==', cycle.id]] : [['where', 'hrId', '==', uid], ['where', 'cycleId', '==', cycle.id]];
-      const evals = await FS.list('evaluations', ...evalsQ);
+      let evals = [];
+      const cycleEvals = await FS.list('evaluations', ['where', 'cycleId', '==', cycle.id]);
+      const memberIds = members.map(m => m.id);
+      evals = cycleEvals.filter(e => memberIds.includes(e.memberId));
 
       pg.innerHTML = `
         <div class="sec-head">
@@ -1172,8 +1199,10 @@ const Pages = {
       pg.innerHTML = `<div class="loading-msg"><span class="spin"></span> جاري تحميل التقييم...</div>`;
       App.cur = 'hr-evaluate';
 
-      const [member, cycle, evalDoc] = await Promise.all([
-        FS.get('members', memberId),
+      let member = await FS.get('members', memberId);
+      if (!member) { member = await FS.get('users', memberId); if (member) member.committee = member.committee || member.role; }
+      
+      const [cycle, evalDoc] = await Promise.all([
         FS.get('cycles', cycleId),
         FS.get('evaluations', `${cycleId}_${memberId}`)
       ]);
@@ -1576,11 +1605,22 @@ const Pages = {
     async load(pg) {
       const uid = HRAuth.uid;
       pg.innerHTML = `<div class="loading-msg"><span class="spin"></span></div>`;
-      const members = await FS.list('members', ['where', 'assignedHrId', '==', uid]);
-      const memberMap = {};
-      members.forEach(m => memberMap[m.id] = m);
+      let myPeople = [];
+      if (HRAuth.isSuperAdmin()) {
+        const allM = await FS.list('members');
+        const allU = await FS.list('users');
+        myPeople = [...allM, ...allU.filter(u => u.role === 'head' || u.role === 'hr')];
+      } else if (HRAuth.role === 'head') {
+        const allM = await FS.list('members', ['where', 'headId', '==', uid]);
+        const allU = await FS.list('users', ['where', 'headId', '==', uid]);
+        myPeople = [...allM, ...allU.filter(u => u.role === 'hr')];
+      } else {
+        myPeople = await FS.list('members', ['where', 'assignedHrId', '==', uid]);
+      }
+      const memberIds = myPeople.map(m => m.id);
 
-      const evals = await FS.list('evaluations', ['where', 'hrId', '==', uid], ['orderBy', 'submittedAt', 'desc']);
+      const allEvals = await FS.list('evaluations', ['orderBy', 'submittedAt', 'desc']);
+      const evals = allEvals.filter(e => memberIds.includes(e.memberId));
 
       pg.innerHTML = `
         <div class="sec-head"><h2>📋 سجل التقييمات</h2></div>
@@ -1610,13 +1650,13 @@ const Pages = {
   'admin-dashboard': {
     async load(pg) {
       pg.innerHTML = `<div class="loading-msg"><span class="spin"></span> جاري التحميل...</div>`;
-      const isHead = HRAuth.role === 'head';
+      const isSuperAdmin = HRAuth.isSuperAdmin();
       const uid = HRAuth.uid;
 
-      let membersQ = isHead
+      let membersQ = !isSuperAdmin
         ? ['where', 'headId', '==', uid]
         : null;
-      let hrsQ = isHead
+      let hrsQ = !isSuperAdmin
         ? ['where', 'headId', '==', uid]
         : null;
 
@@ -1735,15 +1775,23 @@ const Pages = {
   'members-mgmt': {
     async load(pg) {
       pg.innerHTML = `<div class="loading-msg"><span class="spin"></span></div>`;
-      const members = await FS.list('members', ['orderBy', 'createdAt', 'desc']);
-      const hrs = await FS.list('users', ['where', 'role', '==', 'hr']);
+      let membersQ = HRAuth.isSuperAdmin() ? [] : [['where', 'headId', '==', HRAuth.uid]];
+      let members = await FS.list('members', ...membersQ);
+      // Client-side sort fallback since we can't combine where and orderBy simply in our mock without indexes sometimes
+      members.sort((a, b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+      
+      let hrsQ = HRAuth.isSuperAdmin() ? [['where', 'role', '==', 'hr']] : [['where', 'role', '==', 'hr'], ['where', 'headId', '==', HRAuth.uid]];
+      const hrs = await FS.list('users', ...hrsQ);
       const hrMap = {};
       hrs.forEach(h => hrMap[h.id] = h.name);
 
       pg.innerHTML = `
         <div class="sec-head">
           <h2>👥 الأعضاء</h2>
-          <div class="actions"><button class="btn btn-danger" onclick="App.deleteAll('members', 'members-mgmt')">🗑️ حذف الكل</button><button class="btn btn-primary" onclick="Pages['members-mgmt'].addModal()">+ إضافة عضو</button></div>
+          <div class="actions">
+            ${HRAuth.isSuperAdmin() ? '<button class="btn btn-danger" onclick="App.deleteAll(\'members\', \'members-mgmt\')">🗑️ حذف الكل</button>' : ''}
+            <button class="btn btn-primary" onclick="Pages['members-mgmt'].addModal()">+ إضافة عضو</button>
+          </div>
         </div>
         <div class="filters">
           <input id="member-search" placeholder="بحث..." oninput="Pages['members-mgmt'].filter()" style="max-width:200px">
@@ -1778,7 +1826,7 @@ const Pages = {
           <div style="display:flex;gap:4px">
             <button class="btn btn-ghost btn-xs" onclick="Pages['members-mgmt'].editModal('${m.id}')">✏️</button>
             <button class="btn btn-${m.active?'warning':'success'} btn-xs" onclick="Pages['members-mgmt'].toggleActive('${m.id}',${m.active})">${m.active?'تعطيل':'تفعيل'}</button>
-            <button class="btn btn-danger btn-xs" onclick="App.deleteItem('members', '${m.id}', 'members-mgmt')" title="حذف العضو نهائياً">🗑️</button>
+            ${HRAuth.isSuperAdmin() || m.headId === HRAuth.uid ? `<button class="btn btn-danger btn-xs" onclick="App.deleteItem('members', '${m.id}', 'members-mgmt')" title="حذف العضو نهائياً">🗑️</button>` : ''}
           </div>
         </td>
       </tr>`;
@@ -1815,6 +1863,8 @@ const Pages = {
       if (hrId) {
         const hrDoc = await FS.get('users', hrId);
         headId = hrDoc?.headId || '';
+      } else if (!HRAuth.isSuperAdmin()) {
+        headId = HRAuth.uid;
       }
 
       try {
@@ -1930,28 +1980,36 @@ const Pages = {
   'hr-mgmt': {
     async load(pg) {
       pg.innerHTML = `<div class="loading-msg"><span class="spin"></span></div>`;
-      const hrs = await FS.list('users', ['where', 'role', 'in', ['hr', 'head']]);
-      const heads = hrs.filter(u => u.role === 'head');
+      let hrsQ = [];
+      if (!HRAuth.isSuperAdmin()) hrsQ = [['where', 'headId', '==', HRAuth.uid]];
+      const allUsers = await FS.list('users', ...hrsQ);
+      let hrs = allUsers.filter(u => u.role === 'hr' || u.role === 'head');
+      
+      const allHeads = await FS.list('users', ['where', 'role', '==', 'head']);
       const headMap = {};
-      heads.forEach(h => headMap[h.id] = h.name);
+      allHeads.forEach(h => headMap[h.id] = h.name);
 
       pg.innerHTML = `
         <div class="sec-head">
           <h2>🧑‍💼 إدارة الـ HR</h2>
-          ${HRAuth.isSuperAdmin() ? '<div class="actions"><button class="btn btn-danger" onclick="App.deleteAll(\'users\', \'hr-mgmt\')">🗑️ حذف الكل</button><button class="btn btn-primary" onclick="Pages[\'hr-mgmt\'].addModal()">+ إضافة عضو</button></div>' : ''}
+          <div class="actions">
+            ${HRAuth.isSuperAdmin() ? '<button class="btn btn-danger" onclick="App.deleteAll(\'users\', \'hr-mgmt\')">🗑️ حذف الكل</button>' : ''}
+            <button class="btn btn-primary" onclick="Pages['hr-mgmt'].addModal()">+ إضافة عضو</button>
+          </div>
         </div>
         <div class="card tbl-wrap">
           <table>
-            <thead><tr><th>الاسم</th><th>الدور</th><th>الـ Head المسؤول</th><th>الحالة</th><th>إجراء</th></tr></thead>
+            <thead><tr><th>الاسم</th><th>الدور</th><th>اللجنة</th><th>الـ Head المسؤول</th><th>الحالة</th><th>إجراء</th></tr></thead>
             <tbody>
-              ${hrs.length === 0 ? '<tr><td colspan="4" style="text-align:center;color:var(--muted)">لا يوجد HR members بعد</td></tr>' :
+              ${hrs.length === 0 ? '<tr><td colspan="6" style="text-align:center;color:var(--muted)">لا يوجد HR members بعد</td></tr>' :
                 hrs.map(hr => `<tr>
                   <td><strong>${encStr(hr.name)}</strong><div style="font-size:.75rem;color:var(--muted)">${hr.id}</div></td>
                   <td>${hr.role === 'head' ? '<span class="badge badge-warning">Head HR</span>' : '<span class="badge badge-primary">HR Member</span>'}</td>
+                  <td>${encStr(hr.committee || '—')}</td>
                   <td>${encStr(headMap[hr.headId] || '—')}</td>
                   <td>${hr.active !== false ? '<span class="badge badge-success">نشط</span>' : '<span class="badge badge-muted">معطّل</span>'}</td>
                   <td>
-                    ${HRAuth.isSuperAdmin() ? `
+                    ${HRAuth.isSuperAdmin() || hr.headId === HRAuth.uid ? `
                     <div style="display:flex;gap:4px">
                       <button class="btn btn-ghost btn-xs" onclick="Pages['hr-mgmt'].manageCode('${hr.id}','${encStr(hr.name)}')">🔑 الكود</button>
                       <button class="btn btn-${hr.active !== false ? 'warning' : 'success'} btn-xs" onclick="Pages['hr-mgmt'].toggleActive('${hr.id}',${hr.active !== false})">${hr.active !== false ? 'تعطيل' : 'تفعيل'}</button><button class="btn btn-danger btn-xs" onclick="App.deleteItem('users', '${hr.id}', 'hr-mgmt')">🗑️</button>
@@ -1967,19 +2025,30 @@ const Pages = {
     _hrs: [],
     async addModal() {
       const heads = await FS.list('users', ['where', 'role', '==', 'head']);
-      const headOpts = heads.map(h => `<option value="${h.id}">${encStr(h.name)}</option>`).join('');
+      const headOpts = HRAuth.isSuperAdmin() 
+         ? heads.map(h => `<option value="${h.id}">${encStr(h.name)}</option>`).join('')
+         : `<option value="${HRAuth.uid}">${encStr(HRAuth.name)}</option>`;
+
+      const roleSelect = HRAuth.isSuperAdmin()
+         ? `<select id="hr-role"><option value="hr">HR Member</option><option value="head">Head</option></select>`
+         : `<select id="hr-role" disabled><option value="hr">HR Member</option></select>`;
+
+      const headSelect = HRAuth.isSuperAdmin()
+         ? `<select id="hr-head"><option value="">— بدون head —</option>${headOpts}</select>`
+         : `<select id="hr-head" disabled>${headOpts}</select>`;
+
       const ok = await Modal.open('+ إضافة عضو لفريق الـ HR', `
         <div class="form-row cols-2">
           <div class="form-group"><label>الاسم</label><input id="hr-name" placeholder="اسم الـ HR"></div>
           <div class="form-group"><label>الدور</label>
-            <select id="hr-role">
-              <option value="hr">HR Member</option>
-              <option value="head">Head HR</option>
-            </select>
+            ${roleSelect}
           </div>
         </div>
-        <div class="form-group"><label>الـ Head المسؤول</label>
-          <select id="hr-head"><option value="">— بدون head —</option>${headOpts}</select>
+        <div class="form-row cols-2">
+          <div class="form-group"><label>الـ Head المسؤول</label>
+            ${headSelect}
+          </div>
+          <div class="form-group"><label>اللجنة / الفريق</label><input id="hr-committee" placeholder="مثال: HR, Media"></div>
         </div>
         <div style="background:var(--surface2);border-radius:8px;padding:12px;color:var(--dim);font-size:.8rem;margin-top:8px">
           ⚠️ بعد الإضافة، سيتم إنشاء رمز وصول تلقائيًا ويُعرض مرة واحدة فقط.
@@ -1989,10 +2058,11 @@ const Pages = {
       const name = document.getElementById('hr-name').value.trim();
       const role = document.getElementById('hr-role').value;
       const headId = document.getElementById('hr-head').value;
+      const committee = document.getElementById('hr-committee').value.trim();
       if (!name) { Toast.show('أدخل الاسم', 'error'); return; }
       try {
         const createHR = functions.httpsCallable('createHRUser');
-        const result = await createHR({ name, headId, role });
+        const result = await createHR({ name, headId, role, committee });
         const code = result.data?.accessCode;
         await Modal.open('✅ تم إنشاء حساب الـ HR', `
           <div style="text-align:center">

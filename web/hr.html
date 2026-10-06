@@ -444,7 +444,7 @@ textarea{resize:vertical;min-height:100px;line-height:1.6}
       <div class="nav-item superadmin-only" data-s="bonus-rules"><span class="icon">⭐</span><span>قواعد المكافآت</span></div>
       <div class="nav-item superadmin-only" data-s="penalty-rules"><span class="icon">⚠️</span><span>قواعد الخصومات</span></div>
       <div class="nav-item superadmin-only" data-s="perf-levels"><span class="icon">🏅</span><span>مستويات الأداء</span></div>
-      <div class="nav-item admin-only" data-s="settings"><span class="icon">⚙️</span><span>الإعدادات العامة</span></div>
+      <div class="nav-item superadmin-only" data-s="settings"><span class="icon">⚙️</span><span>الإعدادات العامة</span></div>
       <div class="nav-sep admin-only"></div>
       <div class="nav-section-lbl admin-only">التحليل والتقارير</div>
       <div class="nav-item admin-only" data-s="analytics"><span class="icon">📈</span><span>الإحصائيات</span></div>
@@ -1682,10 +1682,10 @@ const Pages = {
       const isSuperAdmin = HRAuth.isSuperAdmin();
       const uid = HRAuth.uid;
 
-      let membersQ = !isSuperAdmin
+      let membersQ = !HRAuth.isHead()
         ? ['where', 'headId', '==', uid]
         : null;
-      let hrsQ = !isSuperAdmin
+      let hrsQ = !HRAuth.isHead()
         ? ['where', 'headId', '==', uid]
         : null;
 
@@ -1693,7 +1693,7 @@ const Pages = {
         FS.list('cycles', ['orderBy', 'createdAt', 'desc'], ['limit', 5]),
         membersQ ? FS.list('members', membersQ) : FS.list('members'),
         hrsQ ? FS.list('users', ['where', 'role', '==', 'hr'], hrsQ) : FS.list('users', ['where', 'role', '==', 'hr']),
-        !isSuperAdmin
+        !HRAuth.isHead()
           ? FS.list('evaluations', ['where', 'headId', '==', uid])
           : FS.list('evaluations')
       ]);
@@ -1804,12 +1804,12 @@ const Pages = {
   'members-mgmt': {
     async load(pg) {
       pg.innerHTML = `<div class="loading-msg"><span class="spin"></span></div>`;
-      let membersQ = HRAuth.isSuperAdmin() ? [] : [['where', 'headId', '==', HRAuth.uid]];
+      let membersQ = HRAuth.isHead() ? [] : [['where', 'headId', '==', HRAuth.uid]];
       let members = await FS.list('members', ...membersQ);
       // Client-side sort fallback since we can't combine where and orderBy simply in our mock without indexes sometimes
       members.sort((a, b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
       
-      let hrsQ = HRAuth.isSuperAdmin() ? [['where', 'role', '==', 'hr']] : [['where', 'role', '==', 'hr'], ['where', 'headId', '==', HRAuth.uid]];
+      let hrsQ = HRAuth.isHead() ? [['where', 'role', '==', 'hr']] : [['where', 'role', '==', 'hr'], ['where', 'headId', '==', HRAuth.uid]];
       const hrs = await FS.list('users', ...hrsQ);
       const hrMap = {};
       hrs.forEach(h => hrMap[h.id] = h.name);
@@ -1855,7 +1855,7 @@ const Pages = {
           <div style="display:flex;gap:4px">
             <button class="btn btn-ghost btn-xs" onclick="Pages['members-mgmt'].editModal('${m.id}')">✏️</button>
             <button class="btn btn-${m.active?'warning':'success'} btn-xs" onclick="Pages['members-mgmt'].toggleActive('${m.id}',${m.active})">${m.active?'تعطيل':'تفعيل'}</button>
-            ${HRAuth.isSuperAdmin() || m.headId === HRAuth.uid ? `<button class="btn btn-danger btn-xs" onclick="App.deleteItem('members', '${m.id}', 'members-mgmt')" title="حذف العضو نهائياً">🗑️</button>` : ''}
+            ${HRAuth.isHead() ? `<button class="btn btn-danger btn-xs" onclick="App.deleteItem('members', '${m.id}', 'members-mgmt')" title="حذف العضو نهائياً">🗑️</button>` : ''}
           </div>
         </td>
       </tr>`;

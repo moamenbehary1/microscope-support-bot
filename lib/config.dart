@@ -33,6 +33,11 @@ class Config {
   /// Full JSON content of the Google Service Account key file (single-line).
   static String get googleServiceAccountJson =>
       _get('GOOGLE_SERVICE_ACCOUNT_JSON') ?? '';
+
+  /// Base URL of the n8n instance (e.g. http://n8n:5678).
+  /// When running via Docker Compose this is set automatically to http://n8n:5678.
+  /// Leave empty to disable n8n integration.
+  static String get n8nBaseUrl => _get('N8N_BASE_URL') ?? '';
 }
 
 // User Modes

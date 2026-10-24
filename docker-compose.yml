@@ -1,0 +1,74 @@
+services:
+  # ─────────────────────────────────────────────────────────────
+  # n8n — Workflow automation engine
+  # Auto-imports workflows & credentials on every startup.
+  # ─────────────────────────────────────────────────────────────
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      # Webhook URL used when workflows call back
+      - WEBHOOK_URL=http://n8n:5678/
+      # Pass the bot token so the entrypoint can render credentials
+      - BOT_TOKEN=${BOT_TOKEN}
+      # Disable user auth for internal-only usage (behind private network)
+      - N8N_AUTH_EXCLUDE_ENDPOINTS=healthz
+      # Persist data
+      - N8N_USER_FOLDER=/home/node/.n8n
+      # Allow importing workflows from CLI without owner check
+      - N8N_SKIP_OWNER_SETUP=true
+      # Timezone
+      - GENERIC_TIMEZONE=Africa/Cairo
+    volumes:
+      - n8n_data:/home/node/.n8n
+      # Mount our workflows folder into the import directory
+      - ./workflows:/data/import-workflows:ro
+      # Mount the entrypoint script
+      - ./n8n-entrypoint.sh:/entrypoint.sh:ro
+    entrypoint: ["sh", "/entrypoint.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - bot_network
+
+  # ─────────────────────────────────────────────────────────────
+  # Dart Telegram Bot
+  # Waits for n8n to be healthy before starting.
+  # ─────────────────────────────────────────────────────────────
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telegram_bot
+    restart: unless-stopped
+    ports:
+      - "${PORT:-5000}:5000"
+    env_file:
+      - .env
+    environment:
+      - PORT=5000
+      # Internal URL so the bot can call n8n
+      - N8N_BASE_URL=http://n8n:5678
+    depends_on:
+      n8n:
+        condition: service_healthy
+    networks:
+      - bot_network
+
+volumes:
+  n8n_data:
+    driver: local
+
+networks:
+  bot_network:
+    driver: bridge

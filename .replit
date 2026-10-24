@@ -1,0 +1,10 @@
+run = "dart run bin/telegram_bot_cms.dart"
+entrypoint = "bin/telegram_bot_cms.dart"
+
+[deployment]
+run = ["dart", "run", "bin/telegram_bot_cms.dart"]
+deploymentTarget = "autoscale"
+
+[[ports]]
+localPort = 5000
+externalPort = 80

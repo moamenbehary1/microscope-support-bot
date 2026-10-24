@@ -10,17 +10,14 @@ import '../lib/table_handlers.dart';
 import '../lib/firebase_db.dart';
 import '../lib/utils.dart';
 
-Bot? _globalBot;
-
-Future<void> startDummyServer([Bot? bot]) async {
-  if (bot != null) _globalBot = bot;
+Future<void> startDummyServer(Bot bot) async {
   final port = int.tryParse(Platform.environment['PORT'] ?? '') ?? 5000;
   final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
   print('Web server listening on all interfaces (0.0.0.0) on port $port');
 
   await for (final request in server) {
     try {
-      await _handleWebRequest(request, _globalBot);
+      await _handleWebRequest(request, bot);
     } catch (e) {
       print('Web server error: $e');
       try {
@@ -31,9 +28,7 @@ Future<void> startDummyServer([Bot? bot]) async {
   }
 }
 
-Future<void> _handleWebRequest(HttpRequest req, Bot? bot) async {
-  final activeBot = bot ?? _globalBot;
-
+Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
   // CORS — allow dashboard to call Firebase from any origin
   req.response.headers
     ..add('Access-Control-Allow-Origin', '*')
@@ -78,10 +73,6 @@ Future<void> _handleWebRequest(HttpRequest req, Bot? bot) async {
 
   } else if (path == '/api/upload' && req.method == 'POST') {
     try {
-      if (activeBot == null) {
-        throw Exception('Telegram Bot is not active. Please set BOT_TOKEN in Replit Secrets.');
-      }
-
       final content = await utf8.decoder.bind(req).join();
       final data = jsonDecode(content) as Map<String, dynamic>;
       
@@ -108,19 +99,19 @@ Future<void> _handleWebRequest(HttpRequest req, Bot? bot) async {
       String fileType = 'document';
 
       if (isPhoto) {
-        final msg = await activeBot.api.sendPhoto(chatId, inputFile);
+        final msg = await bot.api.sendPhoto(chatId, inputFile);
         fileId = msg.photo?.last.fileId ?? '';
         fileType = 'photo';
       } else if (isVideo) {
-        final msg = await activeBot.api.sendVideo(chatId, inputFile);
+        final msg = await bot.api.sendVideo(chatId, inputFile);
         fileId = msg.video?.fileId ?? '';
         fileType = 'video';
       } else if (isAudio) {
-        final msg = await activeBot.api.sendAudio(chatId, inputFile);
+        final msg = await bot.api.sendAudio(chatId, inputFile);
         fileId = msg.audio?.fileId ?? '';
         fileType = 'audio';
       } else {
-        final msg = await activeBot.api.sendDocument(chatId, inputFile);
+        final msg = await bot.api.sendDocument(chatId, inputFile);
         fileId = msg.document?.fileId ?? '';
         fileType = 'document';
       }
@@ -140,7 +131,7 @@ Future<void> _handleWebRequest(HttpRequest req, Bot? bot) async {
       final subscribers = await FirebaseDb.getSubjectSubscribers(subject);
       if (subscribers.isNotEmpty) {
         final text = '🔔 إضافة جديدة!\n\nتمت إضافة ملف جديد في مادة: **$subject**\nالنوع: $type\n\nقم بزيارة البوت لتفقدها.';
-        Utils.broadcast(activeBot, subscribers, text);
+        Utils.broadcast(bot, subscribers, text);
       }
 
       req.response
@@ -220,10 +211,8 @@ Future<void> _handleWebRequest(HttpRequest req, Bot? bot) async {
         if (parsed != null) chatId = ChatID(parsed);
       }
       
-      if (activeBot != null) {
-        final inputFile = InputFile.fromBytes(bytes, name: fileName);
-        await activeBot.api.sendDocument(chatId, inputFile);
-      }
+      final inputFile = InputFile.fromBytes(bytes, name: fileName);
+      await bot.api.sendDocument(chatId, inputFile);
       
       req.response
         ..statusCode = 200
@@ -244,13 +233,9 @@ Future<void> _handleWebRequest(HttpRequest req, Bot? bot) async {
       final subject = data['subject'] as String;
       final message = data['message'] as String;
 
-      if (activeBot == null) {
-        throw Exception('Telegram Bot is not active. Please set BOT_TOKEN in Replit Secrets.');
-      }
-
       final subscribers = await FirebaseDb.getSubjectSubscribers(subject);
       if (subscribers.isNotEmpty) {
-        await Utils.broadcast(activeBot, subscribers, message);
+        await Utils.broadcast(bot, subscribers, message);
       }
 
       req.response
@@ -307,33 +292,32 @@ Future<void> _handleWebRequest(HttpRequest req, Bot? bot) async {
           '🕒 التاريخ والوقت: $dateStr\n'
           '🌐 المصدر: منصة الفيدباك (Microscope Feedback)';
 
-      // Send notifications via Telegram if bot is available
-      if (activeBot != null) {
-        if (Config.superAdminId != 0) {
-          try {
-            await activeBot.api.sendMessage(
-              ChatID(Config.superAdminId),
-              notification,
-            );
-          } catch (e) {
-            print('Failed sending feedback alert to Super Admin: $e');
+      // Send to Super Admin
+      if (Config.superAdminId != 0) {
+        try {
+          await bot.api.sendMessage(
+            ChatID(Config.superAdminId),
+            notification,
+          );
+        } catch (e) {
+          print('Failed sending feedback alert to Super Admin: $e');
+        }
+      }
+
+      // Send to other admins
+      try {
+        final admins = await FirebaseDb.getAdmins();
+        for (var adminId in admins) {
+          if (adminId != Config.superAdminId) {
+            try {
+              await bot.api.sendMessage(
+                ChatID(adminId),
+                notification,
+              );
+            } catch (_) {}
           }
         }
-
-        try {
-          final admins = await FirebaseDb.getAdmins();
-          for (var adminId in admins) {
-            if (adminId != Config.superAdminId) {
-              try {
-                await activeBot.api.sendMessage(
-                  ChatID(adminId),
-                  notification,
-                );
-              } catch (_) {}
-            }
-          }
-        } catch (_) {}
-      }
+      } catch (_) {}
 
       req.response
         ..statusCode = 200
@@ -501,7 +485,7 @@ Future<void> _handleWebRequest(HttpRequest req, Bot? bot) async {
       // 3. Send PDF to Telegram Backup Channel
       // (Google Drive Service Accounts have no personal storage quota)
       String? telegramFileId;
-      if (fileBase64.isNotEmpty && activeBot != null) {
+      if (fileBase64.isNotEmpty) {
         try {
           final pdfBytes = base64Decode(fileBase64.split(',').last);
           ChatID chatId = ChatID(Config.superAdminId);
@@ -510,7 +494,7 @@ Future<void> _handleWebRequest(HttpRequest req, Bot? bot) async {
             if (parsed != null) chatId = ChatID(parsed);
           }
           final inputFile = InputFile.fromBytes(pdfBytes, name: fileName);
-          final msg = await activeBot.api.sendDocument(chatId, inputFile);
+          final msg = await bot.api.sendDocument(chatId, inputFile);
           telegramFileId = msg.document?.fileId;
           print('[register_member] ✅ PDF sent to Backup Channel. File ID: $telegramFileId');
         } catch (e) {
@@ -726,30 +710,24 @@ String? _rsaSha256Sign(String message, String pemKey) {
 Future<void> main() async {
   print('Starting Telegram Bot CMS...');
 
-  // Start HTTP web server immediately so deployment health checks succeed immediately
-  startDummyServer();
-
-  if (Config.botToken.isEmpty || Config.firebaseDatabaseUrl.isEmpty) {
-    print('⚠️ [WARNING] BOT_TOKEN or FIREBASE_DATABASE_URL is not set!');
-    print('⚠️ In Replit: Click "Secrets" (🔒) in the left panel and add your environment variables.');
-    print('⚠️ The web server is listening on port ${Platform.environment['PORT'] ?? 5000} to pass health checks.');
-    while (true) {
-      await Future.delayed(const Duration(minutes: 60));
-    }
+  if (Config.botToken.isEmpty) {
+    print('ERROR: BOT_TOKEN is not set in .env');
+    return;
+  }
+  
+  if (Config.firebaseDatabaseUrl.isEmpty) {
+    print('ERROR: FIREBASE_DATABASE_URL is not set in .env');
+    return;
   }
 
   // Ensure super admin is in database
   if (Config.superAdminId != 0) {
-    try {
-      await FirebaseDb.addAdmin(Config.superAdminId);
-      print('Super Admin registered.');
-    } catch (e) {
-      print('Warning registering super admin: $e');
-    }
+    await FirebaseDb.addAdmin(Config.superAdminId);
+    print('Super Admin registered.');
   }
 
   final bot = Bot(Config.botToken);
-  _globalBot = bot;
+  startDummyServer(bot);
 
   // Error handling
   bot.onError((err) {

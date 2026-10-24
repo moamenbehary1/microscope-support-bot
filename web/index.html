@@ -1079,7 +1079,7 @@ input::placeholder{color:var(--muted)}
 'use strict';
 
 // Safely encode a string for use inside single-quoted onclick attributes
-function encodeStr(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+function encodeStr(s){ return String(s ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\r/g,'').replace(/\n/g,' '); }
 
 /* ── Mobile Sidebar Drawer Control ── */
 function toggleMobileSidebar(open) {
@@ -2520,12 +2520,13 @@ const S = {
     },
 
     async deleteMat(track, subject, type, matId, name){
-      const ok = await UI.modal(`Delete "${name}"?`,
-        `<p style="color:var(--dim);font-size:.875rem">Permanently delete <strong>${name}</strong>?</p>`, 'Delete', true);
+      const safeName = (name || matId || 'Material').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const ok = await UI.modal(`Delete "${safeName}"?`,
+        `<p style="color:var(--dim);font-size:.875rem">Permanently delete <strong>${safeName}</strong>?</p>`, 'Delete', true);
       if(!ok) return;
       try{
         await FB.del(`/curriculum/${encodeURIComponent(track)}/${encodeURIComponent(subject)}/${encodeURIComponent(type)}/${encodeURIComponent(matId)}`);
-        UI.toast(`"${name}" deleted`,'success');
+        UI.toast(`"${safeName}" deleted`,'success');
         await this.fetchAndRender();
       }catch(e){ UI.toast('Failed: '+e.message,'error'); }
     },

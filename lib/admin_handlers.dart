@@ -338,7 +338,15 @@ void registerAdminHandlers(Bot bot) {
     await FirebaseDb.deleteMaterial(track, subject, type, matId);
     await ctx.answerCallbackQuery(
         text: S.get('material_delete_toast', lang), showAlert: true);
-    await ctx.editMessageText(S.get('material_deleted', lang));
+    try {
+      await ctx.editMessageText(S.get('material_deleted', lang));
+    } catch (_) {
+      try {
+        await ctx.editMessageCaption(caption: S.get('material_deleted', lang));
+      } catch (_) {
+        await ctx.reply(S.get('material_deleted', lang));
+      }
+    }
   });
 
   bot.callbackQuery(RegExp(r'^admin_rep:(.*?):(.*?):(.*?):(.*)'), (ctx) async {

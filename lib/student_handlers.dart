@@ -303,6 +303,13 @@ void registerStudentHandlers(Bot bot) {
           'fav_add:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}:${Utils.shorten(materialId)}',
         );
 
+        if (await FirebaseDb.isAdmin(userId)) {
+          favKb.row().add(
+            '🗑️ حذف هذه المحاضرة نهائياً',
+            'admin_del:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}:${Utils.shorten(materialId)}',
+          );
+        }
+
         if (fileType == 'link' || fileId.startsWith('http://') || fileId.startsWith('https://')) {
           await ctx.reply('$caption\n\n🔗 $fileId', replyMarkup: favKb);
         } else if (fileId.isEmpty || fileType == 'text' || fileType == 'string') {

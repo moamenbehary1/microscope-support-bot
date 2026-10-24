@@ -1,0 +1,471 @@
+{
+  "name": "Read Telegram File (Agent Tool)",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "file_id"
+            }
+          ]
+        }
+      },
+      "id": "5a23c6f9-c3ed-466c-ad94-4d26b67ab8b5",
+      "name": "When Agent Calls",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ String($json.file_id ?? \"\").trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e387bb6c-4845-4616-8d45-4219635f314e",
+      "name": "Has File ID?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "m1",
+              "name": "status",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "m2",
+              "name": "message",
+              "value": "No file_id was provided. Ask the student to send the file directly in this chat.",
+              "type": "string"
+            },
+            {
+              "id": "m3",
+              "name": "text",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3d7253fb-8c19-4a0f-b088-002c229642fe",
+      "name": "Return Missing File ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        608,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ String($json.file_id).trim() }}",
+        "additionalFields": {}
+      },
+      "id": "964a8fe5-99cf-4ddb-96e7-30aad9732a5e",
+      "name": "Download File",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        496,
+        192
+      ],
+      "webhookId": "05b0a682-67a1-49b2-bb1e-1ce7c7d74b10",
+      "credentials": {
+        "telegramApi": {
+          "id": "GGSbTXUQmdOP5yja",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const filePath = String(($json.result && $json.result.file_path) || '');\nconst ext = (filePath.split('.').pop() || '').toLowerCase();\nconst types = { pdf: 'application/pdf', txt: 'text/plain', md: 'text/plain', csv: 'text/plain', json: 'text/plain', html: 'text/html', htm: 'text/html', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif' };\nconst mime = types[ext];\nconst binary = $input.item.binary || {};\nif (!mime || !binary.data) {\n  return { json: { supported: false, file_path: filePath, extension: ext } };\n}\nbinary.data.mimeType = mime;\nreturn { json: { supported: true, file_path: filePath, extension: ext }, binary };"
+      },
+      "id": "0d8b03b1-0cbe-4e7f-9f97-9d34e61e1db1",
+      "name": "Detect File Type",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "s1",
+              "leftValue": "={{ $json.supported }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "950e8833-aaff-495e-a416-4baf9dccdd5a",
+      "name": "Is Supported Type?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        976,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3.5-flash",
+          "cachedResultName": "Gemini 3.5 Flash"
+        },
+        "text": "Extract ALL the content of this file as plain text, in its original language, preserving headings, lists, formulas and code. If it is an image or a scanned page, transcribe every visible text and then briefly describe any diagrams, charts or figures. Do not summarize and do not add commentary.",
+        "inputType": "binary",
+        "options": {
+          "maxOutputTokens": 16000
+        }
+      },
+      "id": "ebb3d222-240d-40d1-a7e6-f382b10d2133",
+      "name": "Read File With Gemini",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1248,
+        416
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "glAp1LbLXzAPoE4T",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "status",
+              "value": "ok",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "text",
+              "value": "={{ String(($json.content && $json.content.parts ? $json.content.parts.map(p => p.text || \"\").join(\"\\n\") : null) ?? $json.text ?? $json.output ?? \"\").slice(0, 60000) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "78e7eb40-4089-48ec-9467-5c14bb1cc470",
+      "name": "Return File Text",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1472,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "g1",
+              "name": "status",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "g2",
+              "name": "message",
+              "value": "The file was downloaded but could not be read right now. Ask the student to try again, or send the file as PDF or a clear image.",
+              "type": "string"
+            },
+            {
+              "id": "g3",
+              "name": "text",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2e13b091-7ac2-47fc-a681-12fd02cd5ea5",
+      "name": "Return Reading Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1472,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "u1",
+              "name": "status",
+              "value": "unsupported_format",
+              "type": "string"
+            },
+            {
+              "id": "u2",
+              "name": "file_path",
+              "value": "={{ $json.file_path }}",
+              "type": "string"
+            },
+            {
+              "id": "u3",
+              "name": "message",
+              "value": "This file type cannot be read. Ask the student to send it as PDF, text, or an image.",
+              "type": "string"
+            },
+            {
+              "id": "u4",
+              "name": "text",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a18d8d7e-bd8f-4bca-88b1-408b366685ff",
+      "name": "Return Unsupported",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d1",
+              "name": "status",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "d2",
+              "name": "message",
+              "value": "Wrong file_id or the file is temporarily unavailable (files over 20 MB cannot be downloaded by bots). Ask the student to re-send the file directly in this chat.",
+              "type": "string"
+            },
+            {
+              "id": "d3",
+              "name": "text",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "826473f7-e164-4eb4-8e8a-87a957f854ae",
+      "name": "Return Download Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        720,
+        608
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Agent Calls": {
+      "main": [
+        [
+          {
+            "node": "Has File ID?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has File ID?": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Missing File ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "Detect File Type",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Download Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect File Type": {
+      "main": [
+        [
+          {
+            "node": "Is Supported Type?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Supported Type?": {
+      "main": [
+        [
+          {
+            "node": "Read File With Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Unsupported",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read File With Gemini": {
+      "main": [
+        [
+          {
+            "node": "Return File Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Reading Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v0",
+    "binaryMode": "separate",
+    "timeSavedMode": "dynamic",
+    "callerPolicy": "any",
+    "availableInMCP": true,
+    "timezone": "Africa/Cairo",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "all"
+  },
+  "versionId": "73ac353f-9a79-4ce5-981c-8aed7d7a91dd",
+  "meta": {
+    "instanceId": "89d6592ff191fff80abe6fb4d80ffddca0be5fa87c61e3e3d84345db8893a098"
+  },
+  "nodeGroups": [
+    {
+      "id": "08dfe877-69a9-4030-945f-eed7617182a5",
+      "name": "Fetch the file",
+      "nodeIds": [
+        "964a8fe5-99cf-4ddb-96e7-30aad9732a5e",
+        "826473f7-e164-4eb4-8e8a-87a957f854ae",
+        "0d8b03b1-0cbe-4e7f-9f97-9d34e61e1db1"
+      ],
+      "description": "Downloads the file from Telegram and works out its type; a bad or expired id returns a re-send message"
+    },
+    {
+      "id": "ee518cf3-f8ce-426f-9bad-21292d65dae0",
+      "name": "Read with Gemini",
+      "nodeIds": [
+        "ebb3d222-240d-40d1-a7e6-f382b10d2133",
+        "78e7eb40-4089-48ec-9467-5c14bb1cc470",
+        "2e13b091-7ac2-47fc-a681-12fd02cd5ea5"
+      ],
+      "description": "Gemini reads the PDF, text or image and returns its full content; failures return a retry message"
+    }
+  ],
+  "id": "hDXwdoTqF1Pnhg9Y",
+  "tags": []
+}

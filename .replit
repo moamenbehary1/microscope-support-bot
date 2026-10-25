@@ -33,3 +33,12 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[deployment]
+deploymentTarget = "cloudrun"
+
+[deployment.run]
+args = ["sh", "-c", "/nix/store/hkbylipx1iiawqdcjv858p501wv81bpm-bash-interactive-5.3p3/bin/bash $file"]
+
+[objectStorage]
+defaultBucketID = "replit-objstore-4997a5fc-d067-4436-8be7-26d18c77b4d4"

@@ -1,44 +1,10 @@
-modules = ["web", "nodejs-20", "bash", "dart-3.10"]
+run = "dart run bin/telegram_bot_cms.dart"
+entrypoint = "bin/telegram_bot_cms.dart"
 
-[nix]
-channel = "stable-25_05"
-
-[agent]
-expertMode = true
-
-[workflows]
-runButton = "Project"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "dart pub get && dart run bin/telegram_bot_cms.dart"
-waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
+[deployment]
+run = ["dart", "run", "bin/telegram_bot_cms.dart"]
+deploymentTarget = "autoscale"
 
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[deployment]
-deploymentTarget = "cloudrun"
-
-[deployment.run]
-args = ["sh", "-c", "/nix/store/hkbylipx1iiawqdcjv858p501wv81bpm-bash-interactive-5.3p3/bin/bash $file"]
-
-[objectStorage]
-defaultBucketID = "replit-objstore-4997a5fc-d067-4436-8be7-26d18c77b4d4"

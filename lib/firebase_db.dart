@@ -782,23 +782,106 @@ class FirebaseDb {
 
 
   // ── Auth Code for Contributor Actions ─────────────────────────────────────
-  static Future<void> setAuthCode(String code) async {
+  static Future<void> setAuthCodeWithLimits({
+    required String code,
+    required int maxUses,
+    required Duration validity,
+    required int createdBy,
+  }) async {
+    final now = DateTime.now();
+    final expiresAt = now.add(validity);
     await _put('/auth_code', {
-      'code': code,
-      'generatedAt': DateTime.now().toIso8601String(),
+      'code': code.trim(),
+      'max_uses': maxUses,
+      'remaining_uses': maxUses,
+      'created_at': now.toIso8601String(),
+      'expires_at': expiresAt.toIso8601String(),
+      'validity_minutes': validity.inMinutes,
+      'created_by': createdBy,
+      'is_active': true,
     });
   }
 
-  static Future<String?> getAuthCode() async {
+  static Future<void> setAuthCode(String code) async {
+    // Default: 1 use, 30 minutes
+    await setAuthCodeWithLimits(
+      code: code,
+      maxUses: 1,
+      validity: const Duration(minutes: 30),
+      createdBy: 0,
+    );
+  }
+
+  static Future<Map<String, dynamic>?> getAuthCodeDetails() async {
     final data = await _get('/auth_code');
     if (data == null || data is! Map) return null;
-    return data['code']?.toString();
+    return Map<String, dynamic>.from(data);
+  }
+
+  static Future<String?> getAuthCode() async {
+    final details = await getAuthCodeDetails();
+    if (details == null || details['is_active'] != true) return null;
+    return details['code']?.toString();
+  }
+
+  /// Verifies input code against the active auth code.
+  /// Returns:
+  /// - 'valid': Code matched and 1 use was consumed
+  /// - 'expired_time': Code duration expired
+  /// - 'expired_uses': Code consumed all its allowed uses
+  /// - 'invalid': Code string does not match
+  /// - 'not_found': No active code exists
+  static Future<String> verifyAndConsumeAuthCode(String inputCode) async {
+    final details = await getAuthCodeDetails();
+    if (details == null) return 'not_found';
+
+    final isActive = details['is_active'] == true;
+    if (!isActive) return 'not_found';
+
+    final storedCode = details['code']?.toString().trim();
+    if (storedCode == null || storedCode != inputCode.trim()) {
+      return 'invalid';
+    }
+
+    // Check expiration by time
+    final expiresAtStr = details['expires_at']?.toString();
+    if (expiresAtStr != null) {
+      final expiresAt = DateTime.tryParse(expiresAtStr);
+      if (expiresAt != null && DateTime.now().isAfter(expiresAt)) {
+        await _patch('/auth_code', {'is_active': false});
+        return 'expired_time';
+      }
+    }
+
+    // Check remaining uses
+    final remainingUses = details['remaining_uses'] as int? ?? 1;
+    if (remainingUses <= 0) {
+      await _patch('/auth_code', {'is_active': false});
+      return 'expired_uses';
+    }
+
+    // Consume 1 use
+    final newRemaining = remainingUses - 1;
+    await _patch('/auth_code', {
+      'remaining_uses': newRemaining,
+      'is_active': newRemaining > 0,
+      'last_used_at': DateTime.now().toIso8601String(),
+    });
+
+    return 'valid';
   }
 
   static Future<bool> verifyAuthCode(String inputCode) async {
-    final stored = await getAuthCode();
-    if (stored == null) return false;
-    return stored.trim() == inputCode.trim();
+    final status = await verifyAndConsumeAuthCode(inputCode);
+    return status == 'valid';
+  }
+
+  static Future<void> revokeAuthCode() async {
+    await _patch('/auth_code', {
+      'is_active': false,
+      'remaining_uses': 0,
+      'revoked_at': DateTime.now().toIso8601String(),
+    });
   }
 
   // ── Rename Material ────────────────────────────────────────────────────

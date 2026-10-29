@@ -84,18 +84,8 @@ void registerAdminHandlers(Bot bot) {
       await ctx.reply(S.get('not_authorized', lang));
       return;
     }
-    final code = (100000 + Random().nextInt(900000)).toString();
-    await FirebaseDb.setAuthCode(code);
-
-    final kb = InlineKeyboard()
-      .row().add('🔑 توليد كود جديد', 'dash_gen_code')
-      .row().add('🔙 رجوع للوحة الإدارة', 'admin_dash');
-
-    await ctx.reply(
-      S.get('gen_code_result', lang, {'code': code}),
-      parseMode: ParseMode.markdown,
-      replyMarkup: kb,
-    );
+    // Default: 1 use, 30 minutes
+    await _generateAndShowAuthCode(ctx, userId, lang, 1, 30);
   });
 
   // ── Dashboard callbacks ──────────────────────────────────────────────
@@ -1083,14 +1073,17 @@ void registerAdminHandlers(Bot bot) {
   bot.callbackQuery('adm_add_subject_pick_track', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
     await ctx.answerCallbackQuery();
 
     final tracks = await FirebaseDb.getTracks();
-    final kb = InlineKeyboard();
-    for (var t in tracks) {
-      kb.row().add('📁 $t', 'adm_add_subj_sel_tr:${Utils.shorten(t)}');
-    }
-    kb.row().add('🔙 رجوع', 'adm_curriculum');
+    final kb = Utils.paginateKeyboard(
+      tracks,
+      page: 0,
+      prefix: 'adm_add_subj_sel_tr:',
+      backData: 'adm_curriculum',
+      lang: lang,
+    );
 
     await ctx.editMessageText('اختر المسار الذي تريد إضافة المادة إليه:', replyMarkup: kb);
   });
@@ -1099,8 +1092,24 @@ void registerAdminHandlers(Bot bot) {
     final userId = ctx.from?.id;
     final data = ctx.callbackQuery?.data;
     if (userId == null || data == null) return;
-    final trackShort = data.replaceFirst('adm_add_subj_sel_tr:', '');
-    final track = Utils.lengthen(trackShort);
+    final lang = Utils.getUserLanguage(userId);
+    final raw = data.replaceFirst('adm_add_subj_sel_tr:', '');
+
+    if (raw.startsWith('page_')) {
+      final page = int.parse(raw.split('_')[1]);
+      final tracks = await FirebaseDb.getTracks();
+      final kb = Utils.paginateKeyboard(
+        tracks,
+        page: page,
+        prefix: 'adm_add_subj_sel_tr:',
+        backData: 'adm_curriculum',
+        lang: lang,
+      );
+      await ctx.editMessageText('اختر المسار الذي تريد إضافة المادة إليه:', replyMarkup: kb);
+      return;
+    }
+
+    final track = Utils.lengthen(raw);
     await ctx.answerCallbackQuery();
 
     Utils.uploadStates[userId] = {'action': 'adm_add_subj_name', 'track': track};
@@ -1110,14 +1119,17 @@ void registerAdminHandlers(Bot bot) {
   bot.callbackQuery('adm_del_subject_pick_track', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
     await ctx.answerCallbackQuery();
 
     final tracks = await FirebaseDb.getTracks();
-    final kb = InlineKeyboard();
-    for (var t in tracks) {
-      kb.row().add('📁 $t', 'adm_del_tr_browse:${Utils.shorten(t)}');
-    }
-    kb.row().add('🔙 رجوع', 'adm_curriculum');
+    final kb = Utils.paginateKeyboard(
+      tracks,
+      page: 0,
+      prefix: 'adm_del_tr_browse:',
+      backData: 'adm_curriculum',
+      lang: lang,
+    );
 
     await ctx.editMessageText('اختر المسار لحذف مادة منه:', replyMarkup: kb);
   });
@@ -1126,8 +1138,24 @@ void registerAdminHandlers(Bot bot) {
     final userId = ctx.from?.id;
     final data = ctx.callbackQuery?.data;
     if (userId == null || data == null) return;
-    final trackShort = data.replaceFirst('adm_del_tr_browse:', '');
-    final track = Utils.lengthen(trackShort);
+    final lang = Utils.getUserLanguage(userId);
+    final raw = data.replaceFirst('adm_del_tr_browse:', '');
+
+    if (raw.startsWith('page_')) {
+      final page = int.parse(raw.split('_')[1]);
+      final tracks = await FirebaseDb.getTracks();
+      final kb = Utils.paginateKeyboard(
+        tracks,
+        page: page,
+        prefix: 'adm_del_tr_browse:',
+        backData: 'adm_curriculum',
+        lang: lang,
+      );
+      await ctx.editMessageText('اختر المسار لحذف مادة منه:', replyMarkup: kb);
+      return;
+    }
+
+    final track = Utils.lengthen(raw);
     await ctx.answerCallbackQuery();
 
     final subjects = await FirebaseDb.getSubjects(track);
@@ -1136,23 +1164,41 @@ void registerAdminHandlers(Bot bot) {
       return;
     }
 
-    final kb = InlineKeyboard();
-    for (var s in subjects) {
-      kb.row().add('🗑 $s', 'adm_del_subj_do:${Utils.shorten(track)}:${Utils.shorten(s)}');
-    }
-    kb.row().add('🔙 رجوع', 'adm_del_subject_pick_track');
+    final kb = Utils.paginateKeyboard(
+      subjects,
+      page: 0,
+      prefix: 'adm_del_sub_br:${Utils.shorten(track)}:',
+      backData: 'adm_del_subject_pick_track',
+      lang: lang,
+    );
 
     await ctx.editMessageText('اختر المادة المراد حذفها من مسار "$track":', replyMarkup: kb);
   });
 
-  bot.callbackQuery(RegExp(r'^adm_del_subj_do:(.+)'), (ctx) async {
+  bot.callbackQuery(RegExp(r'^adm_del_sub_br:(.*?):(.*)'), (ctx) async {
     final userId = ctx.from?.id;
     final data = ctx.callbackQuery?.data;
     if (userId == null || data == null) return;
-    final parts = data.replaceFirst('adm_del_subj_do:', '').split(':');
+    final lang = Utils.getUserLanguage(userId);
+    final parts = data.replaceFirst('adm_del_sub_br:', '').split(':');
     final track = Utils.lengthen(parts[0]);
-    final subject = Utils.lengthen(parts[1]);
+    final rawSubj = parts[1];
 
+    if (rawSubj.startsWith('page_')) {
+      final page = int.parse(rawSubj.split('_')[1]);
+      final subjects = await FirebaseDb.getSubjects(track);
+      final kb = Utils.paginateKeyboard(
+        subjects,
+        page: page,
+        prefix: 'adm_del_sub_br:${Utils.shorten(track)}:',
+        backData: 'adm_del_subject_pick_track',
+        lang: lang,
+      );
+      await ctx.editMessageText('اختر المادة المراد حذفها من مسار "$track":', replyMarkup: kb);
+      return;
+    }
+
+    final subject = Utils.lengthen(rawSubj);
     await FirebaseDb.deleteSubject(track, subject);
     await ctx.answerCallbackQuery(text: 'تم حذف المادة بنجاح.');
     await ctx.editMessageText('🗑 *تم حذف مادة "$subject" من مسار "$track" بنجاح.*', parseMode: ParseMode.markdown, replyMarkup: InlineKeyboard().row().add('🔙 إدارة المناهج', 'adm_curriculum'));
@@ -1202,9 +1248,10 @@ void registerAdminHandlers(Bot bot) {
   });
 
   // ═════════════════════════════════════════════════════════════════════════
-  // ── 🔑 8. GENERATE CONTRIBUTOR AUTH CODE ──────────────────────────────
+  // ── 🔑 8. GENERATE CONTRIBUTOR AUTH CODE (WITH USES & EXPIRY) ───────────
   // ═════════════════════════════════════════════════════════════════════════
 
+  // Menu: Choose generator mode
   bot.callbackQuery('dash_gen_code', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -1215,17 +1262,130 @@ void registerAdminHandlers(Bot bot) {
     }
     await ctx.answerCallbackQuery();
 
-    // Generate a random 6-digit code
-    final code = (100000 + Random().nextInt(900000)).toString();
-    await FirebaseDb.setAuthCode(code);
+    final active = await FirebaseDb.getAuthCodeDetails();
+    final buffer = StringBuffer();
+    buffer.writeln(S.get('gen_code_menu_title', lang));
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
+
+    if (active != null && active['is_active'] == true) {
+      final code = active['code'];
+      final rem = active['remaining_uses'] ?? 0;
+      final exp = active['expires_at'] != null ? DateTime.tryParse(active['expires_at'].toString()) : null;
+      final isExpired = exp != null && DateTime.now().isAfter(exp);
+      if (!isExpired && rem > 0) {
+        final diff = exp != null ? exp.difference(DateTime.now()).inMinutes : 0;
+        buffer.writeln('📌 *الكود الفعّال حاليًا:* `$code`');
+        buffer.writeln('• المتبقي: *$rem استخدام*');
+        buffer.writeln('• ينتهي خلال: *$diff دقيقة*\n');
+      }
+    }
 
     final kb = InlineKeyboard()
-      .row().add('🔑 توليد كود جديد', 'dash_gen_code')
-      .row().add('🔙 رجوع للوحة الإدارة', 'admin_dash');
+      .row().add(S.get('btn_gen_fast', lang), 'gen_preset:1:30')
+      .row().add(S.get('btn_gen_custom', lang), 'gen_custom_uses')
+      .row().add(S.get('btn_revoke_code', lang), 'gen_code_revoke')
+      .row().add(S.get('btn_back_admin', lang), 'admin_dash');
 
     await ctx.editMessageText(
-      S.get('gen_code_result', lang, {'code': code}),
+      buffer.toString(),
       parseMode: ParseMode.markdown,
+      replyMarkup: kb,
+    );
+  });
+
+  // Fast preset (e.g. 1 use, 30 min)
+  bot.callbackQuery(RegExp(r'^gen_preset:(\d+):(\d+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) return;
+    await ctx.answerCallbackQuery();
+
+    final match = RegExp(r'^gen_preset:(\d+):(\d+)').firstMatch(ctx.callbackQuery!.data!)!;
+    final uses = int.parse(match.group(1)!);
+    final minutes = int.parse(match.group(2)!);
+
+    await _generateAndShowAuthCode(ctx, userId, lang, uses, minutes);
+  });
+
+  // Step 1 of Custom: choose uses
+  bot.callbackQuery('gen_custom_uses', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) return;
+    await ctx.answerCallbackQuery();
+
+    final kb = InlineKeyboard()
+      .row().add('1️⃣ مرة واحدة فقط (1 use)', 'gcu:1')
+      .row().add('3️⃣ 3 مرات', 'gcu:3')
+      .row().add('5️⃣ 5 مرات', 'gcu:5')
+      .row().add('🔟 10 مرات', 'gcu:10')
+      .row().add('🔙 رجوع', 'dash_gen_code');
+
+    await ctx.editMessageText(
+      S.get('gen_custom_uses_prompt', lang),
+      parseMode: ParseMode.markdown,
+      replyMarkup: kb,
+    );
+  });
+
+  // Step 2 of Custom: choose duration
+  bot.callbackQuery(RegExp(r'^gcu:(\d+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) return;
+    await ctx.answerCallbackQuery();
+
+    final uses = int.parse(ctx.callbackQuery!.data!.substring('gcu:'.length));
+
+    final kb = InlineKeyboard()
+      .row().add('⏱️ 15 دقيقة', 'gcd:$uses:15')
+      .row().add('⏱️ 30 دقيقة', 'gcd:$uses:30')
+      .row().add('⏱️ 1 ساعة (60 دقيقة)', 'gcd:$uses:60')
+      .row().add('⏱️ 6 ساعات', 'gcd:$uses:360')
+      .row().add('⏱️ 24 ساعة (يوم كامل)', 'gcd:$uses:1440')
+      .row().add('🔙 رجوع', 'gen_custom_uses');
+
+    await ctx.editMessageText(
+      S.get('gen_custom_time_prompt', lang),
+      parseMode: ParseMode.markdown,
+      replyMarkup: kb,
+    );
+  });
+
+  // Final step: execute generation
+  bot.callbackQuery(RegExp(r'^gcd:(\d+):(\d+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) return;
+    await ctx.answerCallbackQuery();
+
+    final parts = ctx.callbackQuery!.data!.substring('gcd:'.length).split(':');
+    final uses = int.parse(parts[0]);
+    final minutes = int.parse(parts[1]);
+
+    await _generateAndShowAuthCode(ctx, userId, lang, uses, minutes);
+  });
+
+  // Revoke active code
+  bot.callbackQuery('gen_code_revoke', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) return;
+    await ctx.answerCallbackQuery();
+
+    await FirebaseDb.revokeAuthCode();
+
+    final kb = InlineKeyboard()
+      .row().add('🔑 إنشاء كود جديد', 'dash_gen_code')
+      .row().add(S.get('btn_back_admin', lang), 'admin_dash');
+
+    await ctx.editMessageText(
+      S.get('code_revoked_success', lang),
       replyMarkup: kb,
     );
   });
@@ -1300,4 +1460,39 @@ Future<InlineKeyboard> _buildAdminKeyboard(int userId, String lang) async {
     .add(S.get('btn_edit_files', lang), 'edit_start');
   keyboard.row().add(S.get('btn_student_mode', lang), 'dash_student');
   return keyboard;
+}
+
+// ── Helper: generate & show authorization code ──────────────────────────
+
+Future<void> _generateAndShowAuthCode(
+    Context ctx, int userId, String lang, int uses, int minutes) async {
+  final code = (100000 + Random().nextInt(900000)).toString();
+  await FirebaseDb.setAuthCodeWithLimits(
+    code: code,
+    maxUses: uses,
+    validity: Duration(minutes: minutes),
+    createdBy: userId,
+  );
+
+  String durationStr = minutes < 60 ? '$minutes دقيقة' : '${minutes ~/ 60} ساعة';
+  if (lang == 'en') {
+    durationStr = minutes < 60 ? '$minutes minutes' : '${minutes ~/ 60} hours';
+  }
+
+  final kb = InlineKeyboard()
+    .row().add('🔄 توليد كود آخر', 'dash_gen_code')
+    .row().add(S.get('btn_revoke_code', lang), 'gen_code_revoke')
+    .row().add(S.get('btn_back_admin', lang), 'admin_dash');
+
+  final msg = S.get('gen_code_detailed_result', lang, {
+    'code': code,
+    'uses': '$uses',
+    'duration': durationStr,
+  });
+
+  if (ctx.callbackQuery != null) {
+    await ctx.editMessageText(msg, parseMode: ParseMode.markdown, replyMarkup: kb);
+  } else {
+    await ctx.reply(msg, parseMode: ParseMode.markdown, replyMarkup: kb);
+  }
 }

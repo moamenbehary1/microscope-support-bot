@@ -498,10 +498,16 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
     // ── Edit: Auth code verification ──────────────────────────────
     case 'edit_auth_code_check':
       final inputCode = text.trim();
-      final isValid = await FirebaseDb.verifyAuthCode(inputCode);
-      if (!isValid) {
+      final codeRes = await FirebaseDb.verifyAndConsumeAuthCode(inputCode);
+      if (codeRes != 'valid') {
         final retryKb = InlineKeyboard().row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
-        await ctx.reply(S.get('edit_auth_invalid', lang), replyMarkup: retryKb);
+        String errMsg = S.get('edit_auth_invalid', lang);
+        if (codeRes == 'expired_time') {
+          errMsg = S.get('edit_auth_expired_time', lang);
+        } else if (codeRes == 'expired_uses') {
+          errMsg = S.get('edit_auth_expired_uses', lang);
+        }
+        await ctx.reply(errMsg, replyMarkup: retryKb);
         // Stay in state so user can try again
         return;
       }
@@ -528,11 +534,13 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
       } else if (pendingAction == 'move') {
         state['action'] = 'edit_move_pick_track';
         final tracks = await FirebaseDb.getTracks();
-        final keyboard = InlineKeyboard();
-        for (var t in tracks) {
-          keyboard.row().add(t, 'emv_track:${Utils.shorten(t)}');
-        }
-        keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+        final keyboard = Utils.paginateKeyboard(
+          tracks,
+          page: 0,
+          prefix: 'emv_track:',
+          backData: 'edt_cancel',
+          lang: lang,
+        );
         await ctx.reply(
           S.get('edit_move_select_track', lang),
           replyMarkup: keyboard,
@@ -655,7 +663,26 @@ void registerContributorUploadHandlers(Bot bot) {
 
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
-    final track = data.substring('up_track:'.length);
+    final trackRaw = data.substring('up_track:'.length);
+
+    if (trackRaw.startsWith('page_')) {
+      final page = int.parse(trackRaw.split('_')[1]);
+      final tracks = await FirebaseDb.getTracks();
+      final keyboard = Utils.paginateKeyboard(
+        tracks,
+        page: page,
+        prefix: 'up_track:',
+        backData: 'contrib_dash',
+        lang: lang,
+      );
+      await ctx.editMessageText(
+        S.get('contrib_add_subject_prompt', lang),
+        replyMarkup: keyboard,
+      );
+      return;
+    }
+
+    final track = Utils.lengthen(trackRaw);
     state['track'] = track;
     state['action'] = 'wait_for_upload_subject';
 
@@ -667,10 +694,13 @@ void registerContributorUploadHandlers(Bot bot) {
       return;
     }
 
-    final keyboard = InlineKeyboard();
-    for (var s in subjects) {
-      keyboard.row().add(s, 'up_subj:$s');
-    }
+    final keyboard = Utils.paginateKeyboard(
+      subjects,
+      page: 0,
+      prefix: 'up_subj:',
+      backData: 'contrib_add_subject',
+      lang: lang,
+    );
 
     await ctx.editMessageText(
       S.get('upload_selected_track', lang, {'track': track}),
@@ -687,8 +717,27 @@ void registerContributorUploadHandlers(Bot bot) {
 
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
-    final subject = data.substring('up_subj:'.length);
+    final subjRaw = data.substring('up_subj:'.length);
     final track = state['track'] as String? ?? '';
+
+    if (subjRaw.startsWith('page_')) {
+      final page = int.parse(subjRaw.split('_')[1]);
+      final subjects = await FirebaseDb.getSubjects(track);
+      final keyboard = Utils.paginateKeyboard(
+        subjects,
+        page: page,
+        prefix: 'up_subj:',
+        backData: 'contrib_add_subject',
+        lang: lang,
+      );
+      await ctx.editMessageText(
+        S.get('upload_selected_track', lang, {'track': track}),
+        replyMarkup: keyboard,
+      );
+      return;
+    }
+
+    final subject = Utils.lengthen(subjRaw);
     state['subject'] = subject;
     state['action'] = 'wait_for_upload_type';
 
@@ -701,10 +750,13 @@ void registerContributorUploadHandlers(Bot bot) {
       return;
     }
 
-    final keyboard = InlineKeyboard();
-    for (var t in types) {
-      keyboard.row().add(t, 'up_type:$t');
-    }
+    final keyboard = Utils.paginateKeyboard(
+      types,
+      page: 0,
+      prefix: 'up_type:',
+      backData: 'up_track:${Utils.shorten(track)}',
+      lang: lang,
+    );
 
     await ctx.editMessageText(
       S.get('upload_selected_subject', lang, {'subject': subject}),
@@ -721,7 +773,28 @@ void registerContributorUploadHandlers(Bot bot) {
 
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
-    final type = data.substring('up_type:'.length);
+    final typeRaw = data.substring('up_type:'.length);
+    final track = state['track'] as String? ?? '';
+    final subject = state['subject'] as String? ?? '';
+
+    if (typeRaw.startsWith('page_')) {
+      final page = int.parse(typeRaw.split('_')[1]);
+      final types = await FirebaseDb.getMaterialTypes(track, subject);
+      final keyboard = Utils.paginateKeyboard(
+        types,
+        page: page,
+        prefix: 'up_type:',
+        backData: 'up_track:${Utils.shorten(track)}',
+        lang: lang,
+      );
+      await ctx.editMessageText(
+        S.get('upload_selected_subject', lang, {'subject': subject}),
+        replyMarkup: keyboard,
+      );
+      return;
+    }
+
+    final type = Utils.lengthen(typeRaw);
     state['type'] = type;
     state['action'] = 'wait_for_upload_name';
 
@@ -754,10 +827,13 @@ void registerContributorUploadHandlers(Bot bot) {
       return;
     }
 
-    final keyboard = InlineKeyboard();
-    for (var t in tracks) {
-      keyboard.row().add(t, 'up_track:$t');
-    }
+    final keyboard = Utils.paginateKeyboard(
+      tracks,
+      page: 0,
+      prefix: 'up_track:',
+      backData: 'contrib_dash',
+      lang: lang,
+    );
 
     await ctx.editMessageText(
       S.get('contrib_add_subject_prompt', lang),
@@ -884,12 +960,14 @@ void registerContributorUploadHandlers(Bot bot) {
     }
 
     final tracks = materials.values.map((v) => v['track'] as String).toSet().toList();
-    final keyboard = InlineKeyboard();
-    for (var t in tracks) {
-      keyboard.row().add(t, 'c_mat_track:$t');
-    }
+    final keyboard = Utils.paginateKeyboard(
+      tracks,
+      page: 0,
+      prefix: 'c_mat_track:',
+      backData: 'contrib_dash',
+      lang: lang,
+    );
     keyboard.row().add('🗑️ مسح جميع موادي', 'c_del_all_mats_confirm');
-    keyboard.row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
 
     await ctx.editMessageText('📋 موادي:\nاختر المسار:', replyMarkup: keyboard);
   });
@@ -914,16 +992,18 @@ void registerContributorUploadHandlers(Bot bot) {
 
   // Bulk Delete: Track Materials
   bot.callbackQuery(RegExp(r'^c_del_track_mats_confirm:(.+)'), (ctx) async {
-    final track = ctx.callbackQuery!.data!.substring('c_del_track_mats_confirm:'.length);
+    final raw = ctx.callbackQuery!.data!.substring('c_del_track_mats_confirm:'.length);
+    final track = Utils.lengthen(raw);
     final keyboard = InlineKeyboard()
-        .row().add('⚠️ نعم، احذف مواد مسار $track', 'c_del_track_mats_exec:$track')
-        .row().add('🔙 تراجع', 'c_mat_track:$track');
+        .row().add('⚠️ نعم، احذف مواد مسار $track', 'c_del_track_mats_exec:${Utils.shorten(track)}')
+        .row().add('🔙 تراجع', 'c_mat_track:${Utils.shorten(track)}');
     await ctx.editMessageText('هل أنت متأكد من رغبتك في حذف جميع موادك في مسار **$track**؟ لا يمكن التراجع عن هذا الإجراء.', replyMarkup: keyboard, parseMode: ParseMode.markdown);
   });
 
   bot.callbackQuery(RegExp(r'^c_del_track_mats_exec:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
-    final track = ctx.callbackQuery!.data!.substring('c_del_track_mats_exec:'.length);
+    final raw = ctx.callbackQuery!.data!.substring('c_del_track_mats_exec:'.length);
+    final track = Utils.lengthen(raw);
     if (userId == null) return;
     
     await ctx.editMessageText('جاري الحذف...');
@@ -947,8 +1027,26 @@ void registerContributorUploadHandlers(Bot bot) {
     final userId = ctx.from?.id;
     final data = ctx.callbackQuery?.data;
     if (userId == null || data == null) return;
-    
-    final track = data.substring('c_mat_track:'.length);
+    final lang = Utils.getUserLanguage(userId);
+    final trackRaw = data.substring('c_mat_track:'.length);
+
+    if (trackRaw.startsWith('page_')) {
+      final page = int.parse(trackRaw.split('_')[1]);
+      final materials = await FirebaseDb.getContributorMaterials(userId);
+      final tracks = materials.values.map((v) => v['track'] as String).toSet().toList();
+      final keyboard = Utils.paginateKeyboard(
+        tracks,
+        page: page,
+        prefix: 'c_mat_track:',
+        backData: 'contrib_dash',
+        lang: lang,
+      );
+      keyboard.row().add('🗑️ مسح جميع موادي', 'c_del_all_mats_confirm');
+      await ctx.editMessageText('📋 موادي:\nاختر المسار:', replyMarkup: keyboard);
+      return;
+    }
+
+    final track = Utils.lengthen(trackRaw);
     final materials = await FirebaseDb.getContributorMaterials(userId);
     final subjects = materials.values
         .where((v) => v['track'] == track)
@@ -956,12 +1054,14 @@ void registerContributorUploadHandlers(Bot bot) {
         .toSet()
         .toList();
 
-    final keyboard = InlineKeyboard();
-    for (var s in subjects) {
-      keyboard.row().add(s, 'c_mat_subj:$track:$s');
-    }
-    keyboard.row().add('🗑️ مسح جميع مواد المسار', 'c_del_track_mats_confirm:$track');
-    keyboard.row().add('🔙 رجوع', 'contrib_materials');
+    final keyboard = Utils.paginateKeyboard(
+      subjects,
+      page: 0,
+      prefix: 'c_mat_subj:${Utils.shorten(track)}:',
+      backData: 'contrib_materials',
+      lang: lang,
+    );
+    keyboard.row().add('🗑️ مسح جميع مواد المسار', 'c_del_track_mats_confirm:${Utils.shorten(track)}');
 
     await ctx.editMessageText('📋 موادي - $track:\nاختر المادة:', replyMarkup: keyboard);
   });
@@ -970,23 +1070,49 @@ void registerContributorUploadHandlers(Bot bot) {
     final userId = ctx.from?.id;
     final data = ctx.callbackQuery?.data;
     if (userId == null || data == null) return;
+    final lang = Utils.getUserLanguage(userId);
     
     final parts = data.split(':');
-    final track = parts[1];
-    final subject = parts[2];
+    final track = Utils.lengthen(parts[1]);
+    final subjRaw = parts[2];
     
     final materials = await FirebaseDb.getContributorMaterials(userId);
+
+    if (subjRaw.startsWith('page_')) {
+      final page = int.parse(subjRaw.split('_')[1]);
+      final subjects = materials.values
+          .where((v) => v['track'] == track)
+          .map((v) => v['subject'] as String)
+          .toSet()
+          .toList();
+
+      final keyboard = Utils.paginateKeyboard(
+        subjects,
+        page: page,
+        prefix: 'c_mat_subj:${Utils.shorten(track)}:',
+        backData: 'contrib_materials',
+        lang: lang,
+      );
+      keyboard.row().add('🗑️ مسح جميع مواد المسار', 'c_del_track_mats_confirm:${Utils.shorten(track)}');
+
+      await ctx.editMessageText('📋 موادي - $track:\nاختر المادة:', replyMarkup: keyboard);
+      return;
+    }
+
+    final subject = Utils.lengthen(subjRaw);
     final types = materials.values
         .where((v) => v['track'] == track && v['subject'] == subject)
         .map((v) => v['type'] as String)
         .toSet()
         .toList();
 
-    final keyboard = InlineKeyboard();
-    for (var t in types) {
-      keyboard.row().add(t, 'c_mat_type:$track:$subject:$t');
-    }
-    keyboard.row().add('🔙 رجوع', 'c_mat_track:$track');
+    final keyboard = Utils.paginateKeyboard(
+      types,
+      page: 0,
+      prefix: 'c_mat_type:${Utils.shorten(track)}:${Utils.shorten(subject)}:',
+      backData: 'c_mat_track:${Utils.shorten(track)}',
+      lang: lang,
+    );
 
     await ctx.editMessageText('📋 موادي - $subject:\nاختر النوع:', replyMarkup: keyboard);
   });
@@ -995,24 +1121,154 @@ void registerContributorUploadHandlers(Bot bot) {
     final userId = ctx.from?.id;
     final data = ctx.callbackQuery?.data;
     if (userId == null || data == null) return;
+    final lang = Utils.getUserLanguage(userId);
     
     final parts = data.split(':');
-    final track = parts[1];
-    final subject = parts[2];
-    final type = parts[3];
+    final track = Utils.lengthen(parts[1]);
+    final subject = Utils.lengthen(parts[2]);
+    final typeRaw = parts[3];
     
     final materials = await FirebaseDb.getContributorMaterials(userId);
+
+    if (typeRaw.startsWith('page_')) {
+      final page = int.parse(typeRaw.split('_')[1]);
+      final types = materials.values
+          .where((v) => v['track'] == track && v['subject'] == subject)
+          .map((v) => v['type'] as String)
+          .toSet()
+          .toList();
+
+      final keyboard = Utils.paginateKeyboard(
+        types,
+        page: page,
+        prefix: 'c_mat_type:${Utils.shorten(track)}:${Utils.shorten(subject)}:',
+        backData: 'c_mat_track:${Utils.shorten(track)}',
+        lang: lang,
+      );
+
+      await ctx.editMessageText('📋 موادي - $subject:\nاختر النوع:', replyMarkup: keyboard);
+      return;
+    }
+
+    final type = Utils.lengthen(typeRaw);
     final mats = materials.entries
         .where((e) => e.value['track'] == track && e.value['subject'] == subject && e.value['type'] == type)
         .toList();
 
-    final keyboard = InlineKeyboard();
-    for (var e in mats) {
+    final itemsList = mats.map((e) {
       final matId = e.key;
-      final name = e.value['name'] as String? ?? matId;
-      keyboard.row().add('$name 🗑️', 'contrib_del_mat:${Utils.shorten(matId)}:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}');
+      final name = (e.value['name'] as String?) ?? matId;
+      return MapEntry(matId, '$name 🗑️');
+    }).toList();
+
+    final keyboard = Utils.paginateMapKeyboard(
+      itemsList,
+      page: 0,
+      prefix: 'c_dmat:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}:',
+      backData: 'c_mat_subj:${Utils.shorten(track)}:${Utils.shorten(subject)}',
+      lang: lang,
+    );
+
+    await ctx.editMessageText('📋 موادي - $type:\nاختر الملف لحذفه:', replyMarkup: keyboard);
+  });
+
+  bot.callbackQuery(RegExp(r'^c_dmat:(.*?):(.*?):(.*?):(.*)'), (ctx) async {
+    final data = ctx.callbackQuery?.data;
+    final userId = ctx.from?.id;
+    if (data == null || userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+
+    final parts = data.split(':');
+    final track = Utils.lengthen(parts[1]);
+    final subject = Utils.lengthen(parts[2]);
+    final type = Utils.lengthen(parts[3]);
+    final rawId = parts[4];
+
+    final materials = await FirebaseDb.getContributorMaterials(userId);
+
+    if (rawId.startsWith('page_')) {
+      final page = int.parse(rawId.split('_')[1]);
+      final mats = materials.entries
+          .where((e) => e.value['track'] == track && e.value['subject'] == subject && e.value['type'] == type)
+          .toList();
+      final itemsList = mats.map((e) {
+        final id = e.key;
+        final name = (e.value['name'] as String?) ?? id;
+        return MapEntry(id, '$name 🗑️');
+      }).toList();
+
+      final keyboard = Utils.paginateMapKeyboard(
+        itemsList,
+        page: page,
+        prefix: 'c_dmat:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}:',
+        backData: 'c_mat_subj:${Utils.shorten(track)}:${Utils.shorten(subject)}',
+        lang: lang,
+      );
+      await ctx.editMessageText('📋 موادي - $type:\nاختر الملف لحذفه:', replyMarkup: keyboard);
+      return;
     }
-    keyboard.row().add('🔙 رجوع', 'c_mat_subj:$track:$subject');
+
+    final matId = Utils.lengthen(rawId);
+    await FirebaseDb.deleteMaterial(track, subject, type, matId);
+    await FirebaseDb.removeContributorMaterialRef(userId, matId);
+
+    await ctx.answerCallbackQuery(text: S.get('material_delete_toast', lang), showAlert: false);
+
+    // Refresh materials list for the current type
+    final refreshedMaterials = await FirebaseDb.getContributorMaterials(userId);
+    final mats = refreshedMaterials.entries
+        .where((e) => e.value['track'] == track && e.value['subject'] == subject && e.value['type'] == type)
+        .toList();
+
+    if (mats.isEmpty) {
+      final types = refreshedMaterials.values
+          .where((v) => v['track'] == track && v['subject'] == subject)
+          .map((v) => v['type'] as String)
+          .toSet()
+          .toList();
+      
+      if (types.isEmpty) {
+         if (refreshedMaterials.isEmpty) {
+            final kb = InlineKeyboard().row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
+            await ctx.editMessageText(S.get('contrib_no_materials', lang), replyMarkup: kb);
+         } else {
+            final tracks = refreshedMaterials.values.map((v) => v['track'] as String).toSet().toList();
+            final keyboard = Utils.paginateKeyboard(
+              tracks,
+              page: 0,
+              prefix: 'c_mat_track:',
+              backData: 'contrib_dash',
+              lang: lang,
+            );
+            keyboard.row().add('🗑️ مسح جميع موادي', 'c_del_all_mats_confirm');
+            await ctx.editMessageText('📋 موادي:\nاختر المسار:', replyMarkup: keyboard);
+         }
+      } else {
+          final keyboard = Utils.paginateKeyboard(
+            types,
+            page: 0,
+            prefix: 'c_mat_type:${Utils.shorten(track)}:${Utils.shorten(subject)}:',
+            backData: 'c_mat_track:${Utils.shorten(track)}',
+            lang: lang,
+          );
+          await ctx.editMessageText('📋 موادي - $subject:\nاختر النوع:', replyMarkup: keyboard);
+      }
+      return;
+    }
+
+    final itemsList = mats.map((e) {
+      final id = e.key;
+      final name = (e.value['name'] as String?) ?? id;
+      return MapEntry(id, '$name 🗑️');
+    }).toList();
+
+    final keyboard = Utils.paginateMapKeyboard(
+      itemsList,
+      page: 0,
+      prefix: 'c_dmat:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}:',
+      backData: 'c_mat_subj:${Utils.shorten(track)}:${Utils.shorten(subject)}',
+      lang: lang,
+    );
 
     await ctx.editMessageText('📋 موادي - $type:\nاختر الملف لحذفه:', replyMarkup: keyboard);
   });
@@ -1161,11 +1417,13 @@ void registerContributorUploadHandlers(Bot bot) {
       return;
     }
 
-    final keyboard = InlineKeyboard();
-    for (var t in tracks) {
-      keyboard.row().add(t, 'qa_track:${Utils.shorten(t)}');
-    }
-    keyboard.row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
+    final keyboard = Utils.paginateKeyboard(
+      tracks,
+      page: 0,
+      prefix: 'qa_track:',
+      backData: 'contrib_dash',
+      lang: lang,
+    );
 
     await ctx.editMessageText('اختر المسار لإضافة المحاضرة فيه:', replyMarkup: keyboard);
   });
@@ -1173,20 +1431,38 @@ void registerContributorUploadHandlers(Bot bot) {
   bot.callbackQuery(RegExp(r'^qa_track:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
-    final track = Utils.lengthen(data.substring('qa_track:'.length));
+    final trackRaw = data.substring('qa_track:'.length);
 
+    if (trackRaw.startsWith('page_')) {
+      final page = int.parse(trackRaw.split('_')[1]);
+      final tracks = await FirebaseDb.getTracks();
+      final keyboard = Utils.paginateKeyboard(
+        tracks,
+        page: page,
+        prefix: 'qa_track:',
+        backData: 'contrib_dash',
+        lang: lang,
+      );
+      await ctx.editMessageText('اختر المسار لإضافة المحاضرة فيه:', replyMarkup: keyboard);
+      return;
+    }
+
+    final track = Utils.lengthen(trackRaw);
     final state = Utils.uploadStates[userId];
     if (state == null) return;
     state['track'] = track;
     state['action'] = 'wait_for_quick_add_subject';
 
     final subjects = await FirebaseDb.getSubjects(track);
-    final keyboard = InlineKeyboard();
-    for (var s in subjects) {
-      keyboard.row().add(s, 'qa_subj:${Utils.shorten(s)}');
-    }
-    keyboard.row().add('🔙 رجوع', 'contrib_quick_add');
+    final keyboard = Utils.paginateKeyboard(
+      subjects,
+      page: 0,
+      prefix: 'qa_subj:',
+      backData: 'contrib_quick_add',
+      lang: lang,
+    );
 
     await ctx.editMessageText('المسار: $track\nاختر المادة:', replyMarkup: keyboard);
   });
@@ -1194,21 +1470,40 @@ void registerContributorUploadHandlers(Bot bot) {
   bot.callbackQuery(RegExp(r'^qa_subj:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
-    final subject = Utils.lengthen(data.substring('qa_subj:'.length));
+    final subjRaw = data.substring('qa_subj:'.length);
 
     final state = Utils.uploadStates[userId];
     if (state == null) return;
     final track = state['track'] as String? ?? '';
+
+    if (subjRaw.startsWith('page_')) {
+      final page = int.parse(subjRaw.split('_')[1]);
+      final subjects = await FirebaseDb.getSubjects(track);
+      final keyboard = Utils.paginateKeyboard(
+        subjects,
+        page: page,
+        prefix: 'qa_subj:',
+        backData: 'contrib_quick_add',
+        lang: lang,
+      );
+      await ctx.editMessageText('المسار: $track\nاختر المادة:', replyMarkup: keyboard);
+      return;
+    }
+
+    final subject = Utils.lengthen(subjRaw);
     state['subject'] = subject;
     state['action'] = 'wait_for_quick_add_type';
 
     final types = await FirebaseDb.getMaterialTypes(track, subject);
-    final keyboard = InlineKeyboard();
-    for (var t in types) {
-      keyboard.row().add(t, 'qa_type:${Utils.shorten(t)}');
-    }
-    keyboard.row().add('🔙 رجوع', 'qa_track:${Utils.shorten(track)}');
+    final keyboard = Utils.paginateKeyboard(
+      types,
+      page: 0,
+      prefix: 'qa_type:',
+      backData: 'qa_track:${Utils.shorten(track)}',
+      lang: lang,
+    );
 
     await ctx.editMessageText('المادة: $subject\nاختر النوع (ملخص، شرح، فيديو...):', replyMarkup: keyboard);
   });
@@ -1218,10 +1513,28 @@ void registerContributorUploadHandlers(Bot bot) {
     if (userId == null) return;
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
-    final type = Utils.lengthen(data.substring('qa_type:'.length));
+    final typeRaw = data.substring('qa_type:'.length);
 
     final state = Utils.uploadStates[userId];
     if (state == null) return;
+    final track = state['track'] as String? ?? '';
+    final subject = state['subject'] as String? ?? '';
+
+    if (typeRaw.startsWith('page_')) {
+      final page = int.parse(typeRaw.split('_')[1]);
+      final types = await FirebaseDb.getMaterialTypes(track, subject);
+      final keyboard = Utils.paginateKeyboard(
+        types,
+        page: page,
+        prefix: 'qa_type:',
+        backData: 'qa_track:${Utils.shorten(track)}',
+        lang: lang,
+      );
+      await ctx.editMessageText('المادة: $subject\nاختر النوع (ملخص، شرح، فيديو...):', replyMarkup: keyboard);
+      return;
+    }
+
+    final type = Utils.lengthen(typeRaw);
     state['type'] = type;
     state['action'] = 'contrib_quick_add_name';
 
@@ -1255,13 +1568,17 @@ void registerContributorUploadHandlers(Bot bot) {
     final origin = (isAdmin && Utils.getUserMode(userId) == UserMode.admin) ? 'admin' : 'contrib';
     Utils.uploadStates[userId] = {'action': 'edit_pick_track', 'origin': origin};
 
-    final keyboard = InlineKeyboard();
-    for (var t in tracks) {
-      keyboard.row().add(t, 'edt_track:${Utils.shorten(t)}');
-    }
     final backCallback = origin == 'admin' ? 'admin_dash' : 'contrib_dash';
     final backLabel = origin == 'admin' ? S.get('btn_back_admin', lang) : S.get('btn_back_dashboard', lang);
-    keyboard.row().add(backLabel, backCallback);
+
+    final keyboard = Utils.paginateKeyboard(
+      tracks,
+      page: 0,
+      prefix: 'edt_track:',
+      backData: backCallback,
+      backLabel: backLabel,
+      lang: lang,
+    );
 
     await ctx.editMessageText(
       S.get('edit_select_track', lang),
@@ -1276,9 +1593,33 @@ void registerContributorUploadHandlers(Bot bot) {
     if (userId == null) return;
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
-    final track = Utils.lengthen(data.substring('edt_track:'.length));
+    final trackRaw = data.substring('edt_track:'.length);
 
     final state = Utils.uploadStates[userId] ?? {};
+    final origin = state['origin'] as String? ?? 'contrib';
+    final backCallback = origin == 'admin' ? 'admin_dash' : 'contrib_dash';
+    final backLabel = origin == 'admin' ? S.get('btn_back_admin', lang) : S.get('btn_back_dashboard', lang);
+
+    if (trackRaw.startsWith('page_')) {
+      final page = int.parse(trackRaw.split('_')[1]);
+      final tracks = await FirebaseDb.getTracks();
+      final keyboard = Utils.paginateKeyboard(
+        tracks,
+        page: page,
+        prefix: 'edt_track:',
+        backData: backCallback,
+        backLabel: backLabel,
+        lang: lang,
+      );
+      await ctx.editMessageText(
+        S.get('edit_select_track', lang),
+        replyMarkup: keyboard,
+        parseMode: ParseMode.markdown,
+      );
+      return;
+    }
+
+    final track = Utils.lengthen(trackRaw);
     state['action'] = 'edit_pick_subject';
     state['edit_track'] = track;
     Utils.uploadStates[userId] = state;
@@ -1290,12 +1631,13 @@ void registerContributorUploadHandlers(Bot bot) {
     }
     await ctx.answerCallbackQuery();
 
-    final keyboard = InlineKeyboard();
-    for (var s in subjects) {
-      keyboard.row().add(s, 'edt_subj:${Utils.shorten(s)}');
-    }
-    keyboard.row().add('🔙 رجوع', 'edit_start');
-    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+    final keyboard = Utils.paginateKeyboard(
+      subjects,
+      page: 0,
+      prefix: 'edt_subj:',
+      backData: 'edit_start',
+      lang: lang,
+    );
 
     await ctx.editMessageText(S.get('edit_select_subject', lang), replyMarkup: keyboard);
   });
@@ -1306,11 +1648,27 @@ void registerContributorUploadHandlers(Bot bot) {
     if (userId == null) return;
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
-    final subject = Utils.lengthen(data.substring('edt_subj:'.length));
+    final subjectRaw = data.substring('edt_subj:'.length);
 
     final state = Utils.uploadStates[userId];
     if (state == null) return;
     final track = state['edit_track'] as String? ?? '';
+
+    if (subjectRaw.startsWith('page_')) {
+      final page = int.parse(subjectRaw.split('_')[1]);
+      final subjects = await FirebaseDb.getSubjects(track);
+      final keyboard = Utils.paginateKeyboard(
+        subjects,
+        page: page,
+        prefix: 'edt_subj:',
+        backData: 'edit_start',
+        lang: lang,
+      );
+      await ctx.editMessageText(S.get('edit_select_subject', lang), replyMarkup: keyboard);
+      return;
+    }
+
+    final subject = Utils.lengthen(subjectRaw);
     state['edit_subject'] = subject;
     state['action'] = 'edit_pick_type';
 
@@ -1321,12 +1679,13 @@ void registerContributorUploadHandlers(Bot bot) {
     }
     await ctx.answerCallbackQuery();
 
-    final keyboard = InlineKeyboard();
-    for (var t in types) {
-      keyboard.row().add(t, 'edt_type:${Utils.shorten(t)}');
-    }
-    keyboard.row().add('🔙 رجوع', 'edt_track:${Utils.shorten(track)}');
-    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+    final keyboard = Utils.paginateKeyboard(
+      types,
+      page: 0,
+      prefix: 'edt_type:',
+      backData: 'edt_track:${Utils.shorten(track)}',
+      lang: lang,
+    );
 
     await ctx.editMessageText(S.get('edit_select_type', lang), replyMarkup: keyboard);
   });
@@ -1337,12 +1696,28 @@ void registerContributorUploadHandlers(Bot bot) {
     if (userId == null) return;
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
-    final type = Utils.lengthen(data.substring('edt_type:'.length));
+    final typeRaw = data.substring('edt_type:'.length);
 
     final state = Utils.uploadStates[userId];
     if (state == null) return;
     final track = state['edit_track'] as String? ?? '';
     final subject = state['edit_subject'] as String? ?? '';
+
+    if (typeRaw.startsWith('page_')) {
+      final page = int.parse(typeRaw.split('_')[1]);
+      final types = await FirebaseDb.getMaterialTypes(track, subject);
+      final keyboard = Utils.paginateKeyboard(
+        types,
+        page: page,
+        prefix: 'edt_type:',
+        backData: 'edt_track:${Utils.shorten(track)}',
+        lang: lang,
+      );
+      await ctx.editMessageText(S.get('edit_select_type', lang), replyMarkup: keyboard);
+      return;
+    }
+
+    final type = Utils.lengthen(typeRaw);
     state['edit_type'] = type;
     state['action'] = 'edit_pick_file';
 
@@ -1353,13 +1728,18 @@ void registerContributorUploadHandlers(Bot bot) {
     }
     await ctx.answerCallbackQuery();
 
-    final keyboard = InlineKeyboard();
-    materials.forEach((matId, matData) {
-      final name = (matData['name'] as String?) ?? matId;
-      keyboard.row().add('📄 $name', 'edt_file:${Utils.shorten(matId)}');
-    });
-    keyboard.row().add('🔙 رجوع', 'edt_subj:${Utils.shorten(subject)}');
-    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+    final itemsList = materials.entries.map((e) {
+      final name = (e.value['name'] as String?) ?? e.key;
+      return MapEntry(e.key, '📄 $name');
+    }).toList();
+
+    final keyboard = Utils.paginateMapKeyboard(
+      itemsList,
+      page: 0,
+      prefix: 'edt_file:',
+      backData: 'edt_subj:${Utils.shorten(subject)}',
+      lang: lang,
+    );
 
     await ctx.editMessageText(S.get('edit_select_file', lang), replyMarkup: keyboard);
   });
@@ -1371,7 +1751,7 @@ void registerContributorUploadHandlers(Bot bot) {
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
     final rawId = data.substring('edt_file:'.length);
-    final matId = Utils.lengthen(rawId);
+
     final state = Utils.uploadStates[userId];
     if (state == null) return;
 
@@ -1379,6 +1759,26 @@ void registerContributorUploadHandlers(Bot bot) {
     final subject = state['edit_subject'] as String? ?? '';
     final type = state['edit_type'] as String? ?? '';
 
+    if (rawId.startsWith('page_')) {
+      final page = int.parse(rawId.split('_')[1]);
+      final materials = await FirebaseDb.getMaterials(track, subject, type);
+      final itemsList = materials.entries.map((e) {
+        final name = (e.value['name'] as String?) ?? e.key;
+        return MapEntry(e.key, '📄 $name');
+      }).toList();
+
+      final keyboard = Utils.paginateMapKeyboard(
+        itemsList,
+        page: page,
+        prefix: 'edt_file:',
+        backData: 'edt_subj:${Utils.shorten(subject)}',
+        lang: lang,
+      );
+      await ctx.editMessageText(S.get('edit_select_file', lang), replyMarkup: keyboard);
+      return;
+    }
+
+    final matId = Utils.lengthen(rawId);
     final matData = await FirebaseDb.getMaterial(track, subject, type, matId);
     if (matData == null) {
       await ctx.answerCallbackQuery(text: 'الملف غير موجود.', showAlert: true);
@@ -1404,7 +1804,12 @@ void registerContributorUploadHandlers(Bot bot) {
       .add(S.get('btn_cancel_action', lang), 'edt_cancel');
 
     await ctx.editMessageText(
-      S.get('edit_action_prompt', lang, {'name': matName}),
+      S.get('edit_file_actions_title', lang, {
+        'name': matName,
+        'track': track,
+        'subject': subject,
+        'type': type,
+      }),
       replyMarkup: keyboard,
       parseMode: ParseMode.markdown,
     );
@@ -1534,10 +1939,31 @@ void registerContributorUploadHandlers(Bot bot) {
     if (userId == null) return;
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
-    final newTrack = Utils.lengthen(data.substring('emv_track:'.length));
+    final trackRaw = data.substring('emv_track:'.length);
 
     final state = Utils.uploadStates[userId];
     if (state == null) return;
+    final matId = state['edit_mat_id'] as String? ?? '';
+
+    if (trackRaw.startsWith('page_')) {
+      final page = int.parse(trackRaw.split('_')[1]);
+      final tracks = await FirebaseDb.getTracks();
+      final keyboard = Utils.paginateKeyboard(
+        tracks,
+        page: page,
+        prefix: 'emv_track:',
+        backData: 'edt_file:${Utils.shorten(matId)}',
+        lang: lang,
+      );
+      await ctx.editMessageText(
+        S.get('edit_move_select_track', lang),
+        replyMarkup: keyboard,
+        parseMode: ParseMode.markdown,
+      );
+      return;
+    }
+
+    final newTrack = Utils.lengthen(trackRaw);
     state['move_new_track'] = newTrack;
     state['action'] = 'edit_move_pick_subject';
     await ctx.answerCallbackQuery();
@@ -1548,12 +1974,13 @@ void registerContributorUploadHandlers(Bot bot) {
       return;
     }
 
-    final keyboard = InlineKeyboard();
-    for (var s in subjects) {
-      keyboard.row().add(s, 'emv_subj:${Utils.shorten(s)}');
-    }
-    keyboard.row().add('🔙 رجوع', 'emv_pick_track');
-    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+    final keyboard = Utils.paginateKeyboard(
+      subjects,
+      page: 0,
+      prefix: 'emv_subj:',
+      backData: 'emv_pick_track',
+      lang: lang,
+    );
 
     await ctx.editMessageText(S.get('edit_move_select_subject', lang), replyMarkup: keyboard);
   });
@@ -1570,13 +1997,14 @@ void registerContributorUploadHandlers(Bot bot) {
     await ctx.answerCallbackQuery();
 
     final tracks = await FirebaseDb.getTracks();
-    final keyboard = InlineKeyboard();
-    for (var t in tracks) {
-      keyboard.row().add(t, 'emv_track:${Utils.shorten(t)}');
-    }
     final matId = state['edit_mat_id'] as String? ?? '';
-    keyboard.row().add('🔙 رجوع', 'edt_file:${Utils.shorten(matId)}');
-    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+    final keyboard = Utils.paginateKeyboard(
+      tracks,
+      page: 0,
+      prefix: 'emv_track:',
+      backData: 'edt_file:${Utils.shorten(matId)}',
+      lang: lang,
+    );
 
     await ctx.editMessageText(
       S.get('edit_move_select_track', lang),
@@ -1591,11 +2019,27 @@ void registerContributorUploadHandlers(Bot bot) {
     if (userId == null) return;
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
-    final newSubject = Utils.lengthen(data.substring('emv_subj:'.length));
+    final subjRaw = data.substring('emv_subj:'.length);
 
     final state = Utils.uploadStates[userId];
     if (state == null) return;
     final newTrack = state['move_new_track'] as String? ?? '';
+
+    if (subjRaw.startsWith('page_')) {
+      final page = int.parse(subjRaw.split('_')[1]);
+      final subjects = await FirebaseDb.getSubjects(newTrack);
+      final keyboard = Utils.paginateKeyboard(
+        subjects,
+        page: page,
+        prefix: 'emv_subj:',
+        backData: 'emv_pick_track',
+        lang: lang,
+      );
+      await ctx.editMessageText(S.get('edit_move_select_subject', lang), replyMarkup: keyboard);
+      return;
+    }
+
+    final newSubject = Utils.lengthen(subjRaw);
     state['move_new_subject'] = newSubject;
     state['action'] = 'edit_move_pick_type';
     await ctx.answerCallbackQuery();
@@ -1606,12 +2050,13 @@ void registerContributorUploadHandlers(Bot bot) {
       return;
     }
 
-    final keyboard = InlineKeyboard();
-    for (var t in types) {
-      keyboard.row().add(t, 'emv_type:${Utils.shorten(t)}');
-    }
-    keyboard.row().add('🔙 رجوع', 'emv_track:${Utils.shorten(newTrack)}');
-    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+    final keyboard = Utils.paginateKeyboard(
+      types,
+      page: 0,
+      prefix: 'emv_type:',
+      backData: 'emv_track:${Utils.shorten(newTrack)}',
+      lang: lang,
+    );
 
     await ctx.editMessageText(S.get('edit_move_select_type', lang), replyMarkup: keyboard);
   });
@@ -1622,11 +2067,28 @@ void registerContributorUploadHandlers(Bot bot) {
     if (userId == null) return;
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
-    final newType = Utils.lengthen(data.substring('emv_type:'.length));
+    final typeRaw = data.substring('emv_type:'.length);
 
     final state = Utils.uploadStates[userId];
     if (state == null) return;
+    final newTrack = state['move_new_track'] as String? ?? '';
     final newSubject = state['move_new_subject'] as String? ?? '';
+
+    if (typeRaw.startsWith('page_')) {
+      final page = int.parse(typeRaw.split('_')[1]);
+      final types = await FirebaseDb.getMaterialTypes(newTrack, newSubject);
+      final keyboard = Utils.paginateKeyboard(
+        types,
+        page: page,
+        prefix: 'emv_type:',
+        backData: 'emv_track:${Utils.shorten(newTrack)}',
+        lang: lang,
+      );
+      await ctx.editMessageText(S.get('edit_move_select_type', lang), replyMarkup: keyboard);
+      return;
+    }
+
+    final newType = Utils.lengthen(typeRaw);
     state['move_new_type'] = newType;
     state['action'] = 'edit_move_name_input';
     await ctx.answerCallbackQuery();
@@ -1857,11 +2319,14 @@ Future<void> _proceedWithEditAction(
   } else if (action == 'move') {
     state['action'] = 'edit_move_pick_track';
     final tracks = await FirebaseDb.getTracks();
-    final keyboard = InlineKeyboard();
-    for (var t in tracks) {
-      keyboard.row().add(t, 'emv_track:${Utils.shorten(t)}');
-    }
-    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+    final matId = state['edit_mat_id'] as String? ?? '';
+    final keyboard = Utils.paginateKeyboard(
+      tracks,
+      page: 0,
+      prefix: 'emv_track:',
+      backData: 'edt_file:${Utils.shorten(matId)}',
+      lang: lang,
+    );
     if (ctx.callbackQuery != null) {
       await ctx.editMessageText(
         S.get('edit_move_select_track', lang),

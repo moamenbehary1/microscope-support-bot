@@ -615,6 +615,46 @@ class S {
       'ar': '🔑 *كود تصريح المساهمين:*\n\n`{code}`\n\n⏳ شارك هذا الكود مع المساهم للسماح له بتعديل أو حذف أو نقل الملفات.\n_(الكود يُلغى وينتهي عند توليد كود جديد)_',
       'en': '🔑 *Contributor Authorization Code:*\n\n`{code}`\n\n⏳ Share this code with the contributor to allow file edit/delete/move operations.\n_(Code is replaced when a new one is generated)_',
     },
+    'gen_code_menu_title': {
+      'ar': '🔑 *توليد كود تصريح للمساهمين*\n\nاختر طريقة إنشاء الكود:',
+      'en': '🔑 *Generate Contributor Auth Code*\n\nChoose an option:',
+    },
+    'btn_gen_fast': {
+      'ar': '⚡ توليد سريع (مرة واحدة — 30 دقيقة)',
+      'en': '⚡ Quick (1 use — 30 min)',
+    },
+    'btn_gen_custom': {
+      'ar': '⚙️ تخصيص عدد المرات والوقت',
+      'en': '⚙️ Custom Uses & Time',
+    },
+    'btn_revoke_code': {
+      'ar': '❌ إبطال الكود الحالي فوراً',
+      'en': '❌ Revoke Current Code',
+    },
+    'code_revoked_success': {
+      'ar': '✅ تم إبطال كود التصريح الحالي بنجاح. لا يمكن لأحد استخدامه الآن.',
+      'en': '✅ Current authorization code has been revoked.',
+    },
+    'gen_custom_uses_prompt': {
+      'ar': '🎯 *اختر عدد مرات الاستخدام المسموح بها للكود:*',
+      'en': '🎯 *Select maximum allowed uses for the code:*',
+    },
+    'gen_custom_time_prompt': {
+      'ar': '⏳ *اختر مدة صلاحية الكود (الوقت المتبقي حتى ينتهي):*',
+      'en': '⏳ *Select code validity duration:*',
+    },
+    'gen_code_detailed_result': {
+      'ar': '🔑 *كود تصريح المساهمين الجديد:*\n\n`{code}`\n\n🎯 *مرات الاستخدام المتاحة:* {uses} مرة\n⏳ *صلاحية الكود:* {duration}\n\n💡 بمجرد استخدام الكود بعدد المرات المحددة أو انقضاء وقته سينتهي تلقائيًا.',
+      'en': '🔑 *New Contributor Auth Code:*\n\n`{code}`\n\n🎯 *Max Uses:* {uses}\n⏳ *Validity:* {duration}\n\n💡 Once consumed or expired, the code will be invalidated automatically.',
+    },
+    'edit_auth_expired_time': {
+      'ar': '⏳ انتهت صلاحية هذا الكود زمنيًا. اطلب كودًا جديدًا من الأدمن.',
+      'en': '⏳ This authorization code has expired. Please request a new code from the admin.',
+    },
+    'edit_auth_expired_uses': {
+      'ar': '❌ تم استهلاك هذا الكود بالكامل واستخدامه مسبقًا. اطلب كودًا جديدًا من الأدمن.',
+      'en': '❌ This authorization code has reached its maximum uses. Please request a new code from the admin.',
+    },
     'edit_rename_confirm': {
       'ar': '📝 *تأكيد تغيير اسم الملف*\n\n📄 الاسم الحالي: *{oldName}*\n✏️ الاسم الجديد: *{newName}*\n\nاضغط "حفظ" لتأكيد التغيير:',
       'en': '📝 *Confirm Rename*\n\n📄 Current Name: *{oldName}*\n✏️ New Name: *{newName}*\n\nClick "Save" to confirm:',

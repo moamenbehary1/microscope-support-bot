@@ -334,7 +334,14 @@ class FirebaseDb {
 
   // Delete material (deletes ONLY the specific material node)
   static Future<void> deleteMaterial(String track, String subject, String type, String materialId) async {
+    final original = await getMaterial(track, subject, type, materialId);
     await _delete('/curriculum/$track/$subject/$type/$materialId');
+    if (original != null && original['added_by'] != null) {
+      final addedBy = int.tryParse(original['added_by'].toString());
+      if (addedBy != null) {
+        await removeContributorMaterialRef(addedBy, materialId);
+      }
+    }
   }
 
   // Update material (Replace)
@@ -773,4 +780,84 @@ class FirebaseDb {
     }
   }
 
+
+  // ── Auth Code for Contributor Actions ─────────────────────────────────────
+  static Future<void> setAuthCode(String code) async {
+    await _put('/auth_code', {
+      'code': code,
+      'generatedAt': DateTime.now().toIso8601String(),
+    });
+  }
+
+  static Future<String?> getAuthCode() async {
+    final data = await _get('/auth_code');
+    if (data == null || data is! Map) return null;
+    return data['code']?.toString();
+  }
+
+  static Future<bool> verifyAuthCode(String inputCode) async {
+    final stored = await getAuthCode();
+    if (stored == null) return false;
+    return stored.trim() == inputCode.trim();
+  }
+
+  // ── Rename Material ────────────────────────────────────────────────────
+  static Future<void> renameMaterial(
+      String track, String subject, String type, String materialId, String newName) async {
+    final original = await getMaterial(track, subject, type, materialId);
+    await _patch('/curriculum/$track/$subject/$type/$materialId', {'name': newName});
+    if (original != null && original['added_by'] != null) {
+      final addedBy = int.tryParse(original['added_by'].toString());
+      if (addedBy != null) {
+        await _patch('/contributor_materials/$addedBy/$materialId', {'name': newName});
+      }
+    }
+  }
+
+  // ── Move Material ─────────────────────────────────────────────────────
+  /// Moves a material from old path to new path. Returns the new material ID or null on failure.
+  static Future<String?> moveMaterial({
+    required String oldTrack,
+    required String oldSubject,
+    required String oldType,
+    required String materialId,
+    required String newTrack,
+    required String newSubject,
+    required String newType,
+    String? newName,
+  }) async {
+    // 1. Fetch original data
+    final original = await getMaterial(oldTrack, oldSubject, oldType, materialId);
+    if (original == null) return null;
+
+    // 2. Build new data
+    final Map<String, dynamic> newData = Map<String, dynamic>.from(original);
+    if (newName != null && newName.isNotEmpty) {
+      newData['name'] = newName;
+    }
+    newData.remove('_placeholder');
+
+    // 3. Write to new location
+    final newId = await _post('/curriculum/$newTrack/$newSubject/$newType', newData);
+    if (newId == null) return null;
+
+    // 4. Delete from old location
+    await deleteMaterial(oldTrack, oldSubject, oldType, materialId);
+
+    // 5. Sync contributor material index
+    final addedBy = int.tryParse(original['added_by']?.toString() ?? '');
+    if (addedBy != null) {
+      await removeContributorMaterialRef(addedBy, materialId);
+      await addContributorMaterialRef(addedBy, newId, {
+        'track': newTrack,
+        'subject': newSubject,
+        'type': newType,
+        'name': newData['name'] ?? original['name'],
+        'file_id': newData['file_id'] ?? original['file_id'],
+        'file_type': newData['file_type'] ?? original['file_type'],
+      });
+    }
+
+    return newId;
+  }
 }

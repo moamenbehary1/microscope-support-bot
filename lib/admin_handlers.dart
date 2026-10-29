@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:televerse/televerse.dart';
 import 'firebase_db.dart';
 import 'utils.dart';
@@ -72,6 +73,29 @@ void registerAdminHandlers(Bot bot) {
     Utils.setUserMode(userId, UserMode.student);
     Utils.clearUploadState(userId);
     await ctx.reply(S.get('admin_switched_student', lang));
+  });
+
+  // ── /gencode command (Admins / Super Admins) ──────────────────────────
+  bot.command('gencode', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) {
+      await ctx.reply(S.get('not_authorized', lang));
+      return;
+    }
+    final code = (100000 + Random().nextInt(900000)).toString();
+    await FirebaseDb.setAuthCode(code);
+
+    final kb = InlineKeyboard()
+      .row().add('🔑 توليد كود جديد', 'dash_gen_code')
+      .row().add('🔙 رجوع للوحة الإدارة', 'admin_dash');
+
+    await ctx.reply(
+      S.get('gen_code_result', lang, {'code': code}),
+      parseMode: ParseMode.markdown,
+      replyMarkup: kb,
+    );
   });
 
   // ── Dashboard callbacks ──────────────────────────────────────────────
@@ -1178,6 +1202,34 @@ void registerAdminHandlers(Bot bot) {
   });
 
   // ═════════════════════════════════════════════════════════════════════════
+  // ── 🔑 8. GENERATE CONTRIBUTOR AUTH CODE ──────────────────────────────
+  // ═════════════════════════════════════════════════════════════════════════
+
+  bot.callbackQuery('dash_gen_code', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) {
+      await ctx.answerCallbackQuery(text: S.get('not_authorized', lang), showAlert: true);
+      return;
+    }
+    await ctx.answerCallbackQuery();
+
+    // Generate a random 6-digit code
+    final code = (100000 + Random().nextInt(900000)).toString();
+    await FirebaseDb.setAuthCode(code);
+
+    final kb = InlineKeyboard()
+      .row().add('🔑 توليد كود جديد', 'dash_gen_code')
+      .row().add('🔙 رجوع للوحة الإدارة', 'admin_dash');
+
+    await ctx.editMessageText(
+      S.get('gen_code_result', lang, {'code': code}),
+      parseMode: ParseMode.markdown,
+      replyMarkup: kb,
+    );
+  });
+  // ═════════════════════════════════════════════════════════════════════════
   // ── 🌐 7. WEB PORTALS QUICK LINKS ─────────────────────────────────────
   // ═════════════════════════════════════════════════════════════════════════
 
@@ -1243,6 +1295,9 @@ Future<InlineKeyboard> _buildAdminKeyboard(int userId, String lang) async {
       .add(S.get('btn_transfer_owner', lang), 'dash_transfer_owner');
   }
 
+  keyboard.row()
+    .add(S.get('btn_generate_code', lang), 'dash_gen_code')
+    .add(S.get('btn_edit_files', lang), 'edit_start');
   keyboard.row().add(S.get('btn_student_mode', lang), 'dash_student');
   return keyboard;
 }

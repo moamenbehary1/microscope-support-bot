@@ -495,6 +495,102 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
       }
       break;
 
+    // ── Edit: Auth code verification ──────────────────────────────
+    case 'edit_auth_code_check':
+      final inputCode = text.trim();
+      final isValid = await FirebaseDb.verifyAuthCode(inputCode);
+      if (!isValid) {
+        final retryKb = InlineKeyboard().row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+        await ctx.reply(S.get('edit_auth_invalid', lang), replyMarkup: retryKb);
+        // Stay in state so user can try again
+        return;
+      }
+      // Code correct — proceed to action
+      final pendingAction = state.remove('pending_action') as String? ?? '';
+      state['auth_verified'] = true;
+
+      if (pendingAction == 'rename') {
+        state['action'] = 'edit_rename_input';
+        final cancelKb = InlineKeyboard().row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+        await ctx.reply(S.get('edit_rename_prompt', lang), replyMarkup: cancelKb);
+      } else if (pendingAction == 'delete') {
+        state['action'] = 'edit_delete_confirm';
+        final matName = state['edit_mat_name'] as String? ?? 'الملف';
+        final kb = InlineKeyboard()
+          .row()
+          .add('✅ نعم، احذف الملف', 'edt_delete_confirm')
+          .add('❌ إلغاء', 'edt_delete_cancel');
+        await ctx.reply(
+          S.get('edit_delete_confirm', lang, {'name': matName}),
+          replyMarkup: kb,
+          parseMode: ParseMode.markdown,
+        );
+      } else if (pendingAction == 'move') {
+        state['action'] = 'edit_move_pick_track';
+        final tracks = await FirebaseDb.getTracks();
+        final keyboard = InlineKeyboard();
+        for (var t in tracks) {
+          keyboard.row().add(t, 'emv_track:${Utils.shorten(t)}');
+        }
+        keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+        await ctx.reply(
+          S.get('edit_move_select_track', lang),
+          replyMarkup: keyboard,
+          parseMode: ParseMode.markdown,
+        );
+      }
+      break;
+
+    // ── Edit: Rename input ─────────────────────────────────────────
+    case 'edit_rename_input':
+      final newName = text.trim();
+      if (newName.isEmpty) {
+        await ctx.reply(S.get('edit_rename_prompt', lang));
+        return;
+      }
+      state['pending_new_name'] = newName;
+      final oldName = state['edit_mat_name'] as String? ?? 'الملف';
+      final kb = InlineKeyboard()
+        .row().add(S.get('btn_save_done', lang), 'edt_rename_save')
+        .row().add(S.get('btn_change_name', lang), 'edt_rename_retry')
+        .row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+      await ctx.reply(
+        S.get('edit_rename_confirm', lang, {'oldName': oldName, 'newName': newName}),
+        replyMarkup: kb,
+        parseMode: ParseMode.markdown,
+      );
+      break;
+
+    // ── Edit: Move — new name input ────────────────────────────────
+    case 'edit_move_name_input':
+      final moveName = text.trim();
+      if (moveName.isEmpty) return;
+      state['pending_move_name'] = moveName;
+      final mTrack = state['edit_track'] as String? ?? '';
+      final mSubject = state['edit_subject'] as String? ?? '';
+      final mType = state['edit_type'] as String? ?? '';
+      final mNewTrack = state['move_new_track'] as String? ?? '';
+      final mNewSubject = state['move_new_subject'] as String? ?? '';
+      final mNewType = state['move_new_type'] as String? ?? '';
+
+      final kb = InlineKeyboard()
+        .row().add(S.get('btn_save_move', lang), 'emv_confirm_save')
+        .row().add(S.get('btn_change_name', lang), 'emv_ask_name')
+        .row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+      await ctx.reply(
+        S.get('edit_move_confirm', lang, {
+          'name': moveName,
+          'oldTrack': mTrack,
+          'oldSubject': mSubject,
+          'oldType': mType,
+          'newTrack': mNewTrack,
+          'newSubject': mNewSubject,
+          'newType': mNewType,
+        }),
+        replyMarkup: kb,
+        parseMode: ParseMode.markdown,
+      );
+      break;
     // ---- Link upload: user pastes URL --------------------------------
     case 'contrib_upload_link':
       final track2 = (state['track'] as String?) ?? '';
@@ -1132,6 +1228,545 @@ void registerContributorUploadHandlers(Bot bot) {
     await ctx.editMessageText(S.get('quick_add_name_prompt', lang));
   });
 
+  // ══════════════════════════════════════════════════════════════════════
+  // ── ✏️ FILE MANAGEMENT & EDIT FLOW ────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════
+
+  // Entry point: Edit button clicked
+  bot.callbackQuery('edit_start', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+
+    final isAdmin = await FirebaseDb.isAdmin(userId);
+    final isContributor = await FirebaseDb.isContributor(userId);
+    if (!isAdmin && !isContributor) {
+      await ctx.answerCallbackQuery(text: S.get('not_authorized', lang), showAlert: true);
+      return;
+    }
+    await ctx.answerCallbackQuery();
+
+    final tracks = await FirebaseDb.getTracks();
+    if (tracks.isEmpty) {
+      await ctx.answerCallbackQuery(text: S.get('upload_no_categories', lang), showAlert: true);
+      return;
+    }
+
+    final origin = (isAdmin && Utils.getUserMode(userId) == UserMode.admin) ? 'admin' : 'contrib';
+    Utils.uploadStates[userId] = {'action': 'edit_pick_track', 'origin': origin};
+
+    final keyboard = InlineKeyboard();
+    for (var t in tracks) {
+      keyboard.row().add(t, 'edt_track:${Utils.shorten(t)}');
+    }
+    final backCallback = origin == 'admin' ? 'admin_dash' : 'contrib_dash';
+    final backLabel = origin == 'admin' ? S.get('btn_back_admin', lang) : S.get('btn_back_dashboard', lang);
+    keyboard.row().add(backLabel, backCallback);
+
+    await ctx.editMessageText(
+      S.get('edit_select_track', lang),
+      replyMarkup: keyboard,
+      parseMode: ParseMode.markdown,
+    );
+  });
+
+  // Step 1: Track selected
+  bot.callbackQuery(RegExp(r'^edt_track:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    final data = ctx.callbackQuery!.data!;
+    final track = Utils.lengthen(data.substring('edt_track:'.length));
+
+    final state = Utils.uploadStates[userId] ?? {};
+    state['action'] = 'edit_pick_subject';
+    state['edit_track'] = track;
+    Utils.uploadStates[userId] = state;
+
+    final subjects = await FirebaseDb.getSubjects(track);
+    if (subjects.isEmpty) {
+      await ctx.answerCallbackQuery(text: S.get('upload_no_subjects', lang), showAlert: true);
+      return;
+    }
+    await ctx.answerCallbackQuery();
+
+    final keyboard = InlineKeyboard();
+    for (var s in subjects) {
+      keyboard.row().add(s, 'edt_subj:${Utils.shorten(s)}');
+    }
+    keyboard.row().add('🔙 رجوع', 'edit_start');
+    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+
+    await ctx.editMessageText(S.get('edit_select_subject', lang), replyMarkup: keyboard);
+  });
+
+  // Step 2: Subject selected
+  bot.callbackQuery(RegExp(r'^edt_subj:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    final data = ctx.callbackQuery!.data!;
+    final subject = Utils.lengthen(data.substring('edt_subj:'.length));
+
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+    final track = state['edit_track'] as String? ?? '';
+    state['edit_subject'] = subject;
+    state['action'] = 'edit_pick_type';
+
+    final types = await FirebaseDb.getMaterialTypes(track, subject);
+    if (types.isEmpty) {
+      await ctx.answerCallbackQuery(text: S.get('upload_no_types', lang), showAlert: true);
+      return;
+    }
+    await ctx.answerCallbackQuery();
+
+    final keyboard = InlineKeyboard();
+    for (var t in types) {
+      keyboard.row().add(t, 'edt_type:${Utils.shorten(t)}');
+    }
+    keyboard.row().add('🔙 رجوع', 'edt_track:${Utils.shorten(track)}');
+    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+
+    await ctx.editMessageText(S.get('edit_select_type', lang), replyMarkup: keyboard);
+  });
+
+  // Step 3: Type/Category selected
+  bot.callbackQuery(RegExp(r'^edt_type:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    final data = ctx.callbackQuery!.data!;
+    final type = Utils.lengthen(data.substring('edt_type:'.length));
+
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+    final track = state['edit_track'] as String? ?? '';
+    final subject = state['edit_subject'] as String? ?? '';
+    state['edit_type'] = type;
+    state['action'] = 'edit_pick_file';
+
+    final materials = await FirebaseDb.getMaterials(track, subject, type);
+    if (materials.isEmpty) {
+      await ctx.answerCallbackQuery(text: 'لا توجد ملفات في هذه الفئة.', showAlert: true);
+      return;
+    }
+    await ctx.answerCallbackQuery();
+
+    final keyboard = InlineKeyboard();
+    materials.forEach((matId, matData) {
+      final name = (matData['name'] as String?) ?? matId;
+      keyboard.row().add('📄 $name', 'edt_file:${Utils.shorten(matId)}');
+    });
+    keyboard.row().add('🔙 رجوع', 'edt_subj:${Utils.shorten(subject)}');
+    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+
+    await ctx.editMessageText(S.get('edit_select_file', lang), replyMarkup: keyboard);
+  });
+
+  // Step 4: File selected — show actions
+  bot.callbackQuery(RegExp(r'^edt_file:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    final data = ctx.callbackQuery!.data!;
+    final rawId = data.substring('edt_file:'.length);
+    final matId = Utils.lengthen(rawId);
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+
+    final track = state['edit_track'] as String? ?? '';
+    final subject = state['edit_subject'] as String? ?? '';
+    final type = state['edit_type'] as String? ?? '';
+
+    final matData = await FirebaseDb.getMaterial(track, subject, type, matId);
+    if (matData == null) {
+      await ctx.answerCallbackQuery(text: 'الملف غير موجود.', showAlert: true);
+      return;
+    }
+    final matName = (matData['name'] as String?) ?? matId;
+
+    state['edit_mat_id'] = matId;
+    state['edit_mat_name'] = matName;
+    state['action'] = 'edit_action_select';
+
+    await ctx.answerCallbackQuery();
+
+    final keyboard = InlineKeyboard()
+      .row()
+      .add(S.get('btn_rename', lang), 'edt_action:rename')
+      .add(S.get('btn_delete_file', lang), 'edt_action:delete')
+      .row()
+      .add(S.get('btn_move_file', lang), 'edt_action:move')
+      .row()
+      .add('🔙 رجوع', 'edt_type:${Utils.shorten(type)}')
+      .row()
+      .add(S.get('btn_cancel_action', lang), 'edt_cancel');
+
+    await ctx.editMessageText(
+      S.get('edit_action_prompt', lang, {'name': matName}),
+      replyMarkup: keyboard,
+      parseMode: ParseMode.markdown,
+    );
+  });
+
+  // Step 5: Action chosen — check role
+  bot.callbackQuery(RegExp(r'^edt_action:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    final action = ctx.callbackQuery!.data!.substring('edt_action:'.length);
+
+    final isAdmin = await FirebaseDb.isAdmin(userId);
+    final isContributor = await FirebaseDb.isContributor(userId);
+    if (!isAdmin && !isContributor) {
+      await ctx.answerCallbackQuery(text: S.get('not_authorized', lang), showAlert: true);
+      return;
+    }
+
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+
+    await ctx.answerCallbackQuery();
+
+    // Admins skip auth check
+    if (isAdmin) {
+      await _proceedWithEditAction(ctx, bot, userId, lang, action, state);
+    } else {
+      // Contributor: require 6-digit code
+      state['pending_action'] = action;
+      state['action'] = 'edit_auth_code_check';
+      final cancelKb = InlineKeyboard().row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+      await ctx.editMessageText(S.get('edit_auth_prompt', lang), replyMarkup: cancelKb);
+    }
+  });
+
+  // ── Rename: Save ────────────────────────────────────────────────
+  bot.callbackQuery('edt_rename_save', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    await ctx.answerCallbackQuery();
+
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+
+    final newName = state['pending_new_name'] as String? ?? '';
+    final eTrack = state['edit_track'] as String? ?? '';
+    final eSubject = state['edit_subject'] as String? ?? '';
+    final eType = state['edit_type'] as String? ?? '';
+    final eMatId = state['edit_mat_id'] as String? ?? '';
+    final isAdmin = await FirebaseDb.isAdmin(userId);
+    final backDash = _getEditBackDashboard(state, userId, isAdmin);
+    final backLabel = _getEditBackLabel(backDash, lang);
+
+    if (newName.isNotEmpty && eMatId.isNotEmpty) {
+      await FirebaseDb.renameMaterial(eTrack, eSubject, eType, eMatId, newName);
+    }
+    Utils.clearUploadState(userId);
+
+    final backKb = InlineKeyboard().row().add(backLabel, backDash);
+    await ctx.editMessageText(
+      S.get('edit_rename_done', lang, {'name': newName}),
+      replyMarkup: backKb,
+      parseMode: ParseMode.markdown,
+    );
+  });
+
+  // ── Rename: Retry typing another name ────────────────────────────
+  bot.callbackQuery('edt_rename_retry', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    await ctx.answerCallbackQuery();
+
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+    state['action'] = 'edit_rename_input';
+
+    final cancelKb = InlineKeyboard().row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+    await ctx.editMessageText(S.get('edit_rename_prompt', lang), replyMarkup: cancelKb);
+  });
+
+  // ── Delete: Confirmed ───────────────────────────────────────────
+  bot.callbackQuery('edt_delete_confirm', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    await ctx.answerCallbackQuery();
+
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+
+    final track = state['edit_track'] as String? ?? '';
+    final subject = state['edit_subject'] as String? ?? '';
+    final type = state['edit_type'] as String? ?? '';
+    final matId = state['edit_mat_id'] as String? ?? '';
+    final isAdmin = await FirebaseDb.isAdmin(userId);
+    final backDash = _getEditBackDashboard(state, userId, isAdmin);
+    final backLabel = _getEditBackLabel(backDash, lang);
+
+    await FirebaseDb.deleteMaterial(track, subject, type, matId);
+    Utils.clearUploadState(userId);
+
+    final kb = InlineKeyboard().row().add(backLabel, backDash);
+    await ctx.editMessageText(S.get('edit_delete_done', lang), replyMarkup: kb);
+  });
+
+  // ── Delete: Cancel ───────────────────────────────────────────────
+  bot.callbackQuery('edt_delete_cancel', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    final state = Utils.uploadStates[userId];
+    final isAdmin = await FirebaseDb.isAdmin(userId);
+    final backDash = _getEditBackDashboard(state, userId, isAdmin);
+    final backLabel = _getEditBackLabel(backDash, lang);
+
+    Utils.clearUploadState(userId);
+    await ctx.answerCallbackQuery(text: 'تم إلغاء العملية.');
+    await ctx.editMessageText('❌ تم إلغاء الحذف.', replyMarkup: InlineKeyboard().row().add(backLabel, backDash));
+  });
+
+  // ── Move: Track selected ─────────────────────────────────────────
+  bot.callbackQuery(RegExp(r'^emv_track:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    final data = ctx.callbackQuery!.data!;
+    final newTrack = Utils.lengthen(data.substring('emv_track:'.length));
+
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+    state['move_new_track'] = newTrack;
+    state['action'] = 'edit_move_pick_subject';
+    await ctx.answerCallbackQuery();
+
+    final subjects = await FirebaseDb.getSubjects(newTrack);
+    if (subjects.isEmpty) {
+      await ctx.answerCallbackQuery(text: S.get('upload_no_subjects', lang), showAlert: true);
+      return;
+    }
+
+    final keyboard = InlineKeyboard();
+    for (var s in subjects) {
+      keyboard.row().add(s, 'emv_subj:${Utils.shorten(s)}');
+    }
+    keyboard.row().add('🔙 رجوع', 'emv_pick_track');
+    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+
+    await ctx.editMessageText(S.get('edit_move_select_subject', lang), replyMarkup: keyboard);
+  });
+
+  // ── Move: Back to Track selection ────────────────────────────────
+  bot.callbackQuery('emv_pick_track', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+
+    state['action'] = 'edit_move_pick_track';
+    await ctx.answerCallbackQuery();
+
+    final tracks = await FirebaseDb.getTracks();
+    final keyboard = InlineKeyboard();
+    for (var t in tracks) {
+      keyboard.row().add(t, 'emv_track:${Utils.shorten(t)}');
+    }
+    final matId = state['edit_mat_id'] as String? ?? '';
+    keyboard.row().add('🔙 رجوع', 'edt_file:${Utils.shorten(matId)}');
+    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+
+    await ctx.editMessageText(
+      S.get('edit_move_select_track', lang),
+      replyMarkup: keyboard,
+      parseMode: ParseMode.markdown,
+    );
+  });
+
+  // ── Move: Subject selected ──────────────────────────────────────
+  bot.callbackQuery(RegExp(r'^emv_subj:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    final data = ctx.callbackQuery!.data!;
+    final newSubject = Utils.lengthen(data.substring('emv_subj:'.length));
+
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+    final newTrack = state['move_new_track'] as String? ?? '';
+    state['move_new_subject'] = newSubject;
+    state['action'] = 'edit_move_pick_type';
+    await ctx.answerCallbackQuery();
+
+    final types = await FirebaseDb.getMaterialTypes(newTrack, newSubject);
+    if (types.isEmpty) {
+      await ctx.answerCallbackQuery(text: S.get('upload_no_types', lang), showAlert: true);
+      return;
+    }
+
+    final keyboard = InlineKeyboard();
+    for (var t in types) {
+      keyboard.row().add(t, 'emv_type:${Utils.shorten(t)}');
+    }
+    keyboard.row().add('🔙 رجوع', 'emv_track:${Utils.shorten(newTrack)}');
+    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+
+    await ctx.editMessageText(S.get('edit_move_select_type', lang), replyMarkup: keyboard);
+  });
+
+  // ── Move: Type/Category selected — prompt for name ──────────────
+  bot.callbackQuery(RegExp(r'^emv_type:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    final data = ctx.callbackQuery!.data!;
+    final newType = Utils.lengthen(data.substring('emv_type:'.length));
+
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+    final newSubject = state['move_new_subject'] as String? ?? '';
+    state['move_new_type'] = newType;
+    state['action'] = 'edit_move_name_input';
+    await ctx.answerCallbackQuery();
+
+    final keyboard = InlineKeyboard()
+      .row().add(S.get('btn_keep_name', lang), 'emv_keepname')
+      .row().add('🔙 رجوع', 'emv_subj:${Utils.shorten(newSubject)}')
+      .row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+
+    await ctx.editMessageText(
+      S.get('edit_move_name_prompt', lang),
+      replyMarkup: keyboard,
+    );
+  });
+
+  // ── Move: Keep original name -> show Done/Save confirmation ─────
+  bot.callbackQuery('emv_keepname', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    await ctx.answerCallbackQuery();
+
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+
+    final originalName = state['edit_mat_name'] as String? ?? 'الملف';
+    state['pending_move_name'] = originalName;
+
+    final mTrack = state['edit_track'] as String? ?? '';
+    final mSubject = state['edit_subject'] as String? ?? '';
+    final mType = state['edit_type'] as String? ?? '';
+    final mNewTrack = state['move_new_track'] as String? ?? '';
+    final mNewSubject = state['move_new_subject'] as String? ?? '';
+    final mNewType = state['move_new_type'] as String? ?? '';
+
+    final kb = InlineKeyboard()
+      .row().add(S.get('btn_save_move', lang), 'emv_confirm_save')
+      .row().add(S.get('btn_change_name', lang), 'emv_ask_name')
+      .row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+
+    await ctx.editMessageText(
+      S.get('edit_move_confirm', lang, {
+        'name': originalName,
+        'oldTrack': mTrack,
+        'oldSubject': mSubject,
+        'oldType': mType,
+        'newTrack': mNewTrack,
+        'newSubject': mNewSubject,
+        'newType': mNewType,
+      }),
+      replyMarkup: kb,
+      parseMode: ParseMode.markdown,
+    );
+  });
+
+  // ── Move: Prompt to type new name ────────────────────────────────
+  bot.callbackQuery('emv_ask_name', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    await ctx.answerCallbackQuery();
+
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+    state['action'] = 'edit_move_name_input';
+
+    final cancelKb = InlineKeyboard().row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+    await ctx.editMessageText(S.get('edit_rename_prompt', lang), replyMarkup: cancelKb);
+  });
+
+  // ── Move: Confirmed Done/Save -> execute move ────────────────────
+  bot.callbackQuery('emv_confirm_save', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    await ctx.answerCallbackQuery();
+
+    final state = Utils.uploadStates[userId];
+    if (state == null) return;
+
+    final mTrack = state['edit_track'] as String? ?? '';
+    final mSubject = state['edit_subject'] as String? ?? '';
+    final mType = state['edit_type'] as String? ?? '';
+    final mMatId = state['edit_mat_id'] as String? ?? '';
+    final mNewTrack = state['move_new_track'] as String? ?? '';
+    final mNewSubject = state['move_new_subject'] as String? ?? '';
+    final mNewType = state['move_new_type'] as String? ?? '';
+    final finalName = state['pending_move_name'] as String? ?? state['edit_mat_name'] as String? ?? '';
+
+    final isAdmin = await FirebaseDb.isAdmin(userId);
+    final backDash = _getEditBackDashboard(state, userId, isAdmin);
+    final backLabel = _getEditBackLabel(backDash, lang);
+
+    final newId = await FirebaseDb.moveMaterial(
+      oldTrack: mTrack,
+      oldSubject: mSubject,
+      oldType: mType,
+      materialId: mMatId,
+      newTrack: mNewTrack,
+      newSubject: mNewSubject,
+      newType: mNewType,
+      newName: finalName,
+    );
+    Utils.clearUploadState(userId);
+
+    if (newId != null) {
+      final successKb = InlineKeyboard().row().add(backLabel, backDash);
+      await ctx.editMessageText(
+        S.get('edit_move_done', lang, {
+          'name': finalName,
+          'track': mNewTrack,
+          'subject': mNewSubject,
+          'type': mNewType,
+        }),
+        replyMarkup: successKb,
+        parseMode: ParseMode.markdown,
+      );
+    } else {
+      await ctx.editMessageText(
+        S.get('edit_move_failed', lang),
+        replyMarkup: InlineKeyboard().row().add(backLabel, backDash),
+      );
+    }
+  });
+
+  // ── Universal Cancel for Edit flow ──────────────────────────────
+  bot.callbackQuery('edt_cancel', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    final state = Utils.uploadStates[userId];
+    final isAdmin = await FirebaseDb.isAdmin(userId);
+    final backDash = _getEditBackDashboard(state, userId, isAdmin);
+    final backLabel = _getEditBackLabel(backDash, lang);
+
+    Utils.clearUploadState(userId);
+    await ctx.answerCallbackQuery(text: 'تم الإلغاء');
+    final kb = InlineKeyboard().row().add(backLabel, backDash);
+    await ctx.editMessageText(S.get('edit_action_cancelled', lang), replyMarkup: kb);
+  });
   // Contributor announce new lecture
   bot.callbackQuery('contrib_announce', (ctx) async {
     final userId = ctx.from?.id;
@@ -1173,6 +1808,75 @@ void registerContributorUploadHandlers(Bot bot) {
   });
 }
 
+// ── Private: helpers for Edit flow back destination ─────────────────────
+
+String _getEditBackDashboard(Map<String, dynamic>? state, int userId, bool isAdmin) {
+  if (state?['origin'] == 'admin') return 'admin_dash';
+  if (isAdmin && Utils.getUserMode(userId) == UserMode.admin) return 'admin_dash';
+  return 'contrib_dash';
+}
+
+String _getEditBackLabel(String target, String lang) {
+  return target == 'admin_dash' ? S.get('btn_back_admin', lang) : S.get('btn_back_dashboard', lang);
+}
+
+// ── Private: proceed with edit action (for admins who skip auth) ─────────
+
+Future<void> _proceedWithEditAction(
+    Context ctx, Bot bot, int userId, String lang, String action,
+    Map<String, dynamic> state) async {
+  final matName = state['edit_mat_name'] as String? ?? 'الملف';
+
+  if (action == 'rename') {
+    state['action'] = 'edit_rename_input';
+    final cancelKb = InlineKeyboard().row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+    if (ctx.callbackQuery != null) {
+      await ctx.editMessageText(S.get('edit_rename_prompt', lang), replyMarkup: cancelKb);
+    } else {
+      await ctx.reply(S.get('edit_rename_prompt', lang), replyMarkup: cancelKb);
+    }
+  } else if (action == 'delete') {
+    // Show confirmation dialog
+    final kb = InlineKeyboard()
+      .row()
+      .add('✅ نعم، احذف الملف', 'edt_delete_confirm')
+      .add('❌ إلغاء', 'edt_delete_cancel');
+    if (ctx.callbackQuery != null) {
+      await ctx.editMessageText(
+        S.get('edit_delete_confirm', lang, {'name': matName}),
+        replyMarkup: kb,
+        parseMode: ParseMode.markdown,
+      );
+    } else {
+      await ctx.reply(
+        S.get('edit_delete_confirm', lang, {'name': matName}),
+        replyMarkup: kb,
+        parseMode: ParseMode.markdown,
+      );
+    }
+  } else if (action == 'move') {
+    state['action'] = 'edit_move_pick_track';
+    final tracks = await FirebaseDb.getTracks();
+    final keyboard = InlineKeyboard();
+    for (var t in tracks) {
+      keyboard.row().add(t, 'emv_track:${Utils.shorten(t)}');
+    }
+    keyboard.row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
+    if (ctx.callbackQuery != null) {
+      await ctx.editMessageText(
+        S.get('edit_move_select_track', lang),
+        replyMarkup: keyboard,
+        parseMode: ParseMode.markdown,
+      );
+    } else {
+      await ctx.reply(
+        S.get('edit_move_select_track', lang),
+        replyMarkup: keyboard,
+        parseMode: ParseMode.markdown,
+      );
+    }
+  }
+}
 // ── Private: show contributor dashboard ──────────────────────────────────
 
 Future<void> _showContributorDashboard(Context ctx, int userId, String lang,
@@ -1198,6 +1902,8 @@ Future<void> _showContributorDashboard(Context ctx, int userId, String lang,
     .row()
     .add(S.get('btn_my_materials', lang), 'contrib_materials')
     .add(S.get('btn_contrib_stats', lang), 'contrib_analytics')
+    .row()
+    .add(S.get('btn_edit_files', lang), 'edit_start')
     .row()
     .add(S.get('btn_announce', lang), 'contrib_announce')
     .add(S.get('btn_self_remove', lang), 'contrib_self_remove')

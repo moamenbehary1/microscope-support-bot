@@ -107,13 +107,15 @@ class Utils {
 
   // ── Pagination ──────────────────────────────────────────────────────
 
-  /// Generates a paginated inline keyboard for a list of items.
+  /// Generates a paginated inline keyboard for a list of items (5 per page).
   static InlineKeyboard paginateKeyboard(
     List<String> items, {
     required int page,
     int itemsPerPage = 5,
     required String prefix,
     String? backData,
+    String? backLabel,
+    String lang = 'ar',
   }) {
     final keyboard = InlineKeyboard();
 
@@ -125,28 +127,29 @@ class Utils {
       keyboard.row().add(items[i], '$prefix${Utils.shorten(items[i])}');
     }
 
-    final navRow = <InlineMenuData>[];
-    if (page > 0) {
-      navRow.add(InlineMenuData('⬅️ Prev', '${prefix}page_${page - 1}'));
-    }
-    if (endIndex < items.length) {
-      navRow.add(InlineMenuData('Next ➡️', '${prefix}page_${page + 1}'));
-    }
+    final totalPages = (items.length / itemsPerPage).ceil();
+    if (totalPages > 1) {
+      final navRow = keyboard.row();
+      final prevText = lang == 'en' ? '⬅️ Prev' : '⬅️ السابق';
+      final nextText = lang == 'en' ? 'Next ➡️' : 'التالي ➡️';
 
-    if (navRow.isNotEmpty) {
-      final row = keyboard.row();
-      for (var item in navRow) {
-        row.add(item.text, item.data!);
+      if (page > 0) {
+        navRow.add(prevText, '${prefix}page_${page - 1}');
+      }
+      navRow.add('📄 ${page + 1}/$totalPages', 'ignore');
+      if (endIndex < items.length) {
+        navRow.add(nextText, '${prefix}page_${page + 1}');
       }
     }
 
     if (backData != null) {
-      keyboard.row().add('🔙 Back', backData);
+      final defaultBack = lang == 'en' ? '🔙 Back' : '🔙 رجوع';
+      keyboard.row().add(backLabel ?? defaultBack, backData);
     }
     return keyboard;
   }
 
-  /// Generates a paginated inline keyboard for key-value items (e.g. materials).
+  /// Generates a paginated inline keyboard for key-value items (e.g. materials) (5 per page).
   /// For a list of MapEntry, typically used when we have IDs mapping to names.
   static InlineKeyboard paginateMapKeyboard(
     List<MapEntry<String, String>> items, {
@@ -154,6 +157,8 @@ class Utils {
     int itemsPerPage = 5,
     required String prefix,
     String? backData,
+    String? backLabel,
+    String lang = 'ar',
   }) {
     final keyboard = InlineKeyboard();
 
@@ -166,23 +171,24 @@ class Utils {
       keyboard.row().add(items[i].value, '$prefix${Utils.shorten(items[i].key)}');
     }
 
-    final navRow = <InlineMenuData>[];
-    if (page > 0) {
-      navRow.add(InlineMenuData('⬅️ Prev', '${prefix}page_${page - 1}'));
-    }
-    if (endIndex < items.length) {
-      navRow.add(InlineMenuData('Next ➡️', '${prefix}page_${page + 1}'));
-    }
+    final totalPages = (items.length / itemsPerPage).ceil();
+    if (totalPages > 1) {
+      final navRow = keyboard.row();
+      final prevText = lang == 'en' ? '⬅️ Prev' : '⬅️ السابق';
+      final nextText = lang == 'en' ? 'Next ➡️' : 'التالي ➡️';
 
-    if (navRow.isNotEmpty) {
-      final row = keyboard.row();
-      for (var item in navRow) {
-        row.add(item.text, item.data!);
+      if (page > 0) {
+        navRow.add(prevText, '${prefix}page_${page - 1}');
+      }
+      navRow.add('📄 ${page + 1}/$totalPages', 'ignore');
+      if (endIndex < items.length) {
+        navRow.add(nextText, '${prefix}page_${page + 1}');
       }
     }
 
     if (backData != null) {
-      keyboard.row().add('🔙 Back', backData);
+      final defaultBack = lang == 'en' ? '🔙 Back' : '🔙 رجوع';
+      keyboard.row().add(backLabel ?? defaultBack, backData);
     }
 
     return keyboard;
@@ -197,6 +203,8 @@ class Utils {
     required String togglePrefix,
     required String doneData,
     String? backData,
+    String? backLabel,
+    String lang = 'ar',
   }) {
     final keyboard = InlineKeyboard();
 
@@ -211,25 +219,27 @@ class Utils {
       keyboard.row().add(text, '$togglePrefix${Utils.shorten(item)}');
     }
 
-    final navRow = <InlineMenuData>[];
-    if (page > 0) {
-      navRow.add(InlineMenuData('⬅️ Prev', '${togglePrefix}page_${page - 1}'));
-    }
-    if (endIndex < items.length) {
-      navRow.add(InlineMenuData('Next ➡️', '${togglePrefix}page_${page + 1}'));
-    }
+    final totalPages = (items.length / itemsPerPage).ceil();
+    if (totalPages > 1) {
+      final navRow = keyboard.row();
+      final prevText = lang == 'en' ? '⬅️ Prev' : '⬅️ السابق';
+      final nextText = lang == 'en' ? 'Next ➡️' : 'التالي ➡️';
 
-    if (navRow.isNotEmpty) {
-      final row = keyboard.row();
-      for (var item in navRow) {
-        row.add(item.text, item.data!);
+      if (page > 0) {
+        navRow.add(prevText, '${togglePrefix}page_${page - 1}');
+      }
+      navRow.add('📄 ${page + 1}/$totalPages', 'ignore');
+      if (endIndex < items.length) {
+        navRow.add(nextText, '${togglePrefix}page_${page + 1}');
       }
     }
 
-    keyboard.row().add('✅ Done', doneData);
+    final doneText = lang == 'en' ? '✅ Done' : '✅ تم الحفظ';
+    keyboard.row().add(doneText, doneData);
 
     if (backData != null) {
-      keyboard.row().add('🔙 Back', backData);
+      final defaultBack = lang == 'en' ? '🔙 Back' : '🔙 رجوع';
+      keyboard.row().add(backLabel ?? defaultBack, backData);
     }
 
     return keyboard;

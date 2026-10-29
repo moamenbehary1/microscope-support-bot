@@ -3,7 +3,7 @@ import 'firebase_db.dart';
 import 'utils.dart';
 import 'config.dart';
 import 'strings.dart';
-import 'n8n_client.dart';
+
 
 
 void registerContributorAndUploadHandlers(Bot bot) {
@@ -720,26 +720,6 @@ void registerContributorUploadHandlers(Bot bot) {
           'file_type': fType
         });
         savedCount++;
-
-        // ── Background: extract text via n8n (documents only) ──────────
-        if (fType == 'document') {
-          final extractFileId = backupFileId ?? fId;
-          Future.microtask(() async {
-            try {
-              final text = await N8nClient.extractText(extractFileId);
-              if (text != null && text.isNotEmpty) {
-                await FirebaseDb.updateMaterial(track, subject, type, matId, {
-                  'n8n_text_preview': text.length > 2000
-                      ? '${text.substring(0, 2000)}…'
-                      : text,
-                });
-                print('[N8nClient] Text preview saved for material $matId');
-              }
-            } catch (e) {
-              print('[N8nClient] Background extraction error: $e');
-            }
-          });
-        }
       }
     }
 

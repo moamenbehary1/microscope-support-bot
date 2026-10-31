@@ -1412,6 +1412,95 @@ void registerAdminHandlers(Bot bot) {
     final kb = InlineKeyboard().row().add('🔙 رجوع للوحة الإدارة', 'admin_dash');
     await ctx.editMessageText(buffer.toString(), parseMode: ParseMode.markdown, replyMarkup: kb);
   });
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // ── 🎛 9. SUPER ADMIN: MANAGE STUDENT FEATURES IN /START & BROADCAST ────
+  // ═════════════════════════════════════════════════════════════════════════
+
+  bot.callbackQuery('dash_features_manage', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final superAdminId = await FirebaseDb.getSuperAdmin();
+    if (userId != superAdminId) {
+      await ctx.answerCallbackQuery(text: 'هذه الميزة مخصصة للمالك (Super Admin) فقط.', showAlert: true);
+      return;
+    }
+    await ctx.answerCallbackQuery();
+    await _showFeaturesManagementScreen(ctx);
+  });
+
+  bot.callbackQuery(RegExp(r'^feat_tog:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final superAdminId = await FirebaseDb.getSuperAdmin();
+    if (userId != superAdminId) return;
+    await ctx.answerCallbackQuery();
+
+    final key = ctx.callbackQuery!.data!.replaceFirst('feat_tog:', '');
+    final currentConfig = await FirebaseDb.getFeaturesConfig();
+    final currentState = currentConfig[key] ?? true;
+    await FirebaseDb.toggleFeature(key, !currentState);
+
+    await _showFeaturesManagementScreen(ctx);
+  });
+
+  bot.callbackQuery('feat_broadcast_menu', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final superAdminId = await FirebaseDb.getSuperAdmin();
+    if (userId != superAdminId) return;
+    await ctx.answerCallbackQuery();
+
+    final kb = InlineKeyboard();
+    FirebaseDb.featureDisplayNames.forEach((key, name) {
+      kb.row().add('📢 إرسال: $name', 'feat_send:$key');
+    });
+    kb.row().add('🔙 رجوع', 'dash_features_manage');
+
+    final msg = '📢 *إذاعة وتفعيل ميزة للمستخدمين:*\n\n'
+        'اختر الميزة التي ترغب في إرسال إشعار فوري بها لجميع مستخدمي البوت مع زر مباشر لفتحها:';
+    await ctx.editMessageText(msg, parseMode: ParseMode.markdown, replyMarkup: kb);
+  });
+
+  bot.callbackQuery(RegExp(r'^feat_send:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final superAdminId = await FirebaseDb.getSuperAdmin();
+    if (userId != superAdminId) return;
+    await ctx.answerCallbackQuery(text: 'جاري إذاعة الميزة لجميع المستخدمين...', showAlert: false);
+
+    final key = ctx.callbackQuery!.data!.replaceFirst('feat_send:', '');
+    final featName = FirebaseDb.featureDisplayNames[key] ?? key;
+
+    String actionCallback = 'show_departments';
+    if (key == 'tables') actionCallback = 'table_dash';
+    if (key == 'miko') actionCallback = 'miko_coming_soon';
+    if (key == 'smart_search') actionCallback = 'smart_search_beta';
+    if (key == 'student_tools') actionCallback = 'student_tools_beta';
+    if (key == 'contribute') actionCallback = 'req_contribute';
+    if (key == 'contact_admin') actionCallback = 'contact_admin';
+
+    final userIds = await FirebaseDb.getAllUsers();
+    int count = 0;
+
+    final broadcastMsg = '🌟 *ميزة جديدة متاحة الآن في البوت!*\n\n'
+        'أهلاً بك عزيزي الطالب،\n'
+        'يسر إدارة الفريق إعلامك بتوفير ميزة:\n'
+        '👉 *$featName*\n\n'
+        'يمكنك الوصول إليها واستخدامها فوراً بالضغط على الزر أدناه:';
+
+    final userKb = InlineKeyboard().row().add('🚀 تجربة الميزة الآن', actionCallback);
+
+    for (final uid in userIds) {
+      try {
+        await bot.api.sendMessage(ChatID(uid), broadcastMsg, parseMode: ParseMode.markdown, replyMarkup: userKb);
+        count++;
+      } catch (_) {}
+    }
+
+    final kb = InlineKeyboard().row().add('🔙 رجوع لإدارة الميزات', 'dash_features_manage');
+    await ctx.editMessageText('✅ *تم إرسال وإذاعة الميزة بنجاح!*\n\nتم تسليم الإشعار إلى *$count* مستخدم.', parseMode: ParseMode.markdown, replyMarkup: kb);
+  });
 }
 
 // ── Helper: build admin keyboard ────────────────────────────────────────
@@ -1447,6 +1536,8 @@ Future<InlineKeyboard> _buildAdminKeyboard(int userId, String lang) async {
 
   if (isSuperAdmin) {
     keyboard.row()
+      .add('🎛 ميزات الطلاب في /start', 'dash_features_manage');
+    keyboard.row()
       .add('👑 إضافة أدمن جديد', 'dash_add_admin')
       .add('🚫 مسح مساهم', 'dash_rm_contrib');
     keyboard.row()
@@ -1460,6 +1551,27 @@ Future<InlineKeyboard> _buildAdminKeyboard(int userId, String lang) async {
     .add(S.get('btn_edit_files', lang), 'edit_start');
   keyboard.row().add(S.get('btn_student_mode', lang), 'dash_student');
   return keyboard;
+}
+
+Future<void> _showFeaturesManagementScreen(Context ctx) async {
+  final current = await FirebaseDb.getFeaturesConfig();
+  final kb = InlineKeyboard();
+
+  final buffer = StringBuffer('🎛 *إدارة ظهور الميزات للمستخدمين في /start*\n\n');
+  buffer.writeln('يمكنك التحكم في الميزات التي تظهر للطلاب في القائمة الرئيسية عند الضغط على start:\n');
+
+  FirebaseDb.featureDisplayNames.forEach((key, name) {
+    final enabled = current[key] ?? true;
+    final statusIcon = enabled ? '✅ مفعّلة' : '❌ معطّلة';
+    final toggleLabel = enabled ? 'تعطيل 🔴' : 'تفعيل 🟢';
+    buffer.writeln('• $name: *$statusIcon*');
+    kb.row().add('$name [$toggleLabel]', 'feat_tog:$key');
+  });
+
+  kb.row().add('📢 إذاعة ميزة لجميع الطلاب (Broadcast)', 'feat_broadcast_menu');
+  kb.row().add('🔙 رجوع للوحة الإدارة', 'admin_dash');
+
+  await ctx.editMessageText(buffer.toString(), parseMode: ParseMode.markdown, replyMarkup: kb);
 }
 
 // ── Helper: generate & show authorization code ──────────────────────────

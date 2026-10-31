@@ -14,10 +14,20 @@ class FirebaseDb {
   }
   static String get _authParam => '?auth=${Config.firebaseSecret}';
 
+  /// Percent-encodes each segment of a Firebase REST path so Arabic, emoji,
+  /// and other non-ASCII characters are transmitted correctly.
+  static String _encodePath(String path) {
+    return path
+        .split('/')
+        .map((seg) => seg.isEmpty ? seg : Uri.encodeComponent(seg))
+        .join('/');
+  }
+
   static Future<dynamic> _get(String path) async {
     try {
+      final encoded = _encodePath(path);
       final response = await http
-          .get(Uri.parse('$_baseUrl$path.json$_authParam'))
+          .get(Uri.parse('$_baseUrl$encoded.json$_authParam'))
           .timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         if (response.body == 'null') return null;
@@ -33,9 +43,10 @@ class FirebaseDb {
 
   static Future<bool> _put(String path, dynamic data) async {
     try {
+      final encoded = _encodePath(path);
       final response = await http
           .put(
-            Uri.parse('$_baseUrl$path.json$_authParam'),
+            Uri.parse('$_baseUrl$encoded.json$_authParam'),
             body: json.encode(data),
           )
           .timeout(const Duration(seconds: 10));
@@ -51,9 +62,10 @@ class FirebaseDb {
 
   static Future<bool> _patch(String path, dynamic data) async {
     try {
+      final encoded = _encodePath(path);
       final response = await http
           .patch(
-            Uri.parse('$_baseUrl$path.json$_authParam'),
+            Uri.parse('$_baseUrl$encoded.json$_authParam'),
             body: json.encode(data),
           )
           .timeout(const Duration(seconds: 10));
@@ -69,8 +81,9 @@ class FirebaseDb {
 
   static Future<bool> _delete(String path) async {
     try {
+      final encoded = _encodePath(path);
       final response = await http
-          .delete(Uri.parse('$_baseUrl$path.json$_authParam'))
+          .delete(Uri.parse('$_baseUrl$encoded.json$_authParam'))
           .timeout(const Duration(seconds: 10));
       if (response.statusCode != 200) {
         print('[Firebase] DELETE $path failed: ${response.statusCode}');
@@ -84,9 +97,10 @@ class FirebaseDb {
 
   static Future<String?> _post(String path, dynamic data) async {
     try {
+      final encoded = _encodePath(path);
       final response = await http
           .post(
-            Uri.parse('$_baseUrl$path.json$_authParam'),
+            Uri.parse('$_baseUrl$encoded.json$_authParam'),
             body: json.encode(data),
           )
           .timeout(const Duration(seconds: 10));
@@ -512,6 +526,42 @@ class FirebaseDb {
     await _put('/super_admin', {'id': newAdminId});
     // Ensure the new owner is also a regular admin
     await addAdmin(newAdminId);
+  }
+
+  // --- Bot Features Visibility Config ---
+  static const Map<String, bool> defaultFeatures = {
+    'departments': true,
+    'tables': true,
+    'miko': true,
+    'smart_search': true,
+    'student_tools': true,
+    'contribute': true,
+    'contact_admin': true,
+  };
+
+  static const Map<String, String> featureDisplayNames = {
+    'departments': '📚 تصفح الأقسام والمواد',
+    'tables': '📅 الجداول الدراسية التفاعلية',
+    'miko': '🤖 مساعد ميكو الذكي (Miko AI)',
+    'smart_search': '🔍 البحث الذكي في المحاضرات (Beta)',
+    'student_tools': '🧰 أدوات الطالب والمذاكرة (GPA/مؤقت/مفضلة)',
+    'contribute': '🤝 زر طلب الانضمام كمساهم',
+    'contact_admin': '💬 زر التواصل مع الإدارة',
+  };
+
+  static Future<Map<String, bool>> getFeaturesConfig() async {
+    final data = await _get('/features_config');
+    final res = Map<String, bool>.from(defaultFeatures);
+    if (data != null && data is Map) {
+      data.forEach((k, v) {
+        if (v is bool) res[k.toString()] = v;
+      });
+    }
+    return res;
+  }
+
+  static Future<void> toggleFeature(String key, bool enabled) async {
+    await _put('/features_config/$key', enabled);
   }
 
   // --- Contributor Requests ---

@@ -777,24 +777,42 @@ Future<void> _sendMainMenuNew(Bot bot, Context ctx, int userId, {bool isEdit = f
   final lang = Utils.getUserLanguage(userId);
   final keyboard = InlineKeyboard();
 
-  keyboard.row().add(S.get('btn_departments', lang), 'show_departments');
+  final features = await FirebaseDb.getFeaturesConfig();
+
+  if (features['departments'] ?? true) {
+    keyboard.row().add(S.get('btn_departments', lang), 'show_departments');
+  }
 
   // Schedules / Tables direct button
-  keyboard.row().add(S.get('btn_my_tables', lang), 'table_dash');
+  if (features['tables'] ?? true) {
+    keyboard.row().add(S.get('btn_my_tables', lang), 'table_dash');
+  }
 
   // Miko AI Assistant Bot
-  keyboard.row().add(S.get('btn_chat_miko', lang), 'miko_coming_soon');
+  if (features['miko'] ?? true) {
+    keyboard.row().add(S.get('btn_chat_miko', lang), 'miko_coming_soon');
+  }
 
   // New experimental features labeled [BETA 🧪]
-  keyboard.row().add(S.get('btn_smart_search_beta', lang), 'smart_search_beta');
-  keyboard.row().add(S.get('btn_student_tools_beta', lang), 'student_tools_beta');
+  if (features['smart_search'] ?? true) {
+    keyboard.row().add(S.get('btn_smart_search_beta', lang), 'smart_search_beta');
+  }
+  if (features['student_tools'] ?? true) {
+    keyboard.row().add(S.get('btn_student_tools_beta', lang), 'student_tools_beta');
+  }
 
   final isContrib = await FirebaseDb.isContributor(userId);
   if (isContrib) {
     keyboard.row().add(S.get('btn_my_dashboard', lang), 'contrib_dash');
   }
-  keyboard.row().add(S.get('btn_contribute', lang), 'req_contribute');
-  keyboard.row().add(S.get('btn_contact_admin', lang), 'contact_admin');
+
+  if (features['contribute'] ?? true) {
+    keyboard.row().add(S.get('btn_contribute', lang), 'req_contribute');
+  }
+
+  if (features['contact_admin'] ?? true) {
+    keyboard.row().add(S.get('btn_contact_admin', lang), 'contact_admin');
+  }
   
   if (Config.whatsappSupportNumber.isNotEmpty) {
     keyboard.row().addUrl(S.get('btn_whatsapp_support', lang), 'https://wa.me/${Config.whatsappSupportNumber}');

@@ -7,8 +7,15 @@ import 'strings.dart';
 
 
 void registerContributorAndUploadHandlers(Bot bot) {
-  // ── /مساهم command ───────────────────────────────────────────────────
-  bot.hears(RegExp(r'^/(مساهم|contributor)'), (ctx) async {
+  // ── /مساهم command ────────────────────────────────────────────────────────
+  bot.hears(RegExp(r'^/?(مساهم|contributor)$', caseSensitive: false), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    await _showContributorDashboard(ctx, userId, lang, isEdit: false);
+  });
+
+  bot.command('contributor', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
     final lang = Utils.getUserLanguage(userId);
@@ -94,26 +101,26 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
 
     case 'bcast_track_msg':
       final track = state['track'] as String? ?? '';
-      await ctx.reply('جاري إرسال الإشعار لطلاب مسار "$track"... ⏳');
+      await ctx.reply('ط¬ط§ط±ظٹ ط¥ط±ط³ط§ظ„ ط§ظ„ط¥ط´ط¹ط§ط± ظ„ط·ظ„ط§ط¨ ظ…ط³ط§ط± "$track"... âڈ³');
       final trackUsers = await FirebaseDb.getUsersForTrack(track);
       if (trackUsers.isEmpty) {
-        await ctx.reply('⚠️ لم يتم العثور على طلاب مسجلين في هذا المسار حالياً.');
+        await ctx.reply('âڑ ï¸ڈ ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط·ظ„ط§ط¨ ظ…ط³ط¬ظ„ظٹظ† ظپظٹ ظ‡ط°ط§ ط§ظ„ظ…ط³ط§ط± ط­ط§ظ„ظٹط§ظ‹.');
       } else {
-        Utils.broadcast(bot, trackUsers, '📢 *تنبيه لطلاب [$track]:*\n\n$text');
-        await ctx.reply('✅ تم إرسال الإشعار بنجاح إلى ${trackUsers.length} طالب في مسار "$track".');
+        Utils.broadcast(bot, trackUsers, 'ًں“¢ *طھظ†ط¨ظٹظ‡ ظ„ط·ظ„ط§ط¨ [$track]:*\n\n$text');
+        await ctx.reply('âœ… طھظ… ط¥ط±ط³ط§ظ„ ط§ظ„ط¥ط´ط¹ط§ط± ط¨ظ†ط¬ط§ط­ ط¥ظ„ظ‰ ${trackUsers.length} ط·ط§ظ„ط¨ ظپظٹ ظ…ط³ط§ط± "$track".');
       }
       Utils.clearUploadState(userId);
       break;
 
     case 'bcast_contribs_msg':
-      await ctx.reply('جاري إرسال الإشعار لجميع المساهمين... ⏳');
+      await ctx.reply('ط¬ط§ط±ظٹ ط¥ط±ط³ط§ظ„ ط§ظ„ط¥ط´ط¹ط§ط± ظ„ط¬ظ…ظٹط¹ ط§ظ„ظ…ط³ط§ظ‡ظ…ظٹظ†... âڈ³');
       final contribs = await FirebaseDb.getAllContributors();
       final contribIds = contribs.keys.map((k) => int.tryParse(k)).whereType<int>().toList();
       if (contribIds.isEmpty) {
-        await ctx.reply('⚠️ لا يوجد مساهمون مسجلون حالياً.');
+        await ctx.reply('âڑ ï¸ڈ ظ„ط§ ظٹظˆط¬ط¯ ظ…ط³ط§ظ‡ظ…ظˆظ† ظ…ط³ط¬ظ„ظˆظ† ط­ط§ظ„ظٹط§ظ‹.');
       } else {
-        Utils.broadcast(bot, contribIds, '📢 *تنبيه خاص للمساهمين في الفريق:* 🤝\n\n$text');
-        await ctx.reply('✅ تم إرسال الإشعار بنجاح إلى ${contribIds.length} مساهم.');
+        Utils.broadcast(bot, contribIds, 'ًں“¢ *طھظ†ط¨ظٹظ‡ ط®ط§طµ ظ„ظ„ظ…ط³ط§ظ‡ظ…ظٹظ† ظپظٹ ط§ظ„ظپط±ظٹظ‚:* ًں¤‌\n\n$text');
+        await ctx.reply('âœ… طھظ… ط¥ط±ط³ط§ظ„ ط§ظ„ط¥ط´ط¹ط§ط± ط¨ظ†ط¬ط§ط­ ط¥ظ„ظ‰ ${contribIds.length} ظ…ط³ط§ظ‡ظ….');
       }
       Utils.clearUploadState(userId);
       break;
@@ -122,9 +129,9 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
       final banTarget = int.tryParse(text.trim());
       if (banTarget != null) {
         await FirebaseDb.banUser(banTarget);
-        await ctx.reply('🚫 تم حظر المستخدم `$banTarget` وحرمانه من استخدام البوت بنجاح.', parseMode: ParseMode.markdown);
+        await ctx.reply('ًںڑ« طھظ… ط­ط¸ط± ط§ظ„ظ…ط³طھط®ط¯ظ… `$banTarget` ظˆط­ط±ظ…ط§ظ†ظ‡ ظ…ظ† ط§ط³طھط®ط¯ط§ظ… ط§ظ„ط¨ظˆطھ ط¨ظ†ط¬ط§ط­.', parseMode: ParseMode.markdown);
       } else {
-        await ctx.reply('❌ صيغة الـ ID غير صحيحة.');
+        await ctx.reply('â‌Œ طµظٹط؛ط© ط§ظ„ظ€ ID ط؛ظٹط± طµط­ظٹط­ط©.');
       }
       Utils.clearUploadState(userId);
       break;
@@ -133,9 +140,9 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
       final unbanTarget = int.tryParse(text.trim());
       if (unbanTarget != null) {
         await FirebaseDb.unbanUser(unbanTarget);
-        await ctx.reply('🟢 تم فك الحظر عن المستخدم `$unbanTarget` بنجاح.', parseMode: ParseMode.markdown);
+        await ctx.reply('ًںں¢ طھظ… ظپظƒ ط§ظ„ط­ط¸ط± ط¹ظ† ط§ظ„ظ…ط³طھط®ط¯ظ… `$unbanTarget` ط¨ظ†ط¬ط§ط­.', parseMode: ParseMode.markdown);
       } else {
-        await ctx.reply('❌ صيغة الـ ID غير صحيحة.');
+        await ctx.reply('â‌Œ طµظٹط؛ط© ط§ظ„ظ€ ID ط؛ظٹط± طµط­ظٹط­ط©.');
       }
       Utils.clearUploadState(userId);
       break;
@@ -149,20 +156,20 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
         final userLang = await FirebaseDb.getUserLanguage(lookupTarget);
         final tables = await FirebaseDb.getTables(lookupTarget);
 
-        final buffer = StringBuffer('👤 *تقرير حساب المستخدم:* `$lookupTarget`\n\n');
-        buffer.writeln('• الرتبة: ${isAdmin ? '👑 أدمن' : isContrib ? '🤝 مساهم' : '🎓 طالب'}');
-        buffer.writeln('• حالة الحظر: ${isBanned ? '🚫 محظور' : '🟢 نشط وغير محظور'}');
-        buffer.writeln('• اللغة المفضلة: $userLang');
-        buffer.writeln('• عدد الجداول المسجلة: ${tables.length}');
+        final buffer = StringBuffer('ًں‘¤ *طھظ‚ط±ظٹط± ط­ط³ط§ط¨ ط§ظ„ظ…ط³طھط®ط¯ظ…:* `$lookupTarget`\n\n');
+        buffer.writeln('â€¢ ط§ظ„ط±طھط¨ط©: ${isAdmin ? 'ًں‘‘ ط£ط¯ظ…ظ†' : isContrib ? 'ًں¤‌ ظ…ط³ط§ظ‡ظ…' : 'ًںژ“ ط·ط§ظ„ط¨'}');
+        buffer.writeln('â€¢ ط­ط§ظ„ط© ط§ظ„ط­ط¸ط±: ${isBanned ? 'ًںڑ« ظ…ط­ط¸ظˆط±' : 'ًںں¢ ظ†ط´ط· ظˆط؛ظٹط± ظ…ط­ط¸ظˆط±'}');
+        buffer.writeln('â€¢ ط§ظ„ظ„ط؛ط© ط§ظ„ظ…ظپط¶ظ„ط©: $userLang');
+        buffer.writeln('â€¢ ط¹ط¯ط¯ ط§ظ„ط¬ط¯ط§ظˆظ„ ط§ظ„ظ…ط³ط¬ظ„ط©: ${tables.length}');
         if (tables.isNotEmpty) {
-          buffer.writeln('\n📅 *الجداول والمواد المسجلة:*');
+          buffer.writeln('\nًں“… *ط§ظ„ط¬ط¯ط§ظˆظ„ ظˆط§ظ„ظ…ظˆط§ط¯ ط§ظ„ظ…ط³ط¬ظ„ط©:*');
           tables.forEach((tName, tData) {
-            buffer.writeln('  ▫️ جدول: $tName (${tData['track'] ?? ''})');
+            buffer.writeln('  â–«ï¸ڈ ط¬ط¯ظˆظ„: $tName (${tData['track'] ?? ''})');
           });
         }
         await ctx.reply(buffer.toString(), parseMode: ParseMode.markdown);
       } else {
-        await ctx.reply('❌ صيغة الـ ID غير صحيحة.');
+        await ctx.reply('â‌Œ طµظٹط؛ط© ط§ظ„ظ€ ID ط؛ظٹط± طµط­ظٹط­ط©.');
       }
       Utils.clearUploadState(userId);
       break;
@@ -171,9 +178,9 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
       final newTrack = text.trim();
       if (newTrack.isNotEmpty) {
         await FirebaseDb.addTrack(newTrack);
-        await ctx.reply('✅ تمت إضافة المسار "$newTrack" إلى شجرة المناهج بنجاح!');
+        await ctx.reply('âœ… طھظ…طھ ط¥ط¶ط§ظپط© ط§ظ„ظ…ط³ط§ط± "$newTrack" ط¥ظ„ظ‰ ط´ط¬ط±ط© ط§ظ„ظ…ظ†ط§ظ‡ط¬ ط¨ظ†ط¬ط§ط­!');
       } else {
-        await ctx.reply('❌ اسم المسار لا يمكن أن يكون فارغاً.');
+        await ctx.reply('â‌Œ ط§ط³ظ… ط§ظ„ظ…ط³ط§ط± ظ„ط§ ظٹظ…ظƒظ† ط£ظ† ظٹظƒظˆظ† ظپط§ط±ط؛ط§ظ‹.');
       }
       Utils.clearUploadState(userId);
       break;
@@ -183,9 +190,9 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
       final track = state['track'] as String? ?? '';
       if (newSubj.isNotEmpty && track.isNotEmpty) {
         await FirebaseDb.addSubject(track, newSubj);
-        await ctx.reply('✅ تمت إضافة مادة "$newSubj" إلى مسار "$track" بنجاح!');
+        await ctx.reply('âœ… طھظ…طھ ط¥ط¶ط§ظپط© ظ…ط§ط¯ط© "$newSubj" ط¥ظ„ظ‰ ظ…ط³ط§ط± "$track" ط¨ظ†ط¬ط§ط­!');
       } else {
-        await ctx.reply('❌ حدث خطأ، يرجى إعادة المحاولة.');
+        await ctx.reply('â‌Œ ط­ط¯ط« ط®ط·ط£طŒ ظٹط±ط¬ظ‰ ط¥ط¹ط§ط¯ط© ط§ظ„ظ…ط­ط§ظˆظ„ط©.');
       }
       Utils.clearUploadState(userId);
       break;
@@ -195,12 +202,12 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
       try {
         await bot.api.sendMessage(
           ChatID(targetId),
-          '📩 *رد من إدارة ميكروسكوب على رسالتك:*\n\n$text',
+          'ًں“© *ط±ط¯ ظ…ظ† ط¥ط¯ط§ط±ط© ظ…ظٹظƒط±ظˆط³ظƒظˆط¨ ط¹ظ„ظ‰ ط±ط³ط§ظ„طھظƒ:*\n\n$text',
           parseMode: ParseMode.markdown,
         );
-        await ctx.reply('✅ تم إرسال الرد إلى الطالب بنجاح!');
+        await ctx.reply('âœ… طھظ… ط¥ط±ط³ط§ظ„ ط§ظ„ط±ط¯ ط¥ظ„ظ‰ ط§ظ„ط·ط§ظ„ط¨ ط¨ظ†ط¬ط§ط­!');
       } catch (e) {
-        await ctx.reply('❌ تعذر إرسال الرد: ربما قام المستخدم بحظر البوت.');
+        await ctx.reply('â‌Œ طھط¹ط°ط± ط¥ط±ط³ط§ظ„ ط§ظ„ط±ط¯: ط±ط¨ظ…ط§ ظ‚ط§ظ… ط§ظ„ظ…ط³طھط®ط¯ظ… ط¨ط­ط¸ط± ط§ظ„ط¨ظˆطھ.');
       }
       Utils.clearUploadState(userId);
       break;
@@ -208,7 +215,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
     case 'mis_new_title':
       final title = text.trim();
       if (title.isEmpty) {
-        await ctx.reply('❌ العنوان لا يمكن أن يكون فارغاً.');
+        await ctx.reply('â‌Œ ط§ظ„ط¹ظ†ظˆط§ظ† ظ„ط§ ظٹظ…ظƒظ† ط£ظ† ظٹظƒظˆظ† ظپط§ط±ط؛ط§ظ‹.');
         Utils.clearUploadState(userId);
         return;
       }
@@ -216,20 +223,20 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
       state['action'] = 'mis_new_committee';
       
       final kb = InlineKeyboard()
-        .row().add('HR 👥', 'mis_com:HR').add('PR 📣', 'mis_com:PR').add('Social Media 📱', 'mis_com:Social Media')
-        .row().add('Academic 📚', 'mis_com:Academic').add('Data 📊', 'mis_com:Data').add('IT & Dev 💻', 'mis_com:IT')
-        .row().add('Operations / PM ⚙️', 'mis_com:PM').add('عامة لكافة اللجان 🌐', 'mis_com:General');
+        .row().add('HR ًں‘¥', 'mis_com:HR').add('PR ًں“£', 'mis_com:PR').add('Social Media ًں“±', 'mis_com:Social Media')
+        .row().add('Academic ًں“ڑ', 'mis_com:Academic').add('Data ًں“ٹ', 'mis_com:Data').add('IT & Dev ًں’»', 'mis_com:IT')
+        .row().add('Operations / PM âڑ™ï¸ڈ', 'mis_com:PM').add('ط¹ط§ظ…ط© ظ„ظƒط§ظپط© ط§ظ„ظ„ط¬ط§ظ† ًںŒگ', 'mis_com:General');
 
-      await ctx.reply('تم حفظ العنوان: *$title*\n\nالآن اختر اللجنة المسؤولة عن هذا التكليف:', parseMode: ParseMode.markdown, replyMarkup: kb);
+      await ctx.reply('طھظ… ط­ظپط¸ ط§ظ„ط¹ظ†ظˆط§ظ†: *$title*\n\nط§ظ„ط¢ظ† ط§ط®طھط± ط§ظ„ظ„ط¬ظ†ط© ط§ظ„ظ…ط³ط¤ظˆظ„ط© ط¹ظ† ظ‡ط°ط§ ط§ظ„طھظƒظ„ظٹظپ:', parseMode: ParseMode.markdown, replyMarkup: kb);
       break;
 
     case 'mis_new_desc':
       final desc = text.trim();
-      final title = state['title'] as String? ?? 'مهمة جديدة';
+      final title = state['title'] as String? ?? 'ظ…ظ‡ظ…ط© ط¬ط¯ظٹط¯ط©';
       final committee = state['committee'] as String? ?? 'General';
       final category = state['category'] as String? ?? 'execution';
       final priority = state['priority'] as String? ?? 'high';
-      final deadline = state['deadline'] as String? ?? 'غير محدد';
+      final deadline = state['deadline'] as String? ?? 'ط؛ظٹط± ظ…ط­ط¯ط¯';
       final taskId = 'tsk_' + DateTime.now().millisecondsSinceEpoch.toString();
 
       await FirebaseDb.saveMission(taskId, {
@@ -238,7 +245,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
         'description': desc,
         'category': category,
         'committees': committee,
-        'head_name': 'إدارة المنظومة (Admin)',
+        'head_name': 'ط¥ط¯ط§ط±ط© ط§ظ„ظ…ظ†ط¸ظˆظ…ط© (Admin)',
         'priority': priority,
         'status': 'progress',
         'due_date': deadline,
@@ -248,19 +255,19 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
 
       Utils.clearUploadState(userId);
 
-      final missionCard = '🎯 *تم إنشاء وتكليف المهمة بنجاح!* ✅\n'
-          '━━━━━━━━━━━━━━━━━━━━\n'
-          '📌 *العنوان:* $title\n'
-          '🏢 *اللجنة:* $committee\n'
-          '📅 *الموعد النهائي:* $deadline\n'
-          '🚥 *الحالة:* قيد التنفيذ ⚡\n\n'
-          '📝 *التفاصيل:* $desc\n'
-          '━━━━━━━━━━━━━━━━━━━━\n'
-          '💡 تمت مزامنة المهمة فوراً مع البوت ولوحة الويب.';
+      final missionCard = 'ًںژ¯ *طھظ… ط¥ظ†ط´ط§ط، ظˆطھظƒظ„ظٹظپ ط§ظ„ظ…ظ‡ظ…ط© ط¨ظ†ط¬ط§ط­!* âœ…\n'
+          'â”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پ\n'
+          'ًں“Œ *ط§ظ„ط¹ظ†ظˆط§ظ†:* $title\n'
+          'ًںڈ¢ *ط§ظ„ظ„ط¬ظ†ط©:* $committee\n'
+          'ًں“… *ط§ظ„ظ…ظˆط¹ط¯ ط§ظ„ظ†ظ‡ط§ط¦ظٹ:* $deadline\n'
+          'ًںڑ¥ *ط§ظ„ط­ط§ظ„ط©:* ظ‚ظٹط¯ ط§ظ„طھظ†ظپظٹط° âڑ،\n\n'
+          'ًں“‌ *ط§ظ„طھظپط§طµظٹظ„:* $desc\n'
+          'â”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پâ”پ\n'
+          'ًں’، طھظ…طھ ظ…ط²ط§ظ…ظ†ط© ط§ظ„ظ…ظ‡ظ…ط© ظپظˆط±ط§ظ‹ ظ…ط¹ ط§ظ„ط¨ظˆطھ ظˆظ„ظˆط­ط© ط§ظ„ظˆظٹط¨.';
 
       final cardKb = InlineKeyboard()
-        .row().add('📢 إرسال بطاقة التكليف لقناة اللجان', 'mis_dispatch:$taskId')
-        .row().add('🔙 إدارة المهام', 'adm_missions');
+        .row().add('ًں“¢ ط¥ط±ط³ط§ظ„ ط¨ط·ط§ظ‚ط© ط§ظ„طھظƒظ„ظٹظپ ظ„ظ‚ظ†ط§ط© ط§ظ„ظ„ط¬ط§ظ†', 'mis_dispatch:$taskId')
+        .row().add('ًں”™ ط¥ط¯ط§ط±ط© ط§ظ„ظ…ظ‡ط§ظ…', 'adm_missions');
 
       await ctx.reply(missionCard, parseMode: ParseMode.markdown, replyMarkup: cardKb);
       break;
@@ -376,9 +383,9 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
     case 'contrib_quick_add_desc':
       final qTrack = state['track'] as String? ?? '';
       final qSubject = state['subject'] as String? ?? '';
-      final qType = state['type'] as String? ?? 'ملخص';
-      final qName = state['lecture_name'] as String? ?? 'محاضرة';
-      final desc = text.trim().toLowerCase() == 'تخطي' || text.trim().toLowerCase() == 'skip'
+      final qType = state['type'] as String? ?? 'ظ…ظ„ط®طµ';
+      final qName = state['lecture_name'] as String? ?? 'ظ…ط­ط§ط¶ط±ط©';
+      final desc = text.trim().toLowerCase() == 'طھط®ط·ظٹ' || text.trim().toLowerCase() == 'skip'
           ? ''
           : text.trim();
       Utils.clearUploadState(userId);
@@ -408,7 +415,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
         // Notify subscribers
         final subscribers = await FirebaseDb.getSubjectSubscribers(qSubject);
         if (subscribers.isNotEmpty) {
-          final notifyText = '🔔 إضافة جديدة!\n\nتمت إضافة: **$qName** في مادة: **$qSubject**\nالنوع: $qType\n\nتفضل بزيارة البوت للاطلاع عليها.';
+          final notifyText = 'ًں”” ط¥ط¶ط§ظپط© ط¬ط¯ظٹط¯ط©!\n\nطھظ…طھ ط¥ط¶ط§ظپط©: **$qName** ظپظٹ ظ…ط§ط¯ط©: **$qSubject**\nط§ظ„ظ†ظˆط¹: $qType\n\nطھظپط¶ظ„ ط¨ط²ظٹط§ط±ط© ط§ظ„ط¨ظˆطھ ظ„ظ„ط§ط·ظ„ط§ط¹ ط¹ظ„ظٹظ‡ط§.';
           Utils.broadcast(bot, subscribers, notifyText);
         }
 
@@ -427,7 +434,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
       }
       break;
 
-    // ---- Upload flow: new track / subject typed manually ─────────────
+    // ---- Upload flow: new track / subject typed manually â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     case 'upload_admin_track':
       state['action'] = 'upload_admin_subject';
       state['track'] = text;
@@ -472,7 +479,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
       }
       state['files'] = files;
 
-      if (type == 'رابط' || type.toLowerCase() == 'link') {
+      if (type == 'ط±ط§ط¨ط·' || type.toLowerCase() == 'link') {
         // Switch to link mode
         state['action'] = 'contrib_upload_link';
         await ctx.reply(S.get('upload_link_prompt', lang));
@@ -495,7 +502,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
       }
       break;
 
-    // ── Edit: Auth code verification ──────────────────────────────
+    // â”€â”€ Edit: Auth code verification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     case 'edit_auth_code_check':
       final inputCode = text.trim();
       final codeRes = await FirebaseDb.verifyAndConsumeAuthCode(inputCode);
@@ -511,7 +518,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
         // Stay in state so user can try again
         return;
       }
-      // Code correct — proceed to action
+      // Code correct â€” proceed to action
       final pendingAction = state.remove('pending_action') as String? ?? '';
       state['auth_verified'] = true;
 
@@ -521,11 +528,11 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
         await ctx.reply(S.get('edit_rename_prompt', lang), replyMarkup: cancelKb);
       } else if (pendingAction == 'delete') {
         state['action'] = 'edit_delete_confirm';
-        final matName = state['edit_mat_name'] as String? ?? 'الملف';
+        final matName = state['edit_mat_name'] as String? ?? 'ط§ظ„ظ…ظ„ظپ';
         final kb = InlineKeyboard()
           .row()
-          .add('✅ نعم، احذف الملف', 'edt_delete_confirm')
-          .add('❌ إلغاء', 'edt_delete_cancel');
+          .add('âœ… ظ†ط¹ظ…طŒ ط§ط­ط°ظپ ط§ظ„ظ…ظ„ظپ', 'edt_delete_confirm')
+          .add('â‌Œ ط¥ظ„ط؛ط§ط،', 'edt_delete_cancel');
         await ctx.reply(
           S.get('edit_delete_confirm', lang, {'name': matName}),
           replyMarkup: kb,
@@ -549,7 +556,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
       }
       break;
 
-    // ── Edit: Rename input ─────────────────────────────────────────
+    // â”€â”€ Edit: Rename input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     case 'edit_rename_input':
       final newName = text.trim();
       if (newName.isEmpty) {
@@ -557,7 +564,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
         return;
       }
       state['pending_new_name'] = newName;
-      final oldName = state['edit_mat_name'] as String? ?? 'الملف';
+      final oldName = state['edit_mat_name'] as String? ?? 'ط§ظ„ظ…ظ„ظپ';
       final kb = InlineKeyboard()
         .row().add(S.get('btn_save_done', lang), 'edt_rename_save')
         .row().add(S.get('btn_change_name', lang), 'edt_rename_retry')
@@ -569,7 +576,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
       );
       break;
 
-    // ── Edit: Move — new name input ────────────────────────────────
+    // â”€â”€ Edit: Move â€” new name input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     case 'edit_move_name_input':
       final moveName = text.trim();
       if (moveName.isEmpty) return;
@@ -603,7 +610,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
     case 'contrib_upload_link':
       final track2 = (state['track'] as String?) ?? '';
       final subject2 = (state['subject'] as String?) ?? '';
-      final type2 = (state['type'] as String?) ?? 'رابط';
+      final type2 = (state['type'] as String?) ?? 'ط±ط§ط¨ط·';
       Utils.clearUploadState(userId);
 
       final url = text.trim();
@@ -612,7 +619,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
         break;
       }
 
-      final linkName = url.length > 60 ? '${url.substring(0, 60)}…' : url;
+      final linkName = url.length > 60 ? '${url.substring(0, 60)}â€¦' : url;
       final materialName = (state['material_name'] as String?) ?? linkName;
       final materialId = await FirebaseDb.addMaterial(track2, subject2, type2, {
         'name': materialName,
@@ -634,7 +641,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
         // Send notifications to subscribers
         final subscribers = await FirebaseDb.getSubjectSubscribers(subject2);
         if (subscribers.isNotEmpty) {
-          final text = '🔔 إضافة جديدة!\n\nتمت إضافة ملف جديد في مادة: **$subject2**\nالنوع: $type2\n\nقم بزيارة البوت لتفقدها.';
+          final text = 'ًں”” ط¥ط¶ط§ظپط© ط¬ط¯ظٹط¯ط©!\n\nطھظ…طھ ط¥ط¶ط§ظپط© ظ…ظ„ظپ ط¬ط¯ظٹط¯ ظپظٹ ظ…ط§ط¯ط©: **$subject2**\nط§ظ„ظ†ظˆط¹: $type2\n\nظ‚ظ… ط¨ط²ظٹط§ط±ط© ط§ظ„ط¨ظˆطھ ظ„طھظپظ‚ط¯ظ‡ط§.';
           Utils.broadcast(bot, subscribers, text);
         }
 
@@ -652,7 +659,7 @@ Future<void> handleUploadText(Context ctx, Bot bot) async {
 }
 
 void registerContributorUploadHandlers(Bot bot) {
-  // ── Upload track/subject/type keyboard callbacks ─────────────────────
+  // â”€â”€ Upload track/subject/type keyboard callbacks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   bot.callbackQuery(RegExp(r'^up_track:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
@@ -801,7 +808,7 @@ void registerContributorUploadHandlers(Bot bot) {
     await ctx.editMessageText(S.get('upload_enter_name', lang));
   });
 
-  // ── Add Subject button (from contributor dashboard) ───────────────────
+  // â”€â”€ Add Subject button (from contributor dashboard) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery('contrib_add_subject', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -841,7 +848,7 @@ void registerContributorUploadHandlers(Bot bot) {
     );
   });
 
-  // ── Done uploading → save all collected files ─────────────────────────
+  // â”€â”€ Done uploading â†’ save all collected files â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery('contrib_upload_done', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -898,7 +905,7 @@ void registerContributorUploadHandlers(Bot bot) {
     // Send notifications to subscribers
     final subscribers = await FirebaseDb.getSubjectSubscribers(subject);
     if (subscribers.isNotEmpty) {
-      final text = '🔔 إضافة جديدة!\n\nتمت إضافة ملف جديد في مادة: **$subject**\nالنوع: $type\n\nقم بزيارة البوت لتفقدها.';
+      final text = 'ًں”” ط¥ط¶ط§ظپط© ط¬ط¯ظٹط¯ط©!\n\nطھظ…طھ ط¥ط¶ط§ظپط© ظ…ظ„ظپ ط¬ط¯ظٹط¯ ظپظٹ ظ…ط§ط¯ط©: **$subject**\nط§ظ„ظ†ظˆط¹: $type\n\nظ‚ظ… ط¨ط²ظٹط§ط±ط© ط§ظ„ط¨ظˆطھ ظ„طھظپظ‚ط¯ظ‡ط§.';
       Utils.broadcast(bot, subscribers, text);
     }
 
@@ -911,7 +918,7 @@ void registerContributorUploadHandlers(Bot bot) {
     }));
   });
 
-  // ── File upload handlers (all types) ─────────────────────────────────
+  // â”€â”€ File upload handlers (all types) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   bot.onDocument((ctx) async {
     final fileId = ctx.message?.document?.fileId;
@@ -938,7 +945,7 @@ void registerContributorUploadHandlers(Bot bot) {
     if (fileId != null) await _handleUploadFlow(bot, ctx, fileId, 'voice');
   });
 
-  // ── Contributor Dashboard callbacks ──────────────────────────────────
+  // â”€â”€ Contributor Dashboard callbacks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   bot.callbackQuery('contrib_dash', (ctx) async {
     final userId = ctx.from?.id;
@@ -967,27 +974,27 @@ void registerContributorUploadHandlers(Bot bot) {
       backData: 'contrib_dash',
       lang: lang,
     );
-    keyboard.row().add('🗑️ مسح جميع موادي', 'c_del_all_mats_confirm');
+    keyboard.row().add('ًں—‘ï¸ڈ ظ…ط³ط­ ط¬ظ…ظٹط¹ ظ…ظˆط§ط¯ظٹ', 'c_del_all_mats_confirm');
 
-    await ctx.editMessageText('📋 موادي:\nاختر المسار:', replyMarkup: keyboard);
+    await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ:\nط§ط®طھط± ط§ظ„ظ…ط³ط§ط±:', replyMarkup: keyboard);
   });
 
   // Bulk Delete: All Materials
   bot.callbackQuery('c_del_all_mats_confirm', (ctx) async {
     final keyboard = InlineKeyboard()
-        .row().add('⚠️ نعم، احذف جميع موادي', 'c_del_all_mats_exec')
-        .row().add('🔙 تراجع', 'contrib_materials');
-    await ctx.editMessageText('هل أنت متأكد من رغبتك في حذف **جميع** المواد التي قمت برفعها؟ لا يمكن التراجع عن هذا الإجراء.', replyMarkup: keyboard, parseMode: ParseMode.markdown);
+        .row().add('âڑ ï¸ڈ ظ†ط¹ظ…طŒ ط§ط­ط°ظپ ط¬ظ…ظٹط¹ ظ…ظˆط§ط¯ظٹ', 'c_del_all_mats_exec')
+        .row().add('ًں”™ طھط±ط§ط¬ط¹', 'contrib_materials');
+    await ctx.editMessageText('ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† ط±ط؛ط¨طھظƒ ظپظٹ ط­ط°ظپ **ط¬ظ…ظٹط¹** ط§ظ„ظ…ظˆط§ط¯ ط§ظ„طھظٹ ظ‚ظ…طھ ط¨ط±ظپط¹ظ‡ط§طں ظ„ط§ ظٹظ…ظƒظ† ط§ظ„طھط±ط§ط¬ط¹ ط¹ظ† ظ‡ط°ط§ ط§ظ„ط¥ط¬ط±ط§ط،.', replyMarkup: keyboard, parseMode: ParseMode.markdown);
   });
 
   bot.callbackQuery('c_del_all_mats_exec', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
     final lang = Utils.getUserLanguage(userId);
-    await ctx.editMessageText('جاري الحذف...');
+    await ctx.editMessageText('ط¬ط§ط±ظٹ ط§ظ„ط­ط°ظپ...');
     await FirebaseDb.deleteAllContributorMaterials(userId);
     final kb = InlineKeyboard().row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
-    await ctx.editMessageText('✅ تم حذف جميع موادك بنجاح.', replyMarkup: kb);
+    await ctx.editMessageText('âœ… طھظ… ط­ط°ظپ ط¬ظ…ظٹط¹ ظ…ظˆط§ط¯ظƒ ط¨ظ†ط¬ط§ط­.', replyMarkup: kb);
   });
 
   // Bulk Delete: Track Materials
@@ -995,9 +1002,9 @@ void registerContributorUploadHandlers(Bot bot) {
     final raw = ctx.callbackQuery!.data!.substring('c_del_track_mats_confirm:'.length);
     final track = Utils.lengthen(raw);
     final keyboard = InlineKeyboard()
-        .row().add('⚠️ نعم، احذف مواد مسار $track', 'c_del_track_mats_exec:${Utils.shorten(track)}')
-        .row().add('🔙 تراجع', 'c_mat_track:${Utils.shorten(track)}');
-    await ctx.editMessageText('هل أنت متأكد من رغبتك في حذف جميع موادك في مسار **$track**؟ لا يمكن التراجع عن هذا الإجراء.', replyMarkup: keyboard, parseMode: ParseMode.markdown);
+        .row().add('âڑ ï¸ڈ ظ†ط¹ظ…طŒ ط§ط­ط°ظپ ظ…ظˆط§ط¯ ظ…ط³ط§ط± $track', 'c_del_track_mats_exec:${Utils.shorten(track)}')
+        .row().add('ًں”™ طھط±ط§ط¬ط¹', 'c_mat_track:${Utils.shorten(track)}');
+    await ctx.editMessageText('ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† ط±ط؛ط¨طھظƒ ظپظٹ ط­ط°ظپ ط¬ظ…ظٹط¹ ظ…ظˆط§ط¯ظƒ ظپظٹ ظ…ط³ط§ط± **$track**طں ظ„ط§ ظٹظ…ظƒظ† ط§ظ„طھط±ط§ط¬ط¹ ط¹ظ† ظ‡ط°ط§ ط§ظ„ط¥ط¬ط±ط§ط،.', replyMarkup: keyboard, parseMode: ParseMode.markdown);
   });
 
   bot.callbackQuery(RegExp(r'^c_del_track_mats_exec:(.+)'), (ctx) async {
@@ -1006,7 +1013,7 @@ void registerContributorUploadHandlers(Bot bot) {
     final track = Utils.lengthen(raw);
     if (userId == null) return;
     
-    await ctx.editMessageText('جاري الحذف...');
+    await ctx.editMessageText('ط¬ط§ط±ظٹ ط§ظ„ط­ط°ظپ...');
     final materials = await FirebaseDb.getContributorMaterials(userId);
     for (var entry in materials.entries) {
       final matId = entry.key;
@@ -1019,8 +1026,8 @@ void registerContributorUploadHandlers(Bot bot) {
       }
     }
     
-    final keyboard = InlineKeyboard().row().add('🔙 رجوع إلى موادي', 'contrib_materials');
-    await ctx.editMessageText('✅ تم حذف جميع مواد مسار $track بنجاح.', replyMarkup: keyboard);
+    final keyboard = InlineKeyboard().row().add('ًں”™ ط±ط¬ظˆط¹ ط¥ظ„ظ‰ ظ…ظˆط§ط¯ظٹ', 'contrib_materials');
+    await ctx.editMessageText('âœ… طھظ… ط­ط°ظپ ط¬ظ…ظٹط¹ ظ…ظˆط§ط¯ ظ…ط³ط§ط± $track ط¨ظ†ط¬ط§ط­.', replyMarkup: keyboard);
   });
 
   bot.callbackQuery(RegExp(r'^c_mat_track:(.+)'), (ctx) async {
@@ -1041,8 +1048,8 @@ void registerContributorUploadHandlers(Bot bot) {
         backData: 'contrib_dash',
         lang: lang,
       );
-      keyboard.row().add('🗑️ مسح جميع موادي', 'c_del_all_mats_confirm');
-      await ctx.editMessageText('📋 موادي:\nاختر المسار:', replyMarkup: keyboard);
+      keyboard.row().add('ًں—‘ï¸ڈ ظ…ط³ط­ ط¬ظ…ظٹط¹ ظ…ظˆط§ط¯ظٹ', 'c_del_all_mats_confirm');
+      await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ:\nط§ط®طھط± ط§ظ„ظ…ط³ط§ط±:', replyMarkup: keyboard);
       return;
     }
 
@@ -1061,9 +1068,9 @@ void registerContributorUploadHandlers(Bot bot) {
       backData: 'contrib_materials',
       lang: lang,
     );
-    keyboard.row().add('🗑️ مسح جميع مواد المسار', 'c_del_track_mats_confirm:${Utils.shorten(track)}');
+    keyboard.row().add('ًں—‘ï¸ڈ ظ…ط³ط­ ط¬ظ…ظٹط¹ ظ…ظˆط§ط¯ ط§ظ„ظ…ط³ط§ط±', 'c_del_track_mats_confirm:${Utils.shorten(track)}');
 
-    await ctx.editMessageText('📋 موادي - $track:\nاختر المادة:', replyMarkup: keyboard);
+    await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ - $track:\nط§ط®طھط± ط§ظ„ظ…ط§ط¯ط©:', replyMarkup: keyboard);
   });
 
   bot.callbackQuery(RegExp(r'^c_mat_subj:(.*?):(.*)'), (ctx) async {
@@ -1093,9 +1100,9 @@ void registerContributorUploadHandlers(Bot bot) {
         backData: 'contrib_materials',
         lang: lang,
       );
-      keyboard.row().add('🗑️ مسح جميع مواد المسار', 'c_del_track_mats_confirm:${Utils.shorten(track)}');
+      keyboard.row().add('ًں—‘ï¸ڈ ظ…ط³ط­ ط¬ظ…ظٹط¹ ظ…ظˆط§ط¯ ط§ظ„ظ…ط³ط§ط±', 'c_del_track_mats_confirm:${Utils.shorten(track)}');
 
-      await ctx.editMessageText('📋 موادي - $track:\nاختر المادة:', replyMarkup: keyboard);
+      await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ - $track:\nط§ط®طھط± ط§ظ„ظ…ط§ط¯ط©:', replyMarkup: keyboard);
       return;
     }
 
@@ -1114,7 +1121,7 @@ void registerContributorUploadHandlers(Bot bot) {
       lang: lang,
     );
 
-    await ctx.editMessageText('📋 موادي - $subject:\nاختر النوع:', replyMarkup: keyboard);
+    await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ - $subject:\nط§ط®طھط± ط§ظ„ظ†ظˆط¹:', replyMarkup: keyboard);
   });
 
   bot.callbackQuery(RegExp(r'^c_mat_type:(.*?):(.*?):(.*)'), (ctx) async {
@@ -1146,7 +1153,7 @@ void registerContributorUploadHandlers(Bot bot) {
         lang: lang,
       );
 
-      await ctx.editMessageText('📋 موادي - $subject:\nاختر النوع:', replyMarkup: keyboard);
+      await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ - $subject:\nط§ط®طھط± ط§ظ„ظ†ظˆط¹:', replyMarkup: keyboard);
       return;
     }
 
@@ -1158,7 +1165,7 @@ void registerContributorUploadHandlers(Bot bot) {
     final itemsList = mats.map((e) {
       final matId = e.key;
       final name = (e.value['name'] as String?) ?? matId;
-      return MapEntry(matId, '$name 🗑️');
+      return MapEntry(matId, '$name ًں—‘ï¸ڈ');
     }).toList();
 
     final keyboard = Utils.paginateMapKeyboard(
@@ -1169,7 +1176,7 @@ void registerContributorUploadHandlers(Bot bot) {
       lang: lang,
     );
 
-    await ctx.editMessageText('📋 موادي - $type:\nاختر الملف لحذفه:', replyMarkup: keyboard);
+    await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ - $type:\nط§ط®طھط± ط§ظ„ظ…ظ„ظپ ظ„ط­ط°ظپظ‡:', replyMarkup: keyboard);
   });
 
   bot.callbackQuery(RegExp(r'^c_dmat:(.*?):(.*?):(.*?):(.*)'), (ctx) async {
@@ -1194,7 +1201,7 @@ void registerContributorUploadHandlers(Bot bot) {
       final itemsList = mats.map((e) {
         final id = e.key;
         final name = (e.value['name'] as String?) ?? id;
-        return MapEntry(id, '$name 🗑️');
+        return MapEntry(id, '$name ًں—‘ï¸ڈ');
       }).toList();
 
       final keyboard = Utils.paginateMapKeyboard(
@@ -1204,7 +1211,7 @@ void registerContributorUploadHandlers(Bot bot) {
         backData: 'c_mat_subj:${Utils.shorten(track)}:${Utils.shorten(subject)}',
         lang: lang,
       );
-      await ctx.editMessageText('📋 موادي - $type:\nاختر الملف لحذفه:', replyMarkup: keyboard);
+      await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ - $type:\nط§ط®طھط± ط§ظ„ظ…ظ„ظپ ظ„ط­ط°ظپظ‡:', replyMarkup: keyboard);
       return;
     }
 
@@ -1240,8 +1247,8 @@ void registerContributorUploadHandlers(Bot bot) {
               backData: 'contrib_dash',
               lang: lang,
             );
-            keyboard.row().add('🗑️ مسح جميع موادي', 'c_del_all_mats_confirm');
-            await ctx.editMessageText('📋 موادي:\nاختر المسار:', replyMarkup: keyboard);
+            keyboard.row().add('ًں—‘ï¸ڈ ظ…ط³ط­ ط¬ظ…ظٹط¹ ظ…ظˆط§ط¯ظٹ', 'c_del_all_mats_confirm');
+            await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ:\nط§ط®طھط± ط§ظ„ظ…ط³ط§ط±:', replyMarkup: keyboard);
          }
       } else {
           final keyboard = Utils.paginateKeyboard(
@@ -1251,7 +1258,7 @@ void registerContributorUploadHandlers(Bot bot) {
             backData: 'c_mat_track:${Utils.shorten(track)}',
             lang: lang,
           );
-          await ctx.editMessageText('📋 موادي - $subject:\nاختر النوع:', replyMarkup: keyboard);
+          await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ - $subject:\nط§ط®طھط± ط§ظ„ظ†ظˆط¹:', replyMarkup: keyboard);
       }
       return;
     }
@@ -1259,7 +1266,7 @@ void registerContributorUploadHandlers(Bot bot) {
     final itemsList = mats.map((e) {
       final id = e.key;
       final name = (e.value['name'] as String?) ?? id;
-      return MapEntry(id, '$name 🗑️');
+      return MapEntry(id, '$name ًں—‘ï¸ڈ');
     }).toList();
 
     final keyboard = Utils.paginateMapKeyboard(
@@ -1270,7 +1277,7 @@ void registerContributorUploadHandlers(Bot bot) {
       lang: lang,
     );
 
-    await ctx.editMessageText('📋 موادي - $type:\nاختر الملف لحذفه:', replyMarkup: keyboard);
+    await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ - $type:\nط§ط®طھط± ط§ظ„ظ…ظ„ظپ ظ„ط­ط°ظپظ‡:', replyMarkup: keyboard);
   });
 
   bot.callbackQuery(RegExp(r'^contrib_del_mat:(.*?):(.*?):(.*?):(.*)'), (ctx) async {
@@ -1317,15 +1324,15 @@ void registerContributorUploadHandlers(Bot bot) {
               keyboard.row().add(t, 'c_mat_track:$t');
             }
             keyboard.row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
-            await ctx.editMessageText('📋 موادي:\nاختر المسار:', replyMarkup: keyboard);
+            await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ:\nط§ط®طھط± ط§ظ„ظ…ط³ط§ط±:', replyMarkup: keyboard);
          }
       } else {
           final keyboard = InlineKeyboard();
           for (var t in types) {
             keyboard.row().add(t, 'c_mat_type:$track:$subject:$t');
           }
-          keyboard.row().add('🔙 رجوع', 'c_mat_track:$track');
-          await ctx.editMessageText('📋 موادي - $subject:\nاختر النوع:', replyMarkup: keyboard);
+          keyboard.row().add('ًں”™ ط±ط¬ظˆط¹', 'c_mat_track:$track');
+          await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ - $subject:\nط§ط®طھط± ط§ظ„ظ†ظˆط¹:', replyMarkup: keyboard);
       }
       return;
     }
@@ -1334,14 +1341,14 @@ void registerContributorUploadHandlers(Bot bot) {
     for (var e in mats) {
       final id = e.key;
       final name = e.value['name'] as String? ?? id;
-      keyboard.row().add('$name 🗑️', 'contrib_del_mat:${Utils.shorten(id)}:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}');
+      keyboard.row().add('$name ًں—‘ï¸ڈ', 'contrib_del_mat:${Utils.shorten(id)}:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}');
     }
-    keyboard.row().add('🔙 رجوع', 'c_mat_subj:$track:$subject');
+    keyboard.row().add('ًں”™ ط±ط¬ظˆط¹', 'c_mat_subj:$track:$subject');
 
-    await ctx.editMessageText('📋 موادي - $type:\nاختر الملف لحذفه:', replyMarkup: keyboard);
+    await ctx.editMessageText('ًں“‹ ظ…ظˆط§ط¯ظٹ - $type:\nط§ط®طھط± ط§ظ„ظ…ظ„ظپ ظ„ط­ط°ظپظ‡:', replyMarkup: keyboard);
   });
 
-  // ── Contributor Analytics (NEW FEATURE) ─────────────────────────────
+  // â”€â”€ Contributor Analytics (NEW FEATURE) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery('contrib_analytics', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -1351,7 +1358,7 @@ void registerContributorUploadHandlers(Bot bot) {
     final materials = await FirebaseDb.getContributorMaterials(userId);
     if (materials.isEmpty) {
       final backKb = InlineKeyboard().row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
-      await ctx.editMessageText('📊 ليس لديك أي مواد مرفوعة لعرض إحصائياتها بعد.', replyMarkup: backKb);
+      await ctx.editMessageText('ًں“ٹ ظ„ظٹط³ ظ„ط¯ظٹظƒ ط£ظٹ ظ…ظˆط§ط¯ ظ…ط±ظپظˆط¹ط© ظ„ط¹ط±ط¶ ط¥ط­طµط§ط¦ظٹط§طھظ‡ط§ ط¨ط¹ط¯.', replyMarkup: backKb);
       return;
     }
 
@@ -1380,24 +1387,24 @@ void registerContributorUploadHandlers(Bot bot) {
 
     accessedList.sort((a, b) => (b['count'] as int).compareTo(a['count'] as int));
 
-    String msg = '📊 *إحصائيات موادي وتفاعل الطلاب*\n\n';
-    msg += '📁 *إجمالي المواد المرفوعة:* ${materials.length} مادة\n';
-    msg += '👀 *إجمالي المشاهدات/التحميلات:* $totalViews مشاهدة\n\n';
+    String msg = 'ًں“ٹ *ط¥ط­طµط§ط¦ظٹط§طھ ظ…ظˆط§ط¯ظٹ ظˆطھظپط§ط¹ظ„ ط§ظ„ط·ظ„ط§ط¨*\n\n';
+    msg += 'ًں“پ *ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ظˆط§ط¯ ط§ظ„ظ…ط±ظپظˆط¹ط©:* ${materials.length} ظ…ط§ط¯ط©\n';
+    msg += 'ًں‘€ *ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ط´ط§ظ‡ط¯ط§طھ/ط§ظ„طھط­ظ…ظٹظ„ط§طھ:* $totalViews ظ…ط´ط§ظ‡ط¯ط©\n\n';
 
     if (accessedList.isNotEmpty) {
-      msg += '🔥 *المواد الأكثر تفاعلاً:*\n';
+      msg += 'ًں”¥ *ط§ظ„ظ…ظˆط§ط¯ ط§ظ„ط£ظƒط«ط± طھظپط§ط¹ظ„ط§ظ‹:*\n';
       for (var i = 0; i < accessedList.length && i < 5; i++) {
-        msg += '${i + 1}. ${accessedList[i]['name']} — ${accessedList[i]['count']} مشاهدة\n';
+        msg += '${i + 1}. ${accessedList[i]['name']} â€” ${accessedList[i]['count']} ظ…ط´ط§ظ‡ط¯ط©\n';
       }
     } else {
-      msg += '✨ لم يتم تسجيل تفاعلات بعد على موادك.';
+      msg += 'âœ¨ ظ„ظ… ظٹطھظ… طھط³ط¬ظٹظ„ طھظپط§ط¹ظ„ط§طھ ط¨ط¹ط¯ ط¹ظ„ظ‰ ظ…ظˆط§ط¯ظƒ.';
     }
 
     final kb = InlineKeyboard().row().add(S.get('btn_back_dashboard', lang), 'contrib_dash');
     await ctx.editMessageText(msg, replyMarkup: kb, parseMode: ParseMode.markdown);
   });
 
-  // ── Contributor Quick Add Lecture (NEW FEATURE) ─────────────────────
+  // â”€â”€ Contributor Quick Add Lecture (NEW FEATURE) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery('contrib_quick_add', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -1425,7 +1432,7 @@ void registerContributorUploadHandlers(Bot bot) {
       lang: lang,
     );
 
-    await ctx.editMessageText('اختر المسار لإضافة المحاضرة فيه:', replyMarkup: keyboard);
+    await ctx.editMessageText('ط§ط®طھط± ط§ظ„ظ…ط³ط§ط± ظ„ط¥ط¶ط§ظپط© ط§ظ„ظ…ط­ط§ط¶ط±ط© ظپظٹظ‡:', replyMarkup: keyboard);
   });
 
   bot.callbackQuery(RegExp(r'^qa_track:(.+)'), (ctx) async {
@@ -1445,7 +1452,7 @@ void registerContributorUploadHandlers(Bot bot) {
         backData: 'contrib_dash',
         lang: lang,
       );
-      await ctx.editMessageText('اختر المسار لإضافة المحاضرة فيه:', replyMarkup: keyboard);
+      await ctx.editMessageText('ط§ط®طھط± ط§ظ„ظ…ط³ط§ط± ظ„ط¥ط¶ط§ظپط© ط§ظ„ظ…ط­ط§ط¶ط±ط© ظپظٹظ‡:', replyMarkup: keyboard);
       return;
     }
 
@@ -1464,7 +1471,7 @@ void registerContributorUploadHandlers(Bot bot) {
       lang: lang,
     );
 
-    await ctx.editMessageText('المسار: $track\nاختر المادة:', replyMarkup: keyboard);
+    await ctx.editMessageText('ط§ظ„ظ…ط³ط§ط±: $track\nط§ط®طھط± ط§ظ„ظ…ط§ط¯ط©:', replyMarkup: keyboard);
   });
 
   bot.callbackQuery(RegExp(r'^qa_subj:(.+)'), (ctx) async {
@@ -1488,7 +1495,7 @@ void registerContributorUploadHandlers(Bot bot) {
         backData: 'contrib_quick_add',
         lang: lang,
       );
-      await ctx.editMessageText('المسار: $track\nاختر المادة:', replyMarkup: keyboard);
+      await ctx.editMessageText('ط§ظ„ظ…ط³ط§ط±: $track\nط§ط®طھط± ط§ظ„ظ…ط§ط¯ط©:', replyMarkup: keyboard);
       return;
     }
 
@@ -1505,7 +1512,7 @@ void registerContributorUploadHandlers(Bot bot) {
       lang: lang,
     );
 
-    await ctx.editMessageText('المادة: $subject\nاختر النوع (ملخص، شرح، فيديو...):', replyMarkup: keyboard);
+    await ctx.editMessageText('ط§ظ„ظ…ط§ط¯ط©: $subject\nط§ط®طھط± ط§ظ„ظ†ظˆط¹ (ظ…ظ„ط®طµطŒ ط´ط±ط­طŒ ظپظٹط¯ظٹظˆ...):', replyMarkup: keyboard);
   });
 
   bot.callbackQuery(RegExp(r'^qa_type:(.+)'), (ctx) async {
@@ -1530,7 +1537,7 @@ void registerContributorUploadHandlers(Bot bot) {
         backData: 'qa_track:${Utils.shorten(track)}',
         lang: lang,
       );
-      await ctx.editMessageText('المادة: $subject\nاختر النوع (ملخص، شرح، فيديو...):', replyMarkup: keyboard);
+      await ctx.editMessageText('ط§ظ„ظ…ط§ط¯ط©: $subject\nط§ط®طھط± ط§ظ„ظ†ظˆط¹ (ظ…ظ„ط®طµطŒ ط´ط±ط­طŒ ظپظٹط¯ظٹظˆ...):', replyMarkup: keyboard);
       return;
     }
 
@@ -1541,9 +1548,9 @@ void registerContributorUploadHandlers(Bot bot) {
     await ctx.editMessageText(S.get('quick_add_name_prompt', lang));
   });
 
-  // ══════════════════════════════════════════════════════════════════════
-  // ── ✏️ FILE MANAGEMENT & EDIT FLOW ────────────────────────────────────
-  // ══════════════════════════════════════════════════════════════════════
+  // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  // â”€â”€ âœڈï¸ڈ FILE MANAGEMENT & EDIT FLOW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 
   // Entry point: Edit button clicked
   bot.callbackQuery('edit_start', (ctx) async {
@@ -1591,6 +1598,7 @@ void registerContributorUploadHandlers(Bot bot) {
   bot.callbackQuery(RegExp(r'^edt_track:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
+    try { await ctx.answerCallbackQuery(); } catch (_) {}
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
     final trackRaw = data.substring('edt_track:'.length);
@@ -1626,10 +1634,9 @@ void registerContributorUploadHandlers(Bot bot) {
 
     final subjects = await FirebaseDb.getSubjects(track);
     if (subjects.isEmpty) {
-      await ctx.answerCallbackQuery(text: S.get('upload_no_subjects', lang), showAlert: true);
+      await ctx.reply(S.get('upload_no_subjects', lang));
       return;
     }
-    await ctx.answerCallbackQuery();
 
     final keyboard = Utils.paginateKeyboard(
       subjects,
@@ -1646,12 +1653,12 @@ void registerContributorUploadHandlers(Bot bot) {
   bot.callbackQuery(RegExp(r'^edt_subj:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
+    try { await ctx.answerCallbackQuery(); } catch (_) {}
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
     final subjectRaw = data.substring('edt_subj:'.length);
 
-    final state = Utils.uploadStates[userId];
-    if (state == null) return;
+    final state = Utils.uploadStates[userId] ?? {};
     final track = state['edit_track'] as String? ?? '';
 
     if (subjectRaw.startsWith('page_')) {
@@ -1671,13 +1678,13 @@ void registerContributorUploadHandlers(Bot bot) {
     final subject = Utils.lengthen(subjectRaw);
     state['edit_subject'] = subject;
     state['action'] = 'edit_pick_type';
+    Utils.uploadStates[userId] = state;
 
     final types = await FirebaseDb.getMaterialTypes(track, subject);
     if (types.isEmpty) {
-      await ctx.answerCallbackQuery(text: S.get('upload_no_types', lang), showAlert: true);
+      await ctx.reply(S.get('upload_no_types', lang));
       return;
     }
-    await ctx.answerCallbackQuery();
 
     final keyboard = Utils.paginateKeyboard(
       types,
@@ -1694,12 +1701,12 @@ void registerContributorUploadHandlers(Bot bot) {
   bot.callbackQuery(RegExp(r'^edt_type:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
+    try { await ctx.answerCallbackQuery(); } catch (_) {}
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
     final typeRaw = data.substring('edt_type:'.length);
 
-    final state = Utils.uploadStates[userId];
-    if (state == null) return;
+    final state = Utils.uploadStates[userId] ?? {};
     final track = state['edit_track'] as String? ?? '';
     final subject = state['edit_subject'] as String? ?? '';
 
@@ -1720,13 +1727,13 @@ void registerContributorUploadHandlers(Bot bot) {
     final type = Utils.lengthen(typeRaw);
     state['edit_type'] = type;
     state['action'] = 'edit_pick_file';
+    Utils.uploadStates[userId] = state;
 
     final materials = await FirebaseDb.getMaterials(track, subject, type);
     if (materials.isEmpty) {
-      await ctx.answerCallbackQuery(text: 'لا توجد ملفات في هذه الفئة.', showAlert: true);
+      await ctx.reply('⚠️ لا توجد ملفات في هذه الفئة.');
       return;
     }
-    await ctx.answerCallbackQuery();
 
     final itemsList = materials.entries.map((e) {
       final name = (e.value['name'] as String?) ?? e.key;
@@ -1744,17 +1751,16 @@ void registerContributorUploadHandlers(Bot bot) {
     await ctx.editMessageText(S.get('edit_select_file', lang), replyMarkup: keyboard);
   });
 
-  // Step 4: File selected — show actions
+  // Step 4: File selected
   bot.callbackQuery(RegExp(r'^edt_file:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
+    try { await ctx.answerCallbackQuery(); } catch (_) {}
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
     final rawId = data.substring('edt_file:'.length);
 
-    final state = Utils.uploadStates[userId];
-    if (state == null) return;
-
+    final state = Utils.uploadStates[userId] ?? {};
     final track = state['edit_track'] as String? ?? '';
     final subject = state['edit_subject'] as String? ?? '';
     final type = state['edit_type'] as String? ?? '';
@@ -1779,18 +1785,26 @@ void registerContributorUploadHandlers(Bot bot) {
     }
 
     final matId = Utils.lengthen(rawId);
-    final matData = await FirebaseDb.getMaterial(track, subject, type, matId);
+    var matData = await FirebaseDb.getMaterial(track, subject, type, matId);
+    if (matData == null && track.isNotEmpty && subject.isNotEmpty && type.isNotEmpty) {
+      final allMats = await FirebaseDb.getMaterials(track, subject, type);
+      if (allMats.containsKey(matId)) {
+        final val = allMats[matId];
+        matData = val is Map ? Map<String, dynamic>.from(val) : {'name': val.toString()};
+      }
+    }
+
     if (matData == null) {
-      await ctx.answerCallbackQuery(text: 'الملف غير موجود.', showAlert: true);
+      await ctx.reply('❌ تعذر العثور على الملف المحدد أو قد تم حذفه.');
       return;
     }
+
     final matName = (matData['name'] as String?) ?? matId;
 
     state['edit_mat_id'] = matId;
     state['edit_mat_name'] = matName;
     state['action'] = 'edit_action_select';
-
-    await ctx.answerCallbackQuery();
+    Utils.uploadStates[userId] = state;
 
     final keyboard = InlineKeyboard()
       .row()
@@ -1803,19 +1817,33 @@ void registerContributorUploadHandlers(Bot bot) {
       .row()
       .add(S.get('btn_cancel_action', lang), 'edt_cancel');
 
-    await ctx.editMessageText(
-      S.get('edit_file_actions_title', lang, {
-        'name': matName,
-        'track': track,
-        'subject': subject,
-        'type': type,
-      }),
-      replyMarkup: keyboard,
-      parseMode: ParseMode.markdown,
-    );
+    final safeName = matName.replaceAll('*', '').replaceAll('_', ' ');
+    final safeTrack = track.replaceAll('*', '').replaceAll('_', ' ');
+    final safeSubject = subject.replaceAll('*', '').replaceAll('_', ' ');
+    final safeType = type.replaceAll('*', '').replaceAll('_', ' ');
+
+    final titleMsg = S.get('edit_file_actions_title', lang, {
+      'name': safeName,
+      'track': safeTrack,
+      'subject': safeSubject,
+      'type': safeType,
+    });
+
+    try {
+      await ctx.editMessageText(
+        titleMsg,
+        replyMarkup: keyboard,
+        parseMode: ParseMode.markdown,
+      );
+    } catch (_) {
+      await ctx.editMessageText(
+        titleMsg.replaceAll('*', ''),
+        replyMarkup: keyboard,
+      );
+    }
   });
 
-  // Step 5: Action chosen — check role
+  // Step 5: Action chosen â€” check role
   bot.callbackQuery(RegExp(r'^edt_action:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -1846,7 +1874,7 @@ void registerContributorUploadHandlers(Bot bot) {
     }
   });
 
-  // ── Rename: Save ────────────────────────────────────────────────
+  // â”€â”€ Rename: Save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery('edt_rename_save', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -1878,7 +1906,7 @@ void registerContributorUploadHandlers(Bot bot) {
     );
   });
 
-  // ── Rename: Retry typing another name ────────────────────────────
+  // â”€â”€ Rename: Retry typing another name â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery('edt_rename_retry', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -1893,7 +1921,7 @@ void registerContributorUploadHandlers(Bot bot) {
     await ctx.editMessageText(S.get('edit_rename_prompt', lang), replyMarkup: cancelKb);
   });
 
-  // ── Delete: Confirmed ───────────────────────────────────────────
+  // â”€â”€ Delete: Confirmed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery('edt_delete_confirm', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -1918,7 +1946,7 @@ void registerContributorUploadHandlers(Bot bot) {
     await ctx.editMessageText(S.get('edit_delete_done', lang), replyMarkup: kb);
   });
 
-  // ── Delete: Cancel ───────────────────────────────────────────────
+  // â”€â”€ Delete: Cancel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery('edt_delete_cancel', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -1929,14 +1957,15 @@ void registerContributorUploadHandlers(Bot bot) {
     final backLabel = _getEditBackLabel(backDash, lang);
 
     Utils.clearUploadState(userId);
-    await ctx.answerCallbackQuery(text: 'تم إلغاء العملية.');
-    await ctx.editMessageText('❌ تم إلغاء الحذف.', replyMarkup: InlineKeyboard().row().add(backLabel, backDash));
+    await ctx.answerCallbackQuery(text: 'طھظ… ط¥ظ„ط؛ط§ط، ط§ظ„ط¹ظ…ظ„ظٹط©.');
+    await ctx.editMessageText('â‌Œ طھظ… ط¥ظ„ط؛ط§ط، ط§ظ„ط­ط°ظپ.', replyMarkup: InlineKeyboard().row().add(backLabel, backDash));
   });
 
-  // ── Move: Track selected ─────────────────────────────────────────
+  // â”€â”€ Move: Track selected â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery(RegExp(r'^emv_track:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
+    try { await ctx.answerCallbackQuery(); } catch (_) {}
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
     final trackRaw = data.substring('emv_track:'.length);
@@ -1966,11 +1995,10 @@ void registerContributorUploadHandlers(Bot bot) {
     final newTrack = Utils.lengthen(trackRaw);
     state['move_new_track'] = newTrack;
     state['action'] = 'edit_move_pick_subject';
-    await ctx.answerCallbackQuery();
 
     final subjects = await FirebaseDb.getSubjects(newTrack);
     if (subjects.isEmpty) {
-      await ctx.answerCallbackQuery(text: S.get('upload_no_subjects', lang), showAlert: true);
+      await ctx.reply(S.get('upload_no_subjects', lang));
       return;
     }
 
@@ -1985,7 +2013,7 @@ void registerContributorUploadHandlers(Bot bot) {
     await ctx.editMessageText(S.get('edit_move_select_subject', lang), replyMarkup: keyboard);
   });
 
-  // ── Move: Back to Track selection ────────────────────────────────
+  // â”€â”€ Move: Back to Track selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery('emv_pick_track', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -2013,7 +2041,7 @@ void registerContributorUploadHandlers(Bot bot) {
     );
   });
 
-  // ── Move: Subject selected ──────────────────────────────────────
+  // â”€â”€ Move: Subject selected â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery(RegExp(r'^emv_subj:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -2042,11 +2070,10 @@ void registerContributorUploadHandlers(Bot bot) {
     final newSubject = Utils.lengthen(subjRaw);
     state['move_new_subject'] = newSubject;
     state['action'] = 'edit_move_pick_type';
-    await ctx.answerCallbackQuery();
 
     final types = await FirebaseDb.getMaterialTypes(newTrack, newSubject);
     if (types.isEmpty) {
-      await ctx.answerCallbackQuery(text: S.get('upload_no_types', lang), showAlert: true);
+      await ctx.reply(S.get('upload_no_types', lang));
       return;
     }
 
@@ -2061,10 +2088,11 @@ void registerContributorUploadHandlers(Bot bot) {
     await ctx.editMessageText(S.get('edit_move_select_type', lang), replyMarkup: keyboard);
   });
 
-  // ── Move: Type/Category selected — prompt for name ──────────────
+  // ── Move: Type/Category selected — prompt for name ────────────────────────
   bot.callbackQuery(RegExp(r'^emv_type:(.+)'), (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
+    try { await ctx.answerCallbackQuery(); } catch (_) {}
     final lang = Utils.getUserLanguage(userId);
     final data = ctx.callbackQuery!.data!;
     final typeRaw = data.substring('emv_type:'.length);
@@ -2091,11 +2119,10 @@ void registerContributorUploadHandlers(Bot bot) {
     final newType = Utils.lengthen(typeRaw);
     state['move_new_type'] = newType;
     state['action'] = 'edit_move_name_input';
-    await ctx.answerCallbackQuery();
 
     final keyboard = InlineKeyboard()
       .row().add(S.get('btn_keep_name', lang), 'emv_keepname')
-      .row().add('🔙 رجوع', 'emv_subj:${Utils.shorten(newSubject)}')
+      .row().add('ًں”™ ط±ط¬ظˆط¹', 'emv_subj:${Utils.shorten(newSubject)}')
       .row().add(S.get('btn_cancel_action', lang), 'edt_cancel');
 
     await ctx.editMessageText(
@@ -2104,7 +2131,7 @@ void registerContributorUploadHandlers(Bot bot) {
     );
   });
 
-  // ── Move: Keep original name -> show Done/Save confirmation ─────
+  // â”€â”€ Move: Keep original name -> show Done/Save confirmation â”€â”€â”€â”€â”€
   bot.callbackQuery('emv_keepname', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -2114,7 +2141,7 @@ void registerContributorUploadHandlers(Bot bot) {
     final state = Utils.uploadStates[userId];
     if (state == null) return;
 
-    final originalName = state['edit_mat_name'] as String? ?? 'الملف';
+    final originalName = state['edit_mat_name'] as String? ?? 'ط§ظ„ظ…ظ„ظپ';
     state['pending_move_name'] = originalName;
 
     final mTrack = state['edit_track'] as String? ?? '';
@@ -2144,7 +2171,7 @@ void registerContributorUploadHandlers(Bot bot) {
     );
   });
 
-  // ── Move: Prompt to type new name ────────────────────────────────
+  // â”€â”€ Move: Prompt to type new name â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery('emv_ask_name', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -2159,7 +2186,7 @@ void registerContributorUploadHandlers(Bot bot) {
     await ctx.editMessageText(S.get('edit_rename_prompt', lang), replyMarkup: cancelKb);
   });
 
-  // ── Move: Confirmed Done/Save -> execute move ────────────────────
+  // â”€â”€ Move: Confirmed Done/Save -> execute move â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery('emv_confirm_save', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -2214,7 +2241,7 @@ void registerContributorUploadHandlers(Bot bot) {
     }
   });
 
-  // ── Universal Cancel for Edit flow ──────────────────────────────
+  // â”€â”€ Universal Cancel for Edit flow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bot.callbackQuery('edt_cancel', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
@@ -2225,7 +2252,7 @@ void registerContributorUploadHandlers(Bot bot) {
     final backLabel = _getEditBackLabel(backDash, lang);
 
     Utils.clearUploadState(userId);
-    await ctx.answerCallbackQuery(text: 'تم الإلغاء');
+    await ctx.answerCallbackQuery(text: 'طھظ… ط§ظ„ط¥ظ„ط؛ط§ط،');
     final kb = InlineKeyboard().row().add(backLabel, backDash);
     await ctx.editMessageText(S.get('edit_action_cancelled', lang), replyMarkup: kb);
   });
@@ -2270,7 +2297,7 @@ void registerContributorUploadHandlers(Bot bot) {
   });
 }
 
-// ── Private: helpers for Edit flow back destination ─────────────────────
+// â”€â”€ Private: helpers for Edit flow back destination â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 String _getEditBackDashboard(Map<String, dynamic>? state, int userId, bool isAdmin) {
   if (state?['origin'] == 'admin') return 'admin_dash';
@@ -2282,12 +2309,12 @@ String _getEditBackLabel(String target, String lang) {
   return target == 'admin_dash' ? S.get('btn_back_admin', lang) : S.get('btn_back_dashboard', lang);
 }
 
-// ── Private: proceed with edit action (for admins who skip auth) ─────────
+// â”€â”€ Private: proceed with edit action (for admins who skip auth) â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 Future<void> _proceedWithEditAction(
     Context ctx, Bot bot, int userId, String lang, String action,
     Map<String, dynamic> state) async {
-  final matName = state['edit_mat_name'] as String? ?? 'الملف';
+  final matName = state['edit_mat_name'] as String? ?? 'ط§ظ„ظ…ظ„ظپ';
 
   if (action == 'rename') {
     state['action'] = 'edit_rename_input';
@@ -2301,8 +2328,8 @@ Future<void> _proceedWithEditAction(
     // Show confirmation dialog
     final kb = InlineKeyboard()
       .row()
-      .add('✅ نعم، احذف الملف', 'edt_delete_confirm')
-      .add('❌ إلغاء', 'edt_delete_cancel');
+      .add('âœ… ظ†ط¹ظ…طŒ ط§ط­ط°ظپ ط§ظ„ظ…ظ„ظپ', 'edt_delete_confirm')
+      .add('â‌Œ ط¥ظ„ط؛ط§ط،', 'edt_delete_cancel');
     if (ctx.callbackQuery != null) {
       await ctx.editMessageText(
         S.get('edit_delete_confirm', lang, {'name': matName}),
@@ -2342,17 +2369,39 @@ Future<void> _proceedWithEditAction(
     }
   }
 }
-// ── Private: show contributor dashboard ──────────────────────────────────
+// â”€â”€ Private: show contributor dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 Future<void> _showContributorDashboard(Context ctx, int userId, String lang,
     {bool isEdit = true}) async {
   final contribData = await FirebaseDb.getContributor(userId);
   if (contribData == null) {
+    final reqKb = InlineKeyboard()
+      .row()
+      .add(S.get('btn_request_contribute', lang), 'req_contribute');
+
+    final msg = S.get('not_contributor_prompt', lang);
+
     if (ctx.callbackQuery != null) {
-      await ctx.answerCallbackQuery(
-          text: S.get('no_permission_upload', lang), showAlert: true);
+      await ctx.answerCallbackQuery();
+      if (isEdit) {
+        await ctx.editMessageText(
+          msg,
+          replyMarkup: reqKb,
+          parseMode: ParseMode.markdown,
+        );
+      } else {
+        await ctx.reply(
+          msg,
+          replyMarkup: reqKb,
+          parseMode: ParseMode.markdown,
+        );
+      }
     } else {
-      await ctx.reply(S.get('no_permission_upload', lang));
+      await ctx.reply(
+        msg,
+        replyMarkup: reqKb,
+        parseMode: ParseMode.markdown,
+      );
     }
     return;
   }
@@ -2394,7 +2443,7 @@ Future<void> _showContributorDashboard(Context ctx, int userId, String lang,
   }
 }
 
-// ── Private: handle incoming file (admin or contributor) ─────────────────
+// â”€â”€ Private: handle incoming file (admin or contributor) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 Future<void> _handleUploadFlow(
     Bot bot, Context ctx, String fileId, String fileType) async {
@@ -2408,7 +2457,7 @@ Future<void> _handleUploadFlow(
 
   final state = Utils.uploadStates[userId];
 
-  // ── If currently collecting files, just add to the list ─────────────
+  // â”€â”€ If currently collecting files, just add to the list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (state != null && state['action'] == 'collect_files') {
     final files = (state['files'] as List?)?.cast<Map<String, dynamic>>() ?? [];
     files.add({'fileId': fileId, 'fileType': fileType});
@@ -2423,7 +2472,7 @@ Future<void> _handleUploadFlow(
     return;
   }
 
-  // ── Replace existing file ────────────────────────────────────────────
+  // â”€â”€ Replace existing file â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (state != null && state['action'] == 'replace_file') {
     if (!isAdmin) return;
 
@@ -2438,7 +2487,7 @@ Future<void> _handleUploadFlow(
     return;
   }
 
-  // ── Start a new upload session ────────────────────────────────────────
+  // â”€â”€ Start a new upload session â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if ((isAdmin && isModeAdmin) || isContributor) {
     Utils.uploadStates[userId] = {
       'action': 'wait_for_upload_track',
@@ -2466,7 +2515,7 @@ Future<void> _handleUploadFlow(
   }
 }
 
-// ── Private: backup file to channel ──────────────────────────────────────
+// â”€â”€ Private: backup file to channel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 Future<String?> _backupFile(Bot bot, String fileId, String fileType) async {
   if (Config.backupChannelId.isEmpty ||

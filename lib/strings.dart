@@ -278,7 +278,15 @@ class S {
       'ar': '❌ فشل الحفظ في قاعدة البيانات.',
       'en': '❌ Failed to save to database.',
     },
-    'no_permission_upload': {
+        'not_contributor_prompt': {
+      'ar': '⚠️ *ليس لديك صلاحية مساهم حالياً.*\n\nهل ترغب بالانضمام إلى فريق المساهمين ورفع المواد والملخصات؟ اضغط على الزر أدناه لإرسال طلبك للإدارة:',
+      'en': '⚠️ *You do not have contributor permissions currently.*\n\nWould you like to join the contributors team and upload materials? Tap the button below to send your request:',
+    },
+    'btn_request_contribute': {
+      'ar': '🤝 طلب الانضمام كمساهم',
+      'en': '🤝 Request to Become a Contributor',
+    },
+'no_permission_upload': {
       'ar': '❌ ليس لديك صلاحية لرفع الملفات.',
       'en': '❌ You do not have permission to upload files.',
     },
@@ -522,6 +530,10 @@ class S {
     'btn_edit_files': {
       'ar': '✏️ تعديل الملفات (Edit)',
       'en': '✏️ Edit Files',
+    },
+    'edit_file_actions_title': {
+      'ar': '📄 *{name}*\n📂 {track} › {subject} › {type}\n\nاختر الإجراء المطلوب:',
+      'en': '📄 *{name}*\n📂 {track} › {subject} › {type}\n\nChoose an action:',
     },
     'edit_select_track': {
       'ar': '✏️ *تعديل ملف*\n\nاختر القسم (المسار):',

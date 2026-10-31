@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MICROSCOPE TEAM — تسجيل بيانات الأعضاء</title>
+<title>MICROSCOPE TEAM â€” طھط³ط¬ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط£ط¹ط¶ط§ط،</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -326,7 +326,7 @@ input[type="file"]::file-selector-button:hover {
 }
 .toast-bar.show{transform:translateY(0);opacity:1}
 
-/* ── Special Feature: National ID Intel Badge ── */
+/* â”€â”€ Special Feature: National ID Intel Badge â”€â”€ */
 .nid-intel-badge {
   display: none; align-items: center; gap: 8px;
   background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(14, 165, 233, 0.35);
@@ -338,7 +338,7 @@ input[type="file"]::file-selector-button:hover {
   background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.35); color: #fca5a5;
 }
 
-/* ── Special Feature: Digital Membership ID Card ── */
+/* â”€â”€ Special Feature: Digital Membership ID Card â”€â”€ */
 .digital-id-container {
   perspective: 1000px; margin: 25px auto; max-width: 440px; width: 100%;
 }
@@ -414,72 +414,72 @@ input[type="file"]::file-selector-button:hover {
 
 <div class="header-container">
   <h1 class="brand-title">MICROSCOPE TEAM</h1>
-  <p class="subtitle">استمارة تسجيل بيانات أعضاء الفريق</p>
+  <p class="subtitle">ط§ط³طھظ…ط§ط±ط© طھط³ط¬ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط£ط¹ط¶ط§ط، ط§ظ„ظپط±ظٹظ‚</p>
 </div>
 
 <form class="form-card form-grid" id="memberForm">
   
   <div class="form-group full-width">
-    <label for="picture">صورة شخصية (ارفع صورتك) <span class="req">*</span></label>
+    <label for="picture">طµظˆط±ط© ط´ط®طµظٹط© (ط§ط±ظپط¹ طµظˆط±طھظƒ) <span class="req">*</span></label>
     <div class="file-dropzone" onclick="document.getElementById('picture').click()">
       <input type="file" id="picture" accept="image/*" required style="display:none" onchange="previewUpload(this)">
       <div id="upload-placeholder" class="upload-placeholder">
-        <span class="upload-icon">📸</span>
-        <div class="upload-text">اضغط هنا لاختيار صورة من جهازك أو التقاطها</div>
-        <div class="upload-hint">PNG, JPG, JPEG (صورة واضحة للوجه)</div>
+        <span class="upload-icon">ًں“¸</span>
+        <div class="upload-text">ط§ط¶ط؛ط· ظ‡ظ†ط§ ظ„ط§ط®طھظٹط§ط± طµظˆط±ط© ظ…ظ† ط¬ظ‡ط§ط²ظƒ ط£ظˆ ط§ظ„طھظ‚ط§ط·ظ‡ط§</div>
+        <div class="upload-hint">PNG, JPG, JPEG (طµظˆط±ط© ظˆط§ط¶ط­ط© ظ„ظ„ظˆط¬ظ‡)</div>
       </div>
       <div id="upload-preview-box" class="upload-preview-box" style="display:none">
-        <img id="upload-preview-img" src="" alt="معاينة الصورة">
-        <button type="button" class="btn-change-photo" onclick="event.stopPropagation();document.getElementById('picture').click()">تغيير الصورة 🔄</button>
+        <img id="upload-preview-img" src="" alt="ظ…ط¹ط§ظٹظ†ط© ط§ظ„طµظˆط±ط©">
+        <button type="button" class="btn-change-photo" onclick="event.stopPropagation();document.getElementById('picture').click()">طھط؛ظٹظٹط± ط§ظ„طµظˆط±ط© ًں”„</button>
       </div>
     </div>
   </div>
 
   <div class="form-group full-width">
-    <label for="fullName">الاسم الرباعي (باللغة العربية) <span class="req">*</span></label>
-    <input type="text" id="fullName" placeholder="الاسم الرباعي باللغة العربية" required minlength="10">
+    <label for="fullName">ط§ظ„ط§ط³ظ… ط§ظ„ط±ط¨ط§ط¹ظٹ (ط¨ط§ظ„ظ„ط؛ط© ط§ظ„ط¹ط±ط¨ظٹط©) <span class="req">*</span></label>
+    <input type="text" id="fullName" placeholder="ط§ظ„ط§ط³ظ… ط§ظ„ط±ط¨ط§ط¹ظٹ ط¨ط§ظ„ظ„ط؛ط© ط§ظ„ط¹ط±ط¨ظٹط©" required minlength="10">
   </div>
 
   <div class="form-group full-width">
-    <label for="fullNameEn">الاسم باللغة الإنجليزية (Full Name in English) <span class="req">*</span></label>
+    <label for="fullNameEn">ط§ظ„ط§ط³ظ… ط¨ط§ظ„ظ„ط؛ط© ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹط© (Full Name in English) <span class="req">*</span></label>
     <input type="text" id="fullNameEn" placeholder="e.g. Ahmed Mohamed Ali" required minlength="5" style="direction: ltr; text-align: left;">
   </div>
 
   <div class="form-group">
-    <label for="nationalId">الرقم القومي <span class="req">*</span></label>
-    <input type="text" id="nationalId" placeholder="14 رقم" pattern="[0-9]{14}" required oninput="onNationalIdInput(this.value)">
+    <label for="nationalId">ط§ظ„ط±ظ‚ظ… ط§ظ„ظ‚ظˆظ…ظٹ <span class="req">*</span></label>
+    <input type="text" id="nationalId" placeholder="14 ط±ظ‚ظ…" pattern="[0-9]{14}" required oninput="onNationalIdInput(this.value)">
     <div id="nidIntelBox" class="nid-intel-badge"></div>
   </div>
   
   <div class="form-group">
-    <label for="birthDate">تاريخ الميلاد <span class="req">*</span></label>
+    <label for="birthDate">طھط§ط±ظٹط® ط§ظ„ظ…ظٹظ„ط§ط¯ <span class="req">*</span></label>
     <input type="date" id="birthDate" required>
   </div>
 
   <div class="form-group">
-    <label for="committee">اللجنة (Committee) <span class="req">*</span></label>
+    <label for="committee">ط§ظ„ظ„ط¬ظ†ط© (Committee) <span class="req">*</span></label>
     <select id="committee" required>
-      <option value="" disabled selected>اختر لجنتك...</option>
+      <option value="" disabled selected>ط§ط®طھط± ظ„ط¬ظ†طھظƒ...</option>
       <option value="HR">HR</option>
       <option value="PR">PR</option>
       <option value="PM">PM</option>
       <option value="Scientific">Scientific</option>
       <option value="Social Media">Social Media</option>
-      <option value="Charity">خيرية (Charity)</option>
+      <option value="Charity">ط®ظٹط±ظٹط© (Charity)</option>
     </select>
   </div>
 
   <div class="form-group">
-    <label for="role">المنصب في اللجنة <span class="req">*</span></label>
+    <label for="role">ط§ظ„ظ…ظ†طµط¨ ظپظٹ ط§ظ„ظ„ط¬ظ†ط© <span class="req">*</span></label>
     <select id="role" required onchange="toggleHeadCode()">
-      <option value="Member" selected>عضو (Member)</option>
-      <option value="Head">رئيس لجنة (Head)</option>
+      <option value="Member" selected>ط¹ط¶ظˆ (Member)</option>
+      <option value="Head">ط±ط¦ظٹط³ ظ„ط¬ظ†ط© (Head)</option>
     </select>
   </div>
 
   <div class="form-group" id="headCodeGroup" style="display: none;">
-    <label for="headCode">كود التحقق (للمشرفين فقط) <span class="req">*</span></label>
-    <input type="password" id="headCode" placeholder="أدخل الكود">
+    <label for="headCode">ظƒظˆط¯ ط§ظ„طھط­ظ‚ظ‚ (ظ„ظ„ظ…ط´ط±ظپظٹظ† ظپظ‚ط·) <span class="req">*</span></label>
+    <input type="password" id="headCode" placeholder="ط£ط¯ط®ظ„ ط§ظ„ظƒظˆط¯">
   </div>
   
   <script>
@@ -499,66 +499,66 @@ input[type="file"]::file-selector-button:hover {
   </script>
 
   <div class="form-group">
-    <label for="collegeYear">الفرقة الدراسية <span class="req">*</span></label>
+    <label for="collegeYear">ط§ظ„ظپط±ظ‚ط© ط§ظ„ط¯ط±ط§ط³ظٹط© <span class="req">*</span></label>
     <select id="collegeYear" required>
-      <option value="" disabled selected>اختر الفرقة...</option>
-      <option value="الفرقة الأولى">الفرقة الأولى</option>
-      <option value="الفرقة الثانية">الفرقة الثانية</option>
-      <option value="الفرقة الثالثة">الفرقة الثالثة</option>
-      <option value="الفرقة الرابعة">الفرقة الرابعة</option>
-      <option value="خريج">خريج</option>
+      <option value="" disabled selected>ط§ط®طھط± ط§ظ„ظپط±ظ‚ط©...</option>
+      <option value="ط§ظ„ظپط±ظ‚ط© ط§ظ„ط£ظˆظ„ظ‰">ط§ظ„ظپط±ظ‚ط© ط§ظ„ط£ظˆظ„ظ‰</option>
+      <option value="ط§ظ„ظپط±ظ‚ط© ط§ظ„ط«ط§ظ†ظٹط©">ط§ظ„ظپط±ظ‚ط© ط§ظ„ط«ط§ظ†ظٹط©</option>
+      <option value="ط§ظ„ظپط±ظ‚ط© ط§ظ„ط«ط§ظ„ط«ط©">ط§ظ„ظپط±ظ‚ط© ط§ظ„ط«ط§ظ„ط«ط©</option>
+      <option value="ط§ظ„ظپط±ظ‚ط© ط§ظ„ط±ط§ط¨ط¹ط©">ط§ظ„ظپط±ظ‚ط© ط§ظ„ط±ط§ط¨ط¹ط©</option>
+      <option value="ط®ط±ظٹط¬">ط®ط±ظٹط¬</option>
     </select>
   </div>
 
   <div class="form-group">
-    <label for="whatsapp">رقم الواتساب <span class="req">*</span></label>
+    <label for="whatsapp">ط±ظ‚ظ… ط§ظ„ظˆط§طھط³ط§ط¨ <span class="req">*</span></label>
     <input type="tel" id="whatsapp" placeholder="01xxxxxxxxx" required>
   </div>
 
   <div class="form-group">
-    <label for="phone">رقم آخر إن وجد</label>
+    <label for="phone">ط±ظ‚ظ… ط¢ط®ط± ط¥ظ† ظˆط¬ط¯</label>
     <input type="tel" id="phone" placeholder="01xxxxxxxxx">
   </div>
 
   <div class="form-group full-width">
-    <label for="address">العنوان بالتفصيل <span class="req">*</span></label>
-    <input type="text" id="address" placeholder="المحافظة - المركز - الشارع" required>
+    <label for="address">ط§ظ„ط¹ظ†ظˆط§ظ† ط¨ط§ظ„طھظپطµظٹظ„ <span class="req">*</span></label>
+    <input type="text" id="address" placeholder="ط§ظ„ظ…ط­ط§ظپط¸ط© - ط§ظ„ظ…ط±ظƒط² - ط§ظ„ط´ط§ط±ط¹" required>
   </div>
 
   <div class="form-group">
-    <label for="email">البريد الإلكتروني <span class="req">*</span></label>
+    <label for="email">ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ <span class="req">*</span></label>
     <input type="email" id="email" placeholder="example@gmail.com" required>
   </div>
 
   <div class="form-group">
-    <label for="facebook">لينك صفحة الفيسبوك <span class="req">*</span></label>
+    <label for="facebook">ظ„ظٹظ†ظƒ طµظپط­ط© ط§ظ„ظپظٹط³ط¨ظˆظƒ <span class="req">*</span></label>
     <input type="url" id="facebook" placeholder="https://facebook.com/..." required>
   </div>
 
-  <button type="submit" class="btn-submit">حفظ البيانات وإرسالها 🚀</button>
+  <button type="submit" class="btn-submit">ط­ظپط¸ ط§ظ„ط¨ظٹط§ظ†ط§طھ ظˆط¥ط±ط³ط§ظ„ظ‡ط§ ًںڑ€</button>
 
 </form>
 
-<!-- ── Closed Notice ── -->
+<!-- â”€â”€ Closed Notice â”€â”€ -->
 <div id="closedNotice" class="form-card" style="display: none; text-align: center; padding: 45px 25px; max-width: 520px; margin: 30px auto; border-radius: 20px; border: 1px solid rgba(239,68,68,0.4); background: rgba(239,68,68,0.08);">
-  <div style="font-size: 3.8rem; margin-bottom: 12px;">⏸️</div>
-  <h2 style="color: #ef4444; font-size: 1.85rem; margin-bottom: 8px; font-weight: 800;">باب التسجيل مغلق حالياً</h2>
-  <p style="color: var(--dim); font-size: 1.05rem; line-height: 1.6; margin: 0 0 20px 0;">نعتذر، لقد تم إيقاف استقبال طلبات تسجيل الأعضاء الجدد مؤقتاً من قِبل إدارة المنظومة.</p>
-  <div style="font-size: 0.9rem; color: #94a3b8;">يرجى مراجعة إدارة الفريق أو متابعة القناة الرسمية لمعرفة موعد فتح التسجيل القادم.</div>
+  <div style="font-size: 3.8rem; margin-bottom: 12px;">âڈ¸ï¸ڈ</div>
+  <h2 style="color: #ef4444; font-size: 1.85rem; margin-bottom: 8px; font-weight: 800;">ط¨ط§ط¨ ط§ظ„طھط³ط¬ظٹظ„ ظ…ط؛ظ„ظ‚ ط­ط§ظ„ظٹط§ظ‹</h2>
+  <p style="color: var(--dim); font-size: 1.05rem; line-height: 1.6; margin: 0 0 20px 0;">ظ†ط¹طھط°ط±طŒ ظ„ظ‚ط¯ طھظ… ط¥ظٹظ‚ط§ظپ ط§ط³طھظ‚ط¨ط§ظ„ ط·ظ„ط¨ط§طھ طھط³ط¬ظٹظ„ ط§ظ„ط£ط¹ط¶ط§ط، ط§ظ„ط¬ط¯ط¯ ظ…ط¤ظ‚طھط§ظ‹ ظ…ظ† ظ‚ظگط¨ظ„ ط¥ط¯ط§ط±ط© ط§ظ„ظ…ظ†ط¸ظˆظ…ط©.</p>
+  <div style="font-size: 0.9rem; color: #94a3b8;">ظٹط±ط¬ظ‰ ظ…ط±ط§ط¬ط¹ط© ط¥ط¯ط§ط±ط© ط§ظ„ظپط±ظٹظ‚ ط£ظˆ ظ…طھط§ط¨ط¹ط© ط§ظ„ظ‚ظ†ط§ط© ط§ظ„ط±ط³ظ…ظٹط© ظ„ظ…ط¹ط±ظپط© ظ…ظˆط¹ط¯ ظپطھط­ ط§ظ„طھط³ط¬ظٹظ„ ط§ظ„ظ‚ط§ط¯ظ….</div>
 </div>
 
-<!-- ── Success Message ───────────────────────────────────────────────────── -->
+<!-- â”€â”€ Success Message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <div id="successMessage" class="form-card" style="display: none; text-align: center; padding: 40px 24px; max-width: 540px; margin: 30px auto; border-radius: 24px;">
-  <div style="font-size: 3.5rem; margin-bottom: 8px;">🎉</div>
-  <h2 style="color: #10b981; font-size: 1.85rem; margin-bottom: 6px; font-weight: 800;">تم تسجيل عضويتك بنجاح!</h2>
-  <p style="color: var(--dim); font-size: 1rem; line-height: 1.6; margin: 0 0 20px 0;">أهلاً بك في Microscope Team! تم إنشاء كارنيه العضوية الرقمي الرسمي الخاص بك:</p>
+  <div style="font-size: 3.5rem; margin-bottom: 8px;">ًںژ‰</div>
+  <h2 style="color: #10b981; font-size: 1.85rem; margin-bottom: 6px; font-weight: 800;">طھظ… طھط³ط¬ظٹظ„ ط¹ط¶ظˆظٹطھظƒ ط¨ظ†ط¬ط§ط­!</h2>
+  <p style="color: var(--dim); font-size: 1rem; line-height: 1.6; margin: 0 0 20px 0;">ط£ظ‡ظ„ط§ظ‹ ط¨ظƒ ظپظٹ Microscope Team! طھظ… ط¥ظ†ط´ط§ط، ظƒط§ط±ظ†ظٹظ‡ ط§ظ„ط¹ط¶ظˆظٹط© ط§ظ„ط±ظ‚ظ…ظٹ ط§ظ„ط±ط³ظ…ظٹ ط§ظ„ط®ط§طµ ط¨ظƒ:</p>
 
   <!-- Special Feature: 3D Holographic Member ID Card -->
   <div class="digital-id-container">
     <div class="digital-id-card" id="digitalIdCard">
       <div class="id-card-top">
         <div class="id-brand">
-          <span class="id-logo">🔬</span>
+          <span class="id-logo">ًں”¬</span>
           <div>
             <div class="id-brand-title">MICROSCOPE TEAM</div>
             <div class="id-brand-sub">OFFICIAL MEMBER ID CARD</div>
@@ -571,8 +571,8 @@ input[type="file"]::file-selector-button:hover {
           <img id="cardAvatar" src="" alt="Member">
         </div>
         <div class="id-member-info">
-          <div class="id-name-ar" id="cardNameAr">—</div>
-          <div class="id-name-en" id="cardNameEn">—</div>
+          <div class="id-name-ar" id="cardNameAr">â€”</div>
+          <div class="id-name-en" id="cardNameEn">â€”</div>
           <div class="id-badge-row">
             <span class="id-badge" id="cardCommittee">Committee</span>
             <span class="id-badge role" id="cardRole">Member</span>
@@ -597,28 +597,28 @@ input[type="file"]::file-selector-button:hover {
 
   <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
     <button type="button" class="btn-submit" onclick="downloadIdCard()" style="margin-top:0;padding:12px 24px;font-size:1.05rem;background:linear-gradient(135deg,#0284c7,#0ea5e9);box-shadow:0 8px 25px rgba(14,165,233,0.4)">
-      📥 تحميل كارنيه العضوية (PNG)
+      ًں“¥ طھط­ظ…ظٹظ„ ظƒط§ط±ظ†ظٹظ‡ ط§ظ„ط¹ط¶ظˆظٹط© (PNG)
     </button>
     <button type="button" id="addAnotherBtn" onclick="resetFormForAnother()" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:14px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);cursor:pointer;font-family:var(--font-ar);font-size:1rem;font-weight:700">
-      📝 تسجيل عضو آخر
+      ًں“‌ طھط³ط¬ظٹظ„ ط¹ط¶ظˆ ط¢ط®ط±
     </button>
   </div>
 </div>
 
-<div class="toast-bar" id="toast">✅ تم حفظ البيانات بنجاح!</div>
+<div class="toast-bar" id="toast">âœ… طھظ… ط­ظپط¸ ط§ظ„ط¨ظٹط§ظ†ط§طھ ط¨ظ†ط¬ط§ط­!</div>
 
 <script>
-// ── Egyptian National ID Auto-Intelligence ──
+// â”€â”€ Egyptian National ID Auto-Intelligence â”€â”€
 const GOV_CODES = {
-  '01': 'القاهرة', '02': 'الإسكندرية', '03': 'بورسعيد', '04': 'السويس',
-  '11': 'دمياط', '12': 'الدقهلية', '13': 'الشرقية', '14': 'القليوبية',
-  '15': 'كفر الشيخ', '16': 'الغربية', '17': 'المنوفية', '18': 'البحيرة',
-  '19': 'الإسماعيلية', '21': 'الجيزة', '22': 'بني سويف', '23': 'الفيوم',
-  '24': 'المنيا', '25': 'أسيوط', '26': 'سوهاج', '27': 'قنا',
-  '28': 'أسوان', '29': 'الأقصر', '31': 'البحر الأحمر', '32': 'الوادي الجديد',
-  '33': 'مطروح', '34': 'شمال سيناء', '35': 'جنوب سيناء', '88': 'خارج مصر'
+  '01': 'ط§ظ„ظ‚ط§ظ‡ط±ط©', '02': 'ط§ظ„ط¥ط³ظƒظ†ط¯ط±ظٹط©', '03': 'ط¨ظˆط±ط³ط¹ظٹط¯', '04': 'ط§ظ„ط³ظˆظٹط³',
+  '11': 'ط¯ظ…ظٹط§ط·', '12': 'ط§ظ„ط¯ظ‚ظ‡ظ„ظٹط©', '13': 'ط§ظ„ط´ط±ظ‚ظٹط©', '14': 'ط§ظ„ظ‚ظ„ظٹظˆط¨ظٹط©',
+  '15': 'ظƒظپط± ط§ظ„ط´ظٹط®', '16': 'ط§ظ„ط؛ط±ط¨ظٹط©', '17': 'ط§ظ„ظ…ظ†ظˆظپظٹط©', '18': 'ط§ظ„ط¨ط­ظٹط±ط©',
+  '19': 'ط§ظ„ط¥ط³ظ…ط§ط¹ظٹظ„ظٹط©', '21': 'ط§ظ„ط¬ظٹط²ط©', '22': 'ط¨ظ†ظٹ ط³ظˆظٹظپ', '23': 'ط§ظ„ظپظٹظˆظ…',
+  '24': 'ط§ظ„ظ…ظ†ظٹط§', '25': 'ط£ط³ظٹظˆط·', '26': 'ط³ظˆظ‡ط§ط¬', '27': 'ظ‚ظ†ط§',
+  '28': 'ط£ط³ظˆط§ظ†', '29': 'ط§ظ„ط£ظ‚طµط±', '31': 'ط§ظ„ط¨ط­ط± ط§ظ„ط£ط­ظ…ط±', '32': 'ط§ظ„ظˆط§ط¯ظٹ ط§ظ„ط¬ط¯ظٹط¯',
+  '33': 'ظ…ط·ط±ظˆط­', '34': 'ط´ظ…ط§ظ„ ط³ظٹظ†ط§ط،', '35': 'ط¬ظ†ظˆط¨ ط³ظٹظ†ط§ط،', '88': 'ط®ط§ط±ط¬ ظ…طµط±'
 };
-let currentMemberGov = 'مصر';
+let currentMemberGov = 'ظ…طµط±';
 
 function onNationalIdInput(val) {
   const clean = String(val).replace(/\D/g, '');
@@ -633,7 +633,7 @@ function onNationalIdInput(val) {
   if (clean.length < 14) {
     box.className = 'nid-intel-badge show';
     box.style.display = 'flex';
-    box.innerHTML = `<span>⏳ إدخال الرقم القومي (${clean.length}/14 رقم)...</span>`;
+    box.innerHTML = `<span>âڈ³ ط¥ط¯ط®ط§ظ„ ط§ظ„ط±ظ‚ظ… ط§ظ„ظ‚ظˆظ…ظٹ (${clean.length}/14 ط±ظ‚ظ…)...</span>`;
     return;
   }
   if (clean.length === 14) {
@@ -641,7 +641,7 @@ function onNationalIdInput(val) {
     if (centuryDigit !== 2 && centuryDigit !== 3) {
       box.className = 'nid-intel-badge show invalid';
       box.style.display = 'flex';
-      box.innerHTML = '<span>❌ رقم قومي غير صالح (يجب أن يبدأ بـ 2 أو 3).</span>';
+      box.innerHTML = '<span>â‌Œ ط±ظ‚ظ… ظ‚ظˆظ…ظٹ ط؛ظٹط± طµط§ظ„ط­ (ظٹط¬ط¨ ط£ظ† ظٹط¨ط¯ط£ ط¨ظ€ 2 ط£ظˆ 3).</span>';
       return;
     }
     const yearPrefix = centuryDigit === 2 ? '19' : '20';
@@ -650,8 +650,8 @@ function onNationalIdInput(val) {
     const day = clean.substring(5, 7);
     const govCode = clean.substring(7, 9);
     const genderDigit = parseInt(clean[12], 10);
-    const gender = genderDigit % 2 !== 0 ? 'ذكر 👨' : 'أنثى 👩';
-    const govName = GOV_CODES[govCode] || 'محافظة مصرية';
+    const gender = genderDigit % 2 !== 0 ? 'ط°ظƒط± ًں‘¨' : 'ط£ظ†ط«ظ‰ ًں‘©';
+    const govName = GOV_CODES[govCode] || 'ظ…ط­ط§ظپط¸ط© ظ…طµط±ظٹط©';
     currentMemberGov = govName;
 
     const mNum = parseInt(month, 10);
@@ -659,7 +659,7 @@ function onNationalIdInput(val) {
     if (mNum < 1 || mNum > 12 || dNum < 1 || dNum > 31) {
       box.className = 'nid-intel-badge show invalid';
       box.style.display = 'flex';
-      box.innerHTML = '<span>❌ تاريخ الميلاد في الرقم القومي غير سليم.</span>';
+      box.innerHTML = '<span>â‌Œ طھط§ط±ظٹط® ط§ظ„ظ…ظٹظ„ط§ط¯ ظپظٹ ط§ظ„ط±ظ‚ظ… ط§ظ„ظ‚ظˆظ…ظٹ ط؛ظٹط± ط³ظ„ظٹظ….</span>';
       return;
     }
     const birthDateStr = `${year}-${month}-${day}`;
@@ -669,11 +669,11 @@ function onNationalIdInput(val) {
     }
     box.className = 'nid-intel-badge show';
     box.style.display = 'flex';
-    box.innerHTML = `<span>✨ <strong>تم التحقق بنجاح:</strong> ${govName} • ${gender} • تاريخ الميلاد: ${birthDateStr}</span>`;
+    box.innerHTML = `<span>âœ¨ <strong>طھظ… ط§ظ„طھط­ظ‚ظ‚ ط¨ظ†ط¬ط§ط­:</strong> ${govName} â€¢ ${gender} â€¢ طھط§ط±ظٹط® ط§ظ„ظ…ظٹظ„ط§ط¯: ${birthDateStr}</span>`;
   }
 }
 
-// ── Download ID Card ──
+// â”€â”€ Download ID Card â”€â”€
 async function downloadIdCard() {
   const card = document.getElementById('digitalIdCard');
   if (!card) return;
@@ -689,11 +689,11 @@ async function downloadIdCard() {
     link.click();
   } catch (err) {
     console.error('Error downloading card:', err);
-    alert('حدث خطأ أثناء تحميل الكارنيه، يمكنك أخذ لقطة شاشة للبطاقة.');
+    alert('ط­ط¯ط« ط®ط·ط£ ط£ط«ظ†ط§ط، طھط­ظ…ظٹظ„ ط§ظ„ظƒط§ط±ظ†ظٹظ‡طŒ ظٹظ…ظƒظ†ظƒ ط£ط®ط° ظ„ظ‚ط·ط© ط´ط§ط´ط© ظ„ظ„ط¨ط·ط§ظ‚ط©.');
   }
 }
 
-// ── Reset / "Add Another Registration" ──────────────────────────────────────
+// â”€â”€ Reset / "Add Another Registration" â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function resetFormForAnother() {
   // Hide success, show form
   document.getElementById('successMessage').style.display = 'none';
@@ -715,8 +715,51 @@ function resetFormForAnother() {
   // Re-enable submit button
   const submitBtn = document.querySelector('.btn-submit');
   submitBtn.disabled = false;
-  submitBtn.innerHTML = 'حفظ البيانات وإرسالها 🚀';
+  submitBtn.innerHTML = 'ط­ظپط¸ ط§ظ„ط¨ظٹط§ظ†ط§طھ ظˆط¥ط±ط³ط§ظ„ظ‡ط§ ًںڑ€';
   submitBtn.style.opacity = '1';
+}
+
+// ── Firebase Configuration for Direct Client Sync ────────────────────────
+const DEFAULT_FB_URL = 'https://dataforbot-bbd6b-default-rtdb.firebaseio.com';
+const DEFAULT_FB_SECRET = 'MSdHnbcYnC5TxucBtdUs7qHhVFd88l1CDOSKLr7g';
+
+function getFirebaseConfig() {
+  const url = localStorage.getItem('fb_url') || DEFAULT_FB_URL;
+  const secret = localStorage.getItem('fb_secret') || DEFAULT_FB_SECRET;
+  return { url: url.replace(/\/+$/, ''), secret };
+}
+
+// Client-side image compression to lightweight JPEG (~20-35 KB)
+function compressImage(file, maxDim = 320, quality = 0.8) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(e.target.result);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
 }
 
 function previewUpload(input) {
@@ -731,13 +774,34 @@ function previewUpload(input) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // LocalStorage check
   if (localStorage.getItem('mm_form_open') === 'false') {
     const formEl = document.getElementById('memberForm');
     const noticeEl = document.getElementById('closedNotice');
     if (formEl) formEl.style.display = 'none';
     if (noticeEl) noticeEl.style.display = 'block';
   }
+
+  // Live Firebase check (ensures dynamic status on GitHub Pages)
+  try {
+    const { url, secret } = getFirebaseConfig();
+    const res = await fetch(`${url}/settings/form_open.json?auth=${secret}`);
+    if (res.ok) {
+      const isOpen = await res.json();
+      const formEl = document.getElementById('memberForm');
+      const noticeEl = document.getElementById('closedNotice');
+      if (isOpen === false) {
+        localStorage.setItem('mm_form_open', 'false');
+        if (formEl) formEl.style.display = 'none';
+        if (noticeEl) noticeEl.style.display = 'block';
+      } else if (isOpen === true) {
+        localStorage.setItem('mm_form_open', 'true');
+        if (formEl) formEl.style.display = 'block';
+        if (noticeEl) noticeEl.style.display = 'none';
+      }
+    }
+  } catch(_) {}
 });
 
 document.getElementById('memberForm').addEventListener('submit', function(e) {
@@ -745,15 +809,18 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
   
   const fileInput = document.getElementById('picture');
   if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-    alert('يرجى اختيار صورة');
+    alert('ظٹط±ط¬ظ‰ ط§ط®طھظٹط§ط± طµظˆط±ط©');
     return false;
   }
   const file = fileInput.files[0];
   
   const submitBtn = document.querySelector('.btn-submit');
   submitBtn.disabled = true;
-  submitBtn.innerHTML = 'جاري الحفظ... ⏳';
+  submitBtn.innerHTML = 'ط¬ط§ط±ظٹ ط§ظ„ط­ظپط¸... âڈ³';
   submitBtn.style.opacity = '0.7';
+
+  // Generate lightweight compressed thumbnail (~20-30 KB) for Firebase RTDB storage
+  const thumbBase64 = await compressImage(file, 280, 0.8);
 
   const reader = new FileReader();
   reader.onload = async function(event) {
@@ -767,9 +834,10 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
 
     const memberId = Date.now().toString();
     const photoFileName = `photo_${memberId}.jpg`;
-    let photoUrl = `${window.location.origin}/web/uploads/members/${photoFileName}?download=1`;
+    // If on GitHub Pages or static host, photoUrl falls back to data URI
+    let photoUrl = thumbBase64 || base64String;
 
-    // Attempt to pre-upload photo to server so it is ready on disk
+    // Attempt to pre-upload photo to server if local backend exists
     try {
       const pRes = await fetch('/api/upload_member_photo', {
         method: 'POST',
@@ -784,12 +852,12 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
         photoUrl = `${window.location.origin}${pData.url}?download=1`;
       }
     } catch(err) {
-      console.warn('Pre-upload photo warning:', err);
+      console.warn('Backend photo upload skipped (running on static host or offline)');
     }
 
     const memberData = {
       id: memberId,
-      picture: base64String,
+      picture: thumbBase64 || base64String, // Optimized thumbnail for table preview
       photoUrl: photoUrl,
       fullName: document.getElementById('fullName').value.trim(),
       fullNameEn: document.getElementById('fullNameEn').value.trim(),
@@ -827,26 +895,39 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
     document.getElementById('successMessage').style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // ── STEP 1: SAVE TO FIREBASE IMMEDIATELY ──────────────────────────────
-    // This happens BEFORE PDF generation so data is ALWAYS saved even if
-    // the PDF generation or Drive upload fails for any reason.
-    const memberDataForServer = { ...memberData };
-    delete memberDataForServer.picture; // strip large base64 — photoUrl is kept
+    // ── STEP 1: GUARANTEED DIRECT SAVE TO FIREBASE REST API ───────────────
+    // Directly writes to Firebase RTDB from the client. Works on GitHub Pages,
+    // local server, mobile phones, and inside Hub iframe!
     try {
-      const quickSave = await fetch('/api/register_member', {
+      const fbConfig = getFirebaseConfig();
+      if (fbConfig.url && !fbConfig.url.startsWith('{{')) {
+        const directPayload = { ...memberData };
+        const directEndpoint = `${fbConfig.url}/members/${memberId}.json?auth=${fbConfig.secret}`;
+        const directRes = await fetch(directEndpoint, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(directPayload)
+        });
+        if (directRes.ok) {
+          console.log('✅ [Direct Firebase] Member saved to Firebase instantly! ID:', memberId);
+        } else {
+          console.warn('⚠️ [Direct Firebase] HTTP', directRes.status, await directRes.text());
+        }
+      }
+    } catch (directErr) {
+      console.warn('⚠️ [Direct Firebase] Network error:', directErr);
+    }
+
+    // ── STEP 1.1: Local Server Notification (Backup channel dispatch) ────
+    try {
+      const memberDataForServer = { ...memberData };
+      delete memberDataForServer.picture;
+      await fetch('/api/register_member', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ member_data: memberDataForServer })
       });
-      const quickSaveData = await quickSave.json();
-      if (quickSaveData.success) {
-        console.log('✅ Saved to Firebase instantly. ID:', quickSaveData.firebase_id);
-      } else {
-        console.error('❌ Firebase save error:', quickSaveData.error);
-      }
-    } catch(saveErr) {
-      console.error('❌ Firebase save API failed:', saveErr);
-    }
+    } catch (_) {}
 
     // Format URLs for clickable PDF links
     let fbUrl = memberData.facebook ? memberData.facebook.trim() : '';
@@ -873,8 +954,8 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
     offscreen.style.boxSizing = 'border-box';
     offscreen.innerHTML = `
       <div style="text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 18px; margin-bottom: 18px;">
-        <div style="font-size: 1.3rem; font-weight: 900; color: #1e3a8a;">🔬 MICROSCOPE TEAM</div>
-        <div style="font-size: 0.85rem; color: #64748b; font-weight: bold; margin-top: 2px;">بيانات عضو الفريق الرسمية</div>
+        <div style="font-size: 1.3rem; font-weight: 900; color: #1e3a8a;">ًں”¬ MICROSCOPE TEAM</div>
+        <div style="font-size: 0.85rem; color: #64748b; font-weight: bold; margin-top: 2px;">ط¨ظٹط§ظ†ط§طھ ط¹ط¶ظˆ ط§ظ„ظپط±ظٹظ‚ ط§ظ„ط±ط³ظ…ظٹط©</div>
         <div style="margin: 15px 0;">
           <a id="pdfAvatarLink" href="${photoUrl}" target="_blank" style="display: inline-block;">
             <img src="${memberData.picture}" alt="Profile" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 4px solid #3b82f6; display: inline-block;">
@@ -886,23 +967,23 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
       </div>
 
       <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; width: 35%; background: #f8fafc;">الاسم بالإنجليزية</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a; font-family: sans-serif;">${memberData.fullNameEn || '-'}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">الرقم القومي</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.nationalId}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">تاريخ الميلاد</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.birthDate || '-'}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">المنصب</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.role === 'Head' ? 'رئيس لجنة (Head)' : 'عضو (Member)'}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">اللجنة</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.committee}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">الفرقة الدراسية</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.collegeYear}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">رقم الواتساب</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;"><a id="pdfWaLink" href="${waUrl || '#'}" target="_blank" style="color: #0f172a; text-decoration: none;">${memberData.whatsapp}</a></td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">الهاتف / رقم آخر</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.phone || '-'}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">البريد الإلكتروني</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a; word-break: break-all;">${memberData.email || '-'}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">العنوان</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.address || '-'}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">حساب الفيسبوك</th><td style="padding: 9px 12px; color: #2563eb; word-break: break-all;"><a id="pdfFbLink" href="${fbUrl || '#'}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: bold; display: inline-block;">${memberData.facebook || '-'}</a></td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">رابط الصورة الشخصية</th><td style="padding: 9px 12px; color: #2563eb; word-break: break-all;"><a id="pdfPhotoLink" href="${photoUrl}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: bold; display: inline-block;">📥 عرض وتحميل الصورة الأصلية</a><div style="font-size: 0.72rem; color: #64748b; margin-top: 3px; font-family: monospace; word-break: break-all;">${photoUrl}</div></td></tr>
-        <tr><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">تاريخ التسجيل</th><td style="padding: 9px 12px; color: #64748b; font-size: 0.85rem;">${memberData.timestamp}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; width: 35%; background: #f8fafc;">ط§ظ„ط§ط³ظ… ط¨ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹط©</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a; font-family: sans-serif;">${memberData.fullNameEn || '-'}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">ط§ظ„ط±ظ‚ظ… ط§ظ„ظ‚ظˆظ…ظٹ</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.nationalId}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">طھط§ط±ظٹط® ط§ظ„ظ…ظٹظ„ط§ط¯</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.birthDate || '-'}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">ط§ظ„ظ…ظ†طµط¨</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.role === 'Head' ? 'ط±ط¦ظٹط³ ظ„ط¬ظ†ط© (Head)' : 'ط¹ط¶ظˆ (Member)'}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">ط§ظ„ظ„ط¬ظ†ط©</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.committee}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">ط§ظ„ظپط±ظ‚ط© ط§ظ„ط¯ط±ط§ط³ظٹط©</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.collegeYear}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">ط±ظ‚ظ… ط§ظ„ظˆط§طھط³ط§ط¨</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;"><a id="pdfWaLink" href="${waUrl || '#'}" target="_blank" style="color: #0f172a; text-decoration: none;">${memberData.whatsapp}</a></td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">ط§ظ„ظ‡ط§طھظپ / ط±ظ‚ظ… ط¢ط®ط±</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.phone || '-'}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a; word-break: break-all;">${memberData.email || '-'}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">ط§ظ„ط¹ظ†ظˆط§ظ†</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.address || '-'}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">ط­ط³ط§ط¨ ط§ظ„ظپظٹط³ط¨ظˆظƒ</th><td style="padding: 9px 12px; color: #2563eb; word-break: break-all;"><a id="pdfFbLink" href="${fbUrl || '#'}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: bold; display: inline-block;">${memberData.facebook || '-'}</a></td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">ط±ط§ط¨ط· ط§ظ„طµظˆط±ط© ط§ظ„ط´ط®طµظٹط©</th><td style="padding: 9px 12px; color: #2563eb; word-break: break-all;"><a id="pdfPhotoLink" href="${photoUrl}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: bold; display: inline-block;">ًں“¥ ط¹ط±ط¶ ظˆطھط­ظ…ظٹظ„ ط§ظ„طµظˆط±ط© ط§ظ„ط£طµظ„ظٹط©</a><div style="font-size: 0.72rem; color: #64748b; margin-top: 3px; font-family: monospace; word-break: break-all;">${photoUrl}</div></td></tr>
+        <tr><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">طھط§ط±ظٹط® ط§ظ„طھط³ط¬ظٹظ„</th><td style="padding: 9px 12px; color: #64748b; font-size: 0.85rem;">${memberData.timestamp}</td></tr>
       </table>
 
       <div style="text-align: center; margin-top: 18px; padding-top: 10px; border-top: 1px dashed #cbd5e1; color: #94a3b8; font-size: 0.8rem;">
-        Microscope Team Official Record • تم تسجيل وحفظ البيانات بنجاح
+        Microscope Team Official Record â€¢ طھظ… طھط³ط¬ظٹظ„ ظˆط­ظپط¸ ط§ظ„ط¨ظٹط§ظ†ط§طھ ط¨ظ†ط¬ط§ط­
       </div>
     `;
 
@@ -979,7 +1060,7 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
 
       const pdfBase64 = pdf.output('datauristring');
 
-      // ── STEP 2: Upload PDF to Google Drive ────────────────────────────────
+      // â”€â”€ STEP 2: Upload PDF to Google Drive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       // Firebase was already saved above (before PDF generation).
       // This call uploads the PDF to Drive only. The server skips Firebase
       // if member_data is sent again (PUT is idempotent with the same ID).
@@ -995,12 +1076,12 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
         });
         const regData = await regRes.json();
         if (regData.success) {
-          console.log('✅ PDF uploaded to Google Drive. Drive ID:', regData.drive_file_id);
+          console.log('âœ… PDF uploaded to Google Drive. Drive ID:', regData.drive_file_id);
         } else {
-          console.error('⚠️ Drive upload error (data already saved to Firebase):', regData.error);
+          console.error('âڑ ï¸ڈ Drive upload error (data already saved to Firebase):', regData.error);
         }
       } catch(apiErr) {
-        console.error('⚠️ Drive upload failed (data already saved to Firebase):', apiErr);
+        console.error('âڑ ï¸ڈ Drive upload failed (data already saved to Firebase):', apiErr);
       }
 
     } catch(err) {

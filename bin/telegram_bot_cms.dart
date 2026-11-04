@@ -344,23 +344,6 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
       req.response.write('Members form page not found');
     }
 
-  } else if (path == '/team.html' || path == '/team') {
-    // Serve the 3D team showcase page
-    final teamFile = File('web/team.html');
-    if (await teamFile.exists()) {
-      String html = await teamFile.readAsString();
-      html = html
-          .replaceFirst('{{FB_URL}}', Config.firebaseDatabaseUrl)
-          .replaceFirst('{{FB_SECRET}}', Config.firebaseSecret);
-      req.response
-        ..statusCode = 200
-        ..headers.contentType = ContentType.html
-        ..write(html);
-    } else {
-      req.response.statusCode = 404;
-      req.response.write('Team page not found');
-    }
-
   } else if (path.startsWith('/web/') || 
              path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || 
              path.endsWith('.webp') || path.endsWith('.svg') || 

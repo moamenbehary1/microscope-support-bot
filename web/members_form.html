@@ -213,193 +213,143 @@ input[type="file"]::file-selector-button:hover {
   left: 200%;
 }
 
-/* File Dropzone */
-.file-dropzone {
-  border: 2px dashed rgba(59,130,246,0.4);
-  border-radius: 18px;
-  padding: 24px 16px;
-  text-align: center;
-  background: rgba(15,23,42,0.4);
-  cursor: pointer;
-  transition: all 0.3s ease;
+/* ── Special Feature: Digital Membership ID Card (Impeccable Edition) ── */
+.digital-id-container {
+  margin: 28px auto 20px auto;
+  max-width: 580px;
+  width: 100%;
+}
+.digital-id-card {
   position: relative;
+  width: 100%;
+  aspect-ratio: 2048 / 1144;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.8), 0 0 40px rgba(14,165,233,0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  text-align: right;
+  direction: rtl;
+  user-select: none;
 }
-.file-dropzone:hover {
-  border-color: var(--accent);
-  background: rgba(14,165,233,0.08);
+.digital-id-card .card-canvas-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
 }
-.upload-icon {
-  font-size: 2.4rem;
-  display: block;
-  margin-bottom: 8px;
-  filter: drop-shadow(0 0 10px rgba(14,165,233,0.5));
+.digital-id-card .card-content-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
 }
-.upload-text {
-  font-weight: 700;
-  color: #e2e8f0;
-  font-size: 1rem;
-  margin-bottom: 4px;
+/* QR Code Container (Left side) */
+.card-qr-box {
+  position: absolute;
+  top: 35.8%;
+  left: 6.2%;
+  width: 17%;
+  aspect-ratio: 1 / 1;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
-.upload-hint {
-  font-size: 0.8rem;
-  color: var(--dim);
+.card-qr-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
-.upload-preview-box {
+/* Center Member Information */
+.card-center-info {
+  position: absolute;
+  top: 36%;
+  left: 26%;
+  right: 28%;
+  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  gap: 6px;
 }
-.upload-preview-box img {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
+.card-center-name-ar {
+  font-family: 'Cairo', sans-serif;
+  font-size: clamp(14px, 2.2vw, 22px);
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.card-center-name-en {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(10px, 1.4vw, 15px);
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.card-center-role-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fde047;
+  font-family: 'Cairo', 'Inter', sans-serif;
+  font-size: clamp(9px, 1.3vw, 14px);
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+}
+/* Member Photo (Right side frame) */
+.card-photo-box {
+  position: absolute;
+  top: 35.5%;
+  right: 6.2%;
+  width: 19%;
+  aspect-ratio: 1 / 1;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 2px solid rgba(56, 189, 248, 0.5);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  background: #0f172a;
+}
+.card-photo-box img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border: 3px solid var(--accent);
-  box-shadow: 0 0 20px rgba(14,165,233,0.5);
 }
-.btn-change-photo {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid var(--border-blue);
-  color: #e0f2fe;
-  padding: 6px 14px;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-family: var(--font-ar);
-  cursor: pointer;
+/* Member Code (Bottom right) */
+.card-bottom-code {
+  position: absolute;
+  bottom: 11%;
+  right: 6.2%;
+  font-family: 'Inter', monospace;
+  font-size: clamp(10px, 1.5vw, 15px);
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.8);
 }
-
-@media(max-width: 768px) {
-  body {
-    padding: 30px 12px 60px;
-  }
-  .form-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-  .form-card {
-    padding: 24px 16px;
-    border-radius: 18px;
-  }
-  .brand-title {
-    font-size: clamp(2rem, 7vw, 3rem);
-  }
-  .subtitle {
-    font-size: 1rem;
-  }
-  input, select {
-    font-size: 16px !important; /* Prevents auto zoom on iOS */
-    padding: 14px 16px;
-    border-radius: 12px;
-  }
-  .btn-submit {
-    padding: 16px 20px;
-    font-size: 1.15rem;
-    border-radius: 14px;
-  }
-  .toast-bar {
-    right: 12px;
-    left: 12px;
-    bottom: 20px;
-    justify-content: center;
-    font-size: 0.95rem;
-    padding: 12px 16px;
-  }
-}
-
-/* Toast */
-.toast-bar{
-  position:fixed;bottom:30px;right:30px;
-  background:rgba(15,23,42,0.95);
-  border:1px solid rgba(14,165,233,0.4);
-  backdrop-filter:blur(16px);
-  border-radius:16px;
-  padding:16px 24px;
-  color:#f8fafc;
-  font-weight:700;
-  font-size:1.05rem;
-  z-index:9999;
-  display:flex;align-items:center;gap:12px;
-  transform:translateY(100px);opacity:0;
-  transition:all 0.4s cubic-bezier(0.16,1,0.3,1);
-  box-shadow:0 20px 50px rgba(0,0,0,0.6);
-}
-.toast-bar.show{transform:translateY(0);opacity:1}
-
-/* â”€â”€ Special Feature: National ID Intel Badge â”€â”€ */
-.nid-intel-badge {
-  display: none; align-items: center; gap: 8px;
-  background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(14, 165, 233, 0.35);
-  border-radius: 12px; padding: 10px 14px; font-size: 0.85rem; color: #bae6fd;
-  margin-top: 6px; animation: fadeIn .3s ease;
-}
-.nid-intel-badge.show { display: flex; }
-.nid-intel-badge.invalid {
-  background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.35); color: #fca5a5;
-}
-
-/* â”€â”€ Special Feature: Digital Membership ID Card â”€â”€ */
-.digital-id-container {
-  perspective: 1000px; margin: 25px auto; max-width: 440px; width: 100%;
-}
-.digital-id-card {
-  background: linear-gradient(135deg, #091322 0%, #0d1f38 60%, #152e4d 100%);
-  border: 2px solid rgba(56, 189, 248, 0.4); border-radius: 24px; padding: 24px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 35px rgba(14,165,233,0.25);
-  position: relative; overflow: hidden; text-align: right; direction: rtl;
-}
-.digital-id-card::before {
-  content: ''; position: absolute; inset: 0;
-  background: radial-gradient(circle at 80% 20%, rgba(56, 189, 248, 0.15) 0%, transparent 60%);
-  pointer-events: none;
-}
-.digital-id-card::after {
-  content: 'MICROSCOPE'; position: absolute; right: -20px; bottom: 10px;
-  font-family: var(--font-en); font-size: 54px; font-weight: 900;
-  color: rgba(255, 255, 255, 0.03); letter-spacing: 4px; pointer-events: none;
-}
-.id-card-top {
-  display: flex; align-items: center; justify-content: space-between;
-  border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px; margin-bottom: 16px;
-}
-.id-brand { display: flex; align-items: center; gap: 8px; }
-.id-logo { font-size: 26px; }
-.id-brand-title { font-family: var(--font-en); font-weight: 800; font-size: 15px; color: #fff; letter-spacing: 1px; }
-.id-brand-sub { font-size: 10px; color: #38bdf8; font-weight: 700; }
-.id-chip {
-  width: 36px; height: 28px; border-radius: 6px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  box-shadow: inset 0 1px 2px rgba(255,255,255,0.4);
-}
-.id-card-body {
-  display: flex; gap: 16px; align-items: center; margin-bottom: 16px;
-}
-.id-avatar-wrap {
-  width: 90px; height: 90px; border-radius: 18px; border: 2px solid #38bdf8;
-  overflow: hidden; flex-shrink: 0; box-shadow: 0 0 20px rgba(56,189,248,0.4);
-}
-.id-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
-.id-member-info { flex: 1; }
-.id-name-ar { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 2px; }
-.id-name-en { font-family: var(--font-en); font-size: 13px; color: #94a3b8; font-weight: 600; margin-bottom: 8px; }
-.id-badge-row { display: flex; gap: 6px; flex-wrap: wrap; }
-.id-badge {
-  background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35);
-  color: #7dd3fc; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;
-}
-.id-badge.role {
-  background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.35); color: #fde68a;
-}
-.id-card-foot {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;
-}
-.id-code-lbl { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; }
-.id-code-val { font-family: monospace; font-size: 13px; color: #38bdf8; font-weight: 700; letter-spacing: 1px; }
-.id-barcode { display: flex; gap: 2px; height: 26px; align-items: flex-end; }
-.bar-line { width: 2px; height: 100%; background: #94a3b8; }
-.bar-line.thin { width: 1px; }
-.bar-line.thick { width: 3px; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -470,16 +420,20 @@ input[type="file"]::file-selector-button:hover {
   </div>
 
   <div class="form-group">
-    <label for="role">ط§ظ„ظ…ظ†طµط¨ ظپظٹ ط§ظ„ظ„ط¬ظ†ط© <span class="req">*</span></label>
+    <label for="role">المنصب في الفريق / اللجنة <span class="req">*</span></label>
     <select id="role" required onchange="toggleHeadCode()">
-      <option value="Member" selected>ط¹ط¶ظˆ (Member)</option>
-      <option value="Head">ط±ط¦ظٹط³ ظ„ط¬ظ†ط© (Head)</option>
+      <option value="Member" selected>عضو (Member)</option>
+      <option value="CommitteeVice">فايس اللجنة (Committee Vice)</option>
+      <option value="CommitteeHead">هيد اللجنة (Committee Head)</option>
+      <option value="TeamVice">فايس التيم (Team Vice)</option>
+      <option value="TeamLeader">ليدر التيم (Team Leader)</option>
     </select>
   </div>
 
   <div class="form-group" id="headCodeGroup" style="display: none;">
-    <label for="headCode">ظƒظˆط¯ ط§ظ„طھط­ظ‚ظ‚ (ظ„ظ„ظ…ط´ط±ظپظٹظ† ظپظ‚ط·) <span class="req">*</span></label>
-    <input type="password" id="headCode" placeholder="ط£ط¯ط®ظ„ ط§ظ„ظƒظˆط¯">
+    <label for="headCode">رمز التحقق الأمني للمنصب <span class="req">*</span></label>
+    <input type="password" id="headCode" placeholder="أدخل الرمز السري للمنصب" autocomplete="off">
+    <small id="headCodeHint" style="color:var(--dim);font-size:0.8rem;margin-top:4px"></small>
   </div>
   
   <script>
@@ -487,13 +441,18 @@ input[type="file"]::file-selector-button:hover {
       const role = document.getElementById('role').value;
       const codeGroup = document.getElementById('headCodeGroup');
       const codeInput = document.getElementById('headCode');
-      if (role === 'Head') {
-        codeGroup.style.display = 'flex';
-        codeInput.required = true;
-      } else {
+      const hint = document.getElementById('headCodeHint');
+      if (role === 'Member') {
         codeGroup.style.display = 'none';
         codeInput.required = false;
         codeInput.value = '';
+        if (hint) hint.textContent = '';
+      } else {
+        codeGroup.style.display = 'flex';
+        codeInput.required = true;
+        if (hint) {
+          hint.textContent = '🔒 هذا المنصب الإشرافي يتطلب إدخال رمز التحقق الخاص به.';
+        }
       }
     }
   </script>
@@ -556,14 +515,32 @@ input[type="file"]::file-selector-button:hover {
   <!-- Special Feature: 3D Holographic Member ID Card -->
   <div class="digital-id-container">
     <div class="digital-id-card" id="digitalIdCard">
-      <div class="id-card-top">
-        <div class="id-brand">
-          <span class="id-logo">ًں”¬</span>
-          <div>
-            <div class="id-brand-title">MICROSCOPE TEAM</div>
-            <div class="id-brand-sub">OFFICIAL MEMBER ID CARD</div>
-          </div>
+      <!-- High-res Template Background -->
+      <img id="cardTemplateImg" class="card-canvas-bg" src="/cards/card_5_hr_member.png" alt="ID Card Template">
+      
+      <div class="card-content-overlay">
+        <!-- QR Code (Left) -->
+        <div class="card-qr-box">
+          <img id="cardQrCode" src="" alt="QR">
         </div>
+
+        <!-- Center Information -->
+        <div class="card-center-info">
+          <div class="card-center-name-ar" id="cardNameAr">—</div>
+          <div class="card-center-name-en" id="cardNameEn">—</div>
+          <div class="card-center-role-pill" id="cardRolePill">Member 🔷</div>
+        </div>
+
+        <!-- Member Photo (Right) -->
+        <div class="card-photo-box">
+          <img id="cardAvatar" src="" alt="Member">
+        </div>
+
+        <!-- Member Code (Bottom Right) -->
+        <div class="card-bottom-code" id="cardMemberCode">MIC-2026-0000</div>
+      </div>
+    </div>
+  </div>
         <div class="id-chip"></div>
       </div>
       <div class="id-card-body">
@@ -677,19 +654,33 @@ function onNationalIdInput(val) {
 async function downloadIdCard() {
   const card = document.getElementById('digitalIdCard');
   if (!card) return;
+  const dlBtn = event ? event.target.closest('button') : null;
+  const origBtnText = dlBtn ? dlBtn.innerHTML : '';
+  if (dlBtn) {
+    dlBtn.disabled = true;
+    dlBtn.innerHTML = '⏳ جاري تجهيز البطاقة عالية الدقة...';
+  }
   try {
     const canvas = await html2canvas(card, {
-      scale: 3,
+      scale: 2,
       useCORS: true,
-      backgroundColor: '#091322'
+      allowTaint: true,
+      backgroundColor: null,
+      logging: false
     });
+    const memberName = document.getElementById('cardNameAr').textContent.trim() || 'Member';
     const link = document.createElement('a');
-    link.download = `Microscope_Member_${document.getElementById('cardNameAr').textContent.trim().replace(/\s+/g, '_')}.png`;
+    link.download = `Microscope_Card_${memberName.replace(/\s+/g, '_')}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   } catch (err) {
     console.error('Error downloading card:', err);
-    alert('ط­ط¯ط« ط®ط·ط£ ط£ط«ظ†ط§ط، طھط­ظ…ظٹظ„ ط§ظ„ظƒط§ط±ظ†ظٹظ‡طŒ ظٹظ…ظƒظ†ظƒ ط£ط®ط° ظ„ظ‚ط·ط© ط´ط§ط´ط© ظ„ظ„ط¨ط·ط§ظ‚ط©.');
+    alert('حدث خطأ أثناء تحميل الكارنيه بدقة عالية، يمكنك حفظ الصورة مباشرة أو أخذ لقطة شاشة للبطاقة.');
+  } finally {
+    if (dlBtn) {
+      dlBtn.disabled = false;
+      dlBtn.innerHTML = origBtnText;
+    }
   }
 }
 
@@ -840,9 +831,31 @@ document.getElementById('memberForm').addEventListener('submit', async function(
     const photoBase64 = await compressImage(file, 800, 0.85);
 
     let roleVal = document.getElementById('role').value;
-    const headCode = document.getElementById('headCode').value;
-    if (roleVal === 'Head' && headCode !== '1111') {
-      roleVal = 'Member';
+    const inputPasscode = document.getElementById('headCode').value.trim();
+    
+    // Strict Passcode validation:
+    // TeamVice: 0000
+    // TeamLeader: 1111
+    // CommitteeVice: 2222
+    // CommitteeHead: 3333
+    // Member: no passcode
+    const passcodes = {
+      'TeamVice': '0000',
+      'TeamLeader': '1111',
+      'CommitteeVice': '2222',
+      'CommitteeHead': '3333'
+    };
+
+    if (passcodes[roleVal]) {
+      if (inputPasscode !== passcodes[roleVal]) {
+        alert('⚠️ رمز التحقق الذي أدخلته غير صحيح لهذا المنصب! يرجى التأكد من الرمز والمحاولة مجدداً.');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
+        }
+        document.getElementById('headCode').focus();
+        return;
+      }
     }
 
     const memberId = Date.now().toString();
@@ -887,18 +900,59 @@ document.getElementById('memberForm').addEventListener('submit', async function(
     };
 
     // ── Populate and Show Digital Member ID Card IMMEDIATELY ─────────────────
+    const roleCardConfig = {
+      'TeamLeader': {
+        template: '/cards/card_3_team_leader.png',
+        badge: 'Team Leader 👑',
+        roleLabel: 'قائد الفريق (Team Leader)'
+      },
+      'TeamVice': {
+        template: '/cards/card_4_team_vice.png',
+        badge: 'Team Vice ⭐',
+        roleLabel: 'نائب قائد الفريق (Team Vice)'
+      },
+      'CommitteeHead': {
+        template: '/cards/card_1_committee_head.png',
+        badge: `${memberData.committee || 'Team'} Head 👑`,
+        roleLabel: `رئيس لجنة ${memberData.committee || ''} (Head)`
+      },
+      'CommitteeVice': {
+        template: '/cards/card_2_committee_vice.png',
+        badge: `${memberData.committee || 'Team'} Vice ⭐`,
+        roleLabel: `نائب رئيس لجنة ${memberData.committee || ''} (Vice)`
+      },
+      'Member': {
+        template: '/cards/card_5_hr_member.png',
+        badge: `${memberData.committee || 'Team'} Member 🔷`,
+        roleLabel: `عضو ${memberData.committee || ''} (Member)`
+      }
+    };
+
+    const currentConfig = roleCardConfig[memberData.role] || roleCardConfig['Member'];
+
+    // Update Card Template Image
+    const templateImg = document.getElementById('cardTemplateImg');
+    if (templateImg) templateImg.src = currentConfig.template;
+
+    // Update Avatar Photo
     const cardAv = document.getElementById('cardAvatar');
     if (cardAv) cardAv.src = photoBase64;
+
+    // Update Names & Pill
     const cAr = document.getElementById('cardNameAr');
     if (cAr) cAr.textContent = memberData.fullName;
     const cEn = document.getElementById('cardNameEn');
     if (cEn) cEn.textContent = memberData.fullNameEn || memberData.fullName;
-    const cCom = document.getElementById('cardCommittee');
-    if (cCom) cCom.textContent = memberData.committee;
-    const cRol = document.getElementById('cardRole');
-    if (cRol) cRol.textContent = memberData.role === 'Head' ? '👑 رئيس لجنة (Head)' : 'عضو (Member)';
-    const cGov = document.getElementById('cardGov');
-    if (cGov) cGov.textContent = currentMemberGov || 'عضو معتمد';
+    const cPill = document.getElementById('cardRolePill');
+    if (cPill) cPill.textContent = currentConfig.badge;
+
+    // Dynamic QR Code generation
+    const qrData = encodeURIComponent(`https://t.me/Microscope_Support_bot?start=mem_${memberId}`);
+    const qrImg = document.getElementById('cardQrCode');
+    if (qrImg) {
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrData}`;
+    }
+
     const cCode = document.getElementById('cardMemberCode');
     if (cCode) cCode.textContent = `MIC-2026-${memberId.slice(-4)}`;
 

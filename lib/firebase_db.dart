@@ -14,10 +14,20 @@ class FirebaseDb {
   }
   static String get _authParam => '?auth=${Config.firebaseSecret}';
 
+  /// Percent-encodes each segment of a Firebase REST path so Arabic, emoji,
+  /// and other non-ASCII characters are transmitted correctly.
+  static String _encodePath(String path) {
+    return path
+        .split('/')
+        .map((seg) => seg.isEmpty ? seg : Uri.encodeComponent(seg))
+        .join('/');
+  }
+
   static Future<dynamic> _get(String path) async {
     try {
+      final encoded = _encodePath(path);
       final response = await http
-          .get(Uri.parse('$_baseUrl$path.json$_authParam'))
+          .get(Uri.parse('$_baseUrl$encoded.json$_authParam'))
           .timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         if (response.body == 'null') return null;
@@ -33,9 +43,10 @@ class FirebaseDb {
 
   static Future<bool> _put(String path, dynamic data) async {
     try {
+      final encoded = _encodePath(path);
       final response = await http
           .put(
-            Uri.parse('$_baseUrl$path.json$_authParam'),
+            Uri.parse('$_baseUrl$encoded.json$_authParam'),
             body: json.encode(data),
           )
           .timeout(const Duration(seconds: 10));
@@ -51,9 +62,10 @@ class FirebaseDb {
 
   static Future<bool> _patch(String path, dynamic data) async {
     try {
+      final encoded = _encodePath(path);
       final response = await http
           .patch(
-            Uri.parse('$_baseUrl$path.json$_authParam'),
+            Uri.parse('$_baseUrl$encoded.json$_authParam'),
             body: json.encode(data),
           )
           .timeout(const Duration(seconds: 10));
@@ -69,8 +81,9 @@ class FirebaseDb {
 
   static Future<bool> _delete(String path) async {
     try {
+      final encoded = _encodePath(path);
       final response = await http
-          .delete(Uri.parse('$_baseUrl$path.json$_authParam'))
+          .delete(Uri.parse('$_baseUrl$encoded.json$_authParam'))
           .timeout(const Duration(seconds: 10));
       if (response.statusCode != 200) {
         print('[Firebase] DELETE $path failed: ${response.statusCode}');
@@ -84,9 +97,10 @@ class FirebaseDb {
 
   static Future<String?> _post(String path, dynamic data) async {
     try {
+      final encoded = _encodePath(path);
       final response = await http
           .post(
-            Uri.parse('$_baseUrl$path.json$_authParam'),
+            Uri.parse('$_baseUrl$encoded.json$_authParam'),
             body: json.encode(data),
           )
           .timeout(const Duration(seconds: 10));
@@ -334,7 +348,14 @@ class FirebaseDb {
 
   // Delete material (deletes ONLY the specific material node)
   static Future<void> deleteMaterial(String track, String subject, String type, String materialId) async {
+    final original = await getMaterial(track, subject, type, materialId);
     await _delete('/curriculum/$track/$subject/$type/$materialId');
+    if (original != null && original['added_by'] != null) {
+      final addedBy = int.tryParse(original['added_by'].toString());
+      if (addedBy != null) {
+        await removeContributorMaterialRef(addedBy, materialId);
+      }
+    }
   }
 
   // Update material (Replace)
@@ -505,6 +526,42 @@ class FirebaseDb {
     await _put('/super_admin', {'id': newAdminId});
     // Ensure the new owner is also a regular admin
     await addAdmin(newAdminId);
+  }
+
+  // --- Bot Features Visibility Config ---
+  static const Map<String, bool> defaultFeatures = {
+    'departments': true,
+    'tables': true,
+    'miko': true,
+    'smart_search': true,
+    'student_tools': true,
+    'contribute': true,
+    'contact_admin': true,
+  };
+
+  static const Map<String, String> featureDisplayNames = {
+    'departments': '📚 تصفح الأقسام والمواد',
+    'tables': '📅 الجداول الدراسية التفاعلية',
+    'miko': '🤖 مساعد ميكو الذكي (Miko AI)',
+    'smart_search': '🔍 البحث الذكي في المحاضرات (Beta)',
+    'student_tools': '🧰 أدوات الطالب والمذاكرة (GPA/مؤقت/مفضلة)',
+    'contribute': '🤝 زر طلب الانضمام كمساهم',
+    'contact_admin': '💬 زر التواصل مع الإدارة',
+  };
+
+  static Future<Map<String, bool>> getFeaturesConfig() async {
+    final data = await _get('/features_config');
+    final res = Map<String, bool>.from(defaultFeatures);
+    if (data != null && data is Map) {
+      data.forEach((k, v) {
+        if (v is bool) res[k.toString()] = v;
+      });
+    }
+    return res;
+  }
+
+  static Future<void> toggleFeature(String key, bool enabled) async {
+    await _put('/features_config/$key', enabled);
   }
 
   // --- Contributor Requests ---
@@ -773,4 +830,167 @@ class FirebaseDb {
     }
   }
 
+
+  // ── Auth Code for Contributor Actions ─────────────────────────────────────
+  static Future<void> setAuthCodeWithLimits({
+    required String code,
+    required int maxUses,
+    required Duration validity,
+    required int createdBy,
+  }) async {
+    final now = DateTime.now();
+    final expiresAt = now.add(validity);
+    await _put('/auth_code', {
+      'code': code.trim(),
+      'max_uses': maxUses,
+      'remaining_uses': maxUses,
+      'created_at': now.toIso8601String(),
+      'expires_at': expiresAt.toIso8601String(),
+      'validity_minutes': validity.inMinutes,
+      'created_by': createdBy,
+      'is_active': true,
+    });
+  }
+
+  static Future<void> setAuthCode(String code) async {
+    // Default: 1 use, 30 minutes
+    await setAuthCodeWithLimits(
+      code: code,
+      maxUses: 1,
+      validity: const Duration(minutes: 30),
+      createdBy: 0,
+    );
+  }
+
+  static Future<Map<String, dynamic>?> getAuthCodeDetails() async {
+    final data = await _get('/auth_code');
+    if (data == null || data is! Map) return null;
+    return Map<String, dynamic>.from(data);
+  }
+
+  static Future<String?> getAuthCode() async {
+    final details = await getAuthCodeDetails();
+    if (details == null || details['is_active'] != true) return null;
+    return details['code']?.toString();
+  }
+
+  /// Verifies input code against the active auth code.
+  /// Returns:
+  /// - 'valid': Code matched and 1 use was consumed
+  /// - 'expired_time': Code duration expired
+  /// - 'expired_uses': Code consumed all its allowed uses
+  /// - 'invalid': Code string does not match
+  /// - 'not_found': No active code exists
+  static Future<String> verifyAndConsumeAuthCode(String inputCode) async {
+    final details = await getAuthCodeDetails();
+    if (details == null) return 'not_found';
+
+    final isActive = details['is_active'] == true;
+    if (!isActive) return 'not_found';
+
+    final storedCode = details['code']?.toString().trim();
+    if (storedCode == null || storedCode != inputCode.trim()) {
+      return 'invalid';
+    }
+
+    // Check expiration by time
+    final expiresAtStr = details['expires_at']?.toString();
+    if (expiresAtStr != null) {
+      final expiresAt = DateTime.tryParse(expiresAtStr);
+      if (expiresAt != null && DateTime.now().isAfter(expiresAt)) {
+        await _patch('/auth_code', {'is_active': false});
+        return 'expired_time';
+      }
+    }
+
+    // Check remaining uses
+    final remainingUses = details['remaining_uses'] as int? ?? 1;
+    if (remainingUses <= 0) {
+      await _patch('/auth_code', {'is_active': false});
+      return 'expired_uses';
+    }
+
+    // Consume 1 use
+    final newRemaining = remainingUses - 1;
+    await _patch('/auth_code', {
+      'remaining_uses': newRemaining,
+      'is_active': newRemaining > 0,
+      'last_used_at': DateTime.now().toIso8601String(),
+    });
+
+    return 'valid';
+  }
+
+  static Future<bool> verifyAuthCode(String inputCode) async {
+    final status = await verifyAndConsumeAuthCode(inputCode);
+    return status == 'valid';
+  }
+
+  static Future<void> revokeAuthCode() async {
+    await _patch('/auth_code', {
+      'is_active': false,
+      'remaining_uses': 0,
+      'revoked_at': DateTime.now().toIso8601String(),
+    });
+  }
+
+  // ── Rename Material ────────────────────────────────────────────────────
+  static Future<void> renameMaterial(
+      String track, String subject, String type, String materialId, String newName) async {
+    final original = await getMaterial(track, subject, type, materialId);
+    await _patch('/curriculum/$track/$subject/$type/$materialId', {'name': newName});
+    if (original != null && original['added_by'] != null) {
+      final addedBy = int.tryParse(original['added_by'].toString());
+      if (addedBy != null) {
+        await _patch('/contributor_materials/$addedBy/$materialId', {'name': newName});
+      }
+    }
+  }
+
+  // ── Move Material ─────────────────────────────────────────────────────
+  /// Moves a material from old path to new path. Returns the new material ID or null on failure.
+  static Future<String?> moveMaterial({
+    required String oldTrack,
+    required String oldSubject,
+    required String oldType,
+    required String materialId,
+    required String newTrack,
+    required String newSubject,
+    required String newType,
+    String? newName,
+  }) async {
+    // 1. Fetch original data
+    final original = await getMaterial(oldTrack, oldSubject, oldType, materialId);
+    if (original == null) return null;
+
+    // 2. Build new data
+    final Map<String, dynamic> newData = Map<String, dynamic>.from(original);
+    if (newName != null && newName.isNotEmpty) {
+      newData['name'] = newName;
+    }
+    newData.remove('_placeholder');
+
+    // 3. Write to new location
+    final newId = await _post('/curriculum/$newTrack/$newSubject/$newType', newData);
+    if (newId == null) return null;
+
+    // 4. Delete from old location
+    await deleteMaterial(oldTrack, oldSubject, oldType, materialId);
+
+    // 5. Sync contributor material index
+    final addedBy = int.tryParse(original['added_by']?.toString() ?? '');
+    if (addedBy != null) {
+      await removeContributorMaterialRef(addedBy, materialId);
+      await addContributorMaterialRef(addedBy, newId, {
+        'track': newTrack,
+        'subject': newSubject,
+        'type': newType,
+        'name': newData['name'] ?? original['name'],
+        'file_id': newData['file_id'] ?? original['file_id'],
+        'file_type': newData['file_type'] ?? original['file_type'],
+      });
+    }
+
+    return newId;
+  }
 }

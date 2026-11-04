@@ -344,68 +344,6 @@ Future<void> _handleWebRequest(HttpRequest req, Bot bot) async {
       req.response.write('Members form page not found');
     }
 
-  } else if (path == '/team.html' || path == '/team') {
-    // Serve the 3D team showcase page
-    final teamFile = File('web/team.html');
-    if (await teamFile.exists()) {
-      String html = await teamFile.readAsString();
-      html = html
-          .replaceFirst('{{FB_URL}}', Config.firebaseDatabaseUrl)
-          .replaceFirst('{{FB_SECRET}}', Config.firebaseSecret);
-      req.response
-        ..statusCode = 200
-        ..headers.contentType = ContentType.html
-        ..write(html);
-    } else {
-      req.response.statusCode = 404;
-      req.response.write('Team page not found');
-    }
-
-  } else if (path == '/hr.html' || path == '/hr') {
-    // Serve the HR Evaluation module
-    final hrFile = File('web/hr.html');
-    if (await hrFile.exists()) {
-      String html = await hrFile.readAsString();
-      html = html
-          .replaceFirst('{{FB_URL}}', Config.firebaseDatabaseUrl)
-          .replaceFirst('{{FB_SECRET}}', Config.firebaseSecret);
-      req.response
-        ..statusCode = 200
-        ..headers.contentType = ContentType.html
-        ..write(html);
-    } else {
-      req.response.statusCode = 404;
-      req.response.write('HR module not found');
-    }
-
-  } else if (path == '/mission-admin.html' || path == '/mission-admin') {
-    // Serve the Mission Admin Dashboard
-    final missionFile = File('web/mission-admin.html');
-    if (await missionFile.exists()) {
-      final html = await missionFile.readAsString();
-      req.response
-        ..statusCode = 200
-        ..headers.contentType = ContentType.html
-        ..write(html);
-    } else {
-      req.response.statusCode = 404;
-      req.response.write('Mission admin page not found');
-    }
-
-  } else if (path == '/mission-view.html' || path == '/mission-view' || path == '/mission') {
-    // Serve the Public Mission View page
-    final missionViewFile = File('web/mission-view.html');
-    if (await missionViewFile.exists()) {
-      final html = await missionViewFile.readAsString();
-      req.response
-        ..statusCode = 200
-        ..headers.contentType = ContentType.html
-        ..write(html);
-    } else {
-      req.response.statusCode = 404;
-      req.response.write('Mission view page not found');
-    }
-
   } else if (path.startsWith('/web/') || 
              path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || 
              path.endsWith('.webp') || path.endsWith('.svg') || 

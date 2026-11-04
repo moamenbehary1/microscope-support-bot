@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:televerse/televerse.dart';
 import 'firebase_db.dart';
 import 'utils.dart';
@@ -72,6 +73,19 @@ void registerAdminHandlers(Bot bot) {
     Utils.setUserMode(userId, UserMode.student);
     Utils.clearUploadState(userId);
     await ctx.reply(S.get('admin_switched_student', lang));
+  });
+
+  // ── /gencode command (Admins / Super Admins) ──────────────────────────
+  bot.command('gencode', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) {
+      await ctx.reply(S.get('not_authorized', lang));
+      return;
+    }
+    // Default: 1 use, 30 minutes
+    await _generateAndShowAuthCode(ctx, userId, lang, 1, 30);
   });
 
   // ── Dashboard callbacks ──────────────────────────────────────────────
@@ -1059,14 +1073,17 @@ void registerAdminHandlers(Bot bot) {
   bot.callbackQuery('adm_add_subject_pick_track', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
     await ctx.answerCallbackQuery();
 
     final tracks = await FirebaseDb.getTracks();
-    final kb = InlineKeyboard();
-    for (var t in tracks) {
-      kb.row().add('📁 $t', 'adm_add_subj_sel_tr:${Utils.shorten(t)}');
-    }
-    kb.row().add('🔙 رجوع', 'adm_curriculum');
+    final kb = Utils.paginateKeyboard(
+      tracks,
+      page: 0,
+      prefix: 'adm_add_subj_sel_tr:',
+      backData: 'adm_curriculum',
+      lang: lang,
+    );
 
     await ctx.editMessageText('اختر المسار الذي تريد إضافة المادة إليه:', replyMarkup: kb);
   });
@@ -1075,8 +1092,24 @@ void registerAdminHandlers(Bot bot) {
     final userId = ctx.from?.id;
     final data = ctx.callbackQuery?.data;
     if (userId == null || data == null) return;
-    final trackShort = data.replaceFirst('adm_add_subj_sel_tr:', '');
-    final track = Utils.lengthen(trackShort);
+    final lang = Utils.getUserLanguage(userId);
+    final raw = data.replaceFirst('adm_add_subj_sel_tr:', '');
+
+    if (raw.startsWith('page_')) {
+      final page = int.parse(raw.split('_')[1]);
+      final tracks = await FirebaseDb.getTracks();
+      final kb = Utils.paginateKeyboard(
+        tracks,
+        page: page,
+        prefix: 'adm_add_subj_sel_tr:',
+        backData: 'adm_curriculum',
+        lang: lang,
+      );
+      await ctx.editMessageText('اختر المسار الذي تريد إضافة المادة إليه:', replyMarkup: kb);
+      return;
+    }
+
+    final track = Utils.lengthen(raw);
     await ctx.answerCallbackQuery();
 
     Utils.uploadStates[userId] = {'action': 'adm_add_subj_name', 'track': track};
@@ -1086,14 +1119,17 @@ void registerAdminHandlers(Bot bot) {
   bot.callbackQuery('adm_del_subject_pick_track', (ctx) async {
     final userId = ctx.from?.id;
     if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
     await ctx.answerCallbackQuery();
 
     final tracks = await FirebaseDb.getTracks();
-    final kb = InlineKeyboard();
-    for (var t in tracks) {
-      kb.row().add('📁 $t', 'adm_del_tr_browse:${Utils.shorten(t)}');
-    }
-    kb.row().add('🔙 رجوع', 'adm_curriculum');
+    final kb = Utils.paginateKeyboard(
+      tracks,
+      page: 0,
+      prefix: 'adm_del_tr_browse:',
+      backData: 'adm_curriculum',
+      lang: lang,
+    );
 
     await ctx.editMessageText('اختر المسار لحذف مادة منه:', replyMarkup: kb);
   });
@@ -1102,8 +1138,24 @@ void registerAdminHandlers(Bot bot) {
     final userId = ctx.from?.id;
     final data = ctx.callbackQuery?.data;
     if (userId == null || data == null) return;
-    final trackShort = data.replaceFirst('adm_del_tr_browse:', '');
-    final track = Utils.lengthen(trackShort);
+    final lang = Utils.getUserLanguage(userId);
+    final raw = data.replaceFirst('adm_del_tr_browse:', '');
+
+    if (raw.startsWith('page_')) {
+      final page = int.parse(raw.split('_')[1]);
+      final tracks = await FirebaseDb.getTracks();
+      final kb = Utils.paginateKeyboard(
+        tracks,
+        page: page,
+        prefix: 'adm_del_tr_browse:',
+        backData: 'adm_curriculum',
+        lang: lang,
+      );
+      await ctx.editMessageText('اختر المسار لحذف مادة منه:', replyMarkup: kb);
+      return;
+    }
+
+    final track = Utils.lengthen(raw);
     await ctx.answerCallbackQuery();
 
     final subjects = await FirebaseDb.getSubjects(track);
@@ -1112,23 +1164,41 @@ void registerAdminHandlers(Bot bot) {
       return;
     }
 
-    final kb = InlineKeyboard();
-    for (var s in subjects) {
-      kb.row().add('🗑 $s', 'adm_del_subj_do:${Utils.shorten(track)}:${Utils.shorten(s)}');
-    }
-    kb.row().add('🔙 رجوع', 'adm_del_subject_pick_track');
+    final kb = Utils.paginateKeyboard(
+      subjects,
+      page: 0,
+      prefix: 'adm_del_sub_br:${Utils.shorten(track)}:',
+      backData: 'adm_del_subject_pick_track',
+      lang: lang,
+    );
 
     await ctx.editMessageText('اختر المادة المراد حذفها من مسار "$track":', replyMarkup: kb);
   });
 
-  bot.callbackQuery(RegExp(r'^adm_del_subj_do:(.+)'), (ctx) async {
+  bot.callbackQuery(RegExp(r'^adm_del_sub_br:(.*?):(.*)'), (ctx) async {
     final userId = ctx.from?.id;
     final data = ctx.callbackQuery?.data;
     if (userId == null || data == null) return;
-    final parts = data.replaceFirst('adm_del_subj_do:', '').split(':');
+    final lang = Utils.getUserLanguage(userId);
+    final parts = data.replaceFirst('adm_del_sub_br:', '').split(':');
     final track = Utils.lengthen(parts[0]);
-    final subject = Utils.lengthen(parts[1]);
+    final rawSubj = parts[1];
 
+    if (rawSubj.startsWith('page_')) {
+      final page = int.parse(rawSubj.split('_')[1]);
+      final subjects = await FirebaseDb.getSubjects(track);
+      final kb = Utils.paginateKeyboard(
+        subjects,
+        page: page,
+        prefix: 'adm_del_sub_br:${Utils.shorten(track)}:',
+        backData: 'adm_del_subject_pick_track',
+        lang: lang,
+      );
+      await ctx.editMessageText('اختر المادة المراد حذفها من مسار "$track":', replyMarkup: kb);
+      return;
+    }
+
+    final subject = Utils.lengthen(rawSubj);
     await FirebaseDb.deleteSubject(track, subject);
     await ctx.answerCallbackQuery(text: 'تم حذف المادة بنجاح.');
     await ctx.editMessageText('🗑 *تم حذف مادة "$subject" من مسار "$track" بنجاح.*', parseMode: ParseMode.markdown, replyMarkup: InlineKeyboard().row().add('🔙 إدارة المناهج', 'adm_curriculum'));
@@ -1178,6 +1248,148 @@ void registerAdminHandlers(Bot bot) {
   });
 
   // ═════════════════════════════════════════════════════════════════════════
+  // ── 🔑 8. GENERATE CONTRIBUTOR AUTH CODE (WITH USES & EXPIRY) ───────────
+  // ═════════════════════════════════════════════════════════════════════════
+
+  // Menu: Choose generator mode
+  bot.callbackQuery('dash_gen_code', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) {
+      await ctx.answerCallbackQuery(text: S.get('not_authorized', lang), showAlert: true);
+      return;
+    }
+    await ctx.answerCallbackQuery();
+
+    final active = await FirebaseDb.getAuthCodeDetails();
+    final buffer = StringBuffer();
+    buffer.writeln(S.get('gen_code_menu_title', lang));
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
+
+    if (active != null && active['is_active'] == true) {
+      final code = active['code'];
+      final rem = active['remaining_uses'] ?? 0;
+      final exp = active['expires_at'] != null ? DateTime.tryParse(active['expires_at'].toString()) : null;
+      final isExpired = exp != null && DateTime.now().isAfter(exp);
+      if (!isExpired && rem > 0) {
+        final diff = exp != null ? exp.difference(DateTime.now()).inMinutes : 0;
+        buffer.writeln('📌 *الكود الفعّال حاليًا:* `$code`');
+        buffer.writeln('• المتبقي: *$rem استخدام*');
+        buffer.writeln('• ينتهي خلال: *$diff دقيقة*\n');
+      }
+    }
+
+    final kb = InlineKeyboard()
+      .row().add(S.get('btn_gen_fast', lang), 'gen_preset:1:30')
+      .row().add(S.get('btn_gen_custom', lang), 'gen_custom_uses')
+      .row().add(S.get('btn_revoke_code', lang), 'gen_code_revoke')
+      .row().add(S.get('btn_back_admin', lang), 'admin_dash');
+
+    await ctx.editMessageText(
+      buffer.toString(),
+      parseMode: ParseMode.markdown,
+      replyMarkup: kb,
+    );
+  });
+
+  // Fast preset (e.g. 1 use, 30 min)
+  bot.callbackQuery(RegExp(r'^gen_preset:(\d+):(\d+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) return;
+    await ctx.answerCallbackQuery();
+
+    final match = RegExp(r'^gen_preset:(\d+):(\d+)').firstMatch(ctx.callbackQuery!.data!)!;
+    final uses = int.parse(match.group(1)!);
+    final minutes = int.parse(match.group(2)!);
+
+    await _generateAndShowAuthCode(ctx, userId, lang, uses, minutes);
+  });
+
+  // Step 1 of Custom: choose uses
+  bot.callbackQuery('gen_custom_uses', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) return;
+    await ctx.answerCallbackQuery();
+
+    final kb = InlineKeyboard()
+      .row().add('1️⃣ مرة واحدة فقط (1 use)', 'gcu:1')
+      .row().add('3️⃣ 3 مرات', 'gcu:3')
+      .row().add('5️⃣ 5 مرات', 'gcu:5')
+      .row().add('🔟 10 مرات', 'gcu:10')
+      .row().add('🔙 رجوع', 'dash_gen_code');
+
+    await ctx.editMessageText(
+      S.get('gen_custom_uses_prompt', lang),
+      parseMode: ParseMode.markdown,
+      replyMarkup: kb,
+    );
+  });
+
+  // Step 2 of Custom: choose duration
+  bot.callbackQuery(RegExp(r'^gcu:(\d+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) return;
+    await ctx.answerCallbackQuery();
+
+    final uses = int.parse(ctx.callbackQuery!.data!.substring('gcu:'.length));
+
+    final kb = InlineKeyboard()
+      .row().add('⏱️ 15 دقيقة', 'gcd:$uses:15')
+      .row().add('⏱️ 30 دقيقة', 'gcd:$uses:30')
+      .row().add('⏱️ 1 ساعة (60 دقيقة)', 'gcd:$uses:60')
+      .row().add('⏱️ 6 ساعات', 'gcd:$uses:360')
+      .row().add('⏱️ 24 ساعة (يوم كامل)', 'gcd:$uses:1440')
+      .row().add('🔙 رجوع', 'gen_custom_uses');
+
+    await ctx.editMessageText(
+      S.get('gen_custom_time_prompt', lang),
+      parseMode: ParseMode.markdown,
+      replyMarkup: kb,
+    );
+  });
+
+  // Final step: execute generation
+  bot.callbackQuery(RegExp(r'^gcd:(\d+):(\d+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) return;
+    await ctx.answerCallbackQuery();
+
+    final parts = ctx.callbackQuery!.data!.substring('gcd:'.length).split(':');
+    final uses = int.parse(parts[0]);
+    final minutes = int.parse(parts[1]);
+
+    await _generateAndShowAuthCode(ctx, userId, lang, uses, minutes);
+  });
+
+  // Revoke active code
+  bot.callbackQuery('gen_code_revoke', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final lang = Utils.getUserLanguage(userId);
+    if (!(await FirebaseDb.isAdmin(userId))) return;
+    await ctx.answerCallbackQuery();
+
+    await FirebaseDb.revokeAuthCode();
+
+    final kb = InlineKeyboard()
+      .row().add('🔑 إنشاء كود جديد', 'dash_gen_code')
+      .row().add(S.get('btn_back_admin', lang), 'admin_dash');
+
+    await ctx.editMessageText(
+      S.get('code_revoked_success', lang),
+      replyMarkup: kb,
+    );
+  });
+  // ═════════════════════════════════════════════════════════════════════════
   // ── 🌐 7. WEB PORTALS QUICK LINKS ─────────────────────────────────────
   // ═════════════════════════════════════════════════════════════════════════
 
@@ -1190,15 +1402,102 @@ void registerAdminHandlers(Bot bot) {
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('🖥️ *لوحة التحكم الرئيسية (Web CMS):*');
     buffer.writeln('`http://localhost:5000/`\n');
-    buffer.writeln('🔬 *لوحة إدارة المهام المتقدمة (Mission Admin):*');
-    buffer.writeln('`http://localhost:5000/mission-admin.html`\n');
-    buffer.writeln('📺 *شاشة العرض المباشر للمهام (Live Missions Screen):*');
-    buffer.writeln('`http://localhost:5000/mission-view.html`');
+    buffer.writeln('👥 *استمارة تسجيل الأعضاء (Members Form):*');
+    buffer.writeln('`http://localhost:5000/members_form.html`');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
-    buffer.writeln('💡 يمكنك فتح أي رابط مباشرة لمتابعة الشاشات المباشرة ومصفوفة كانبان.');
+    buffer.writeln('💡 يمكنك فتح أي رابط مباشرة لإدارة المنظومة واستعراض السجلات.');
 
     final kb = InlineKeyboard().row().add('🔙 رجوع للوحة الإدارة', 'admin_dash');
     await ctx.editMessageText(buffer.toString(), parseMode: ParseMode.markdown, replyMarkup: kb);
+  });
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // ── 🎛 9. SUPER ADMIN: MANAGE STUDENT FEATURES IN /START & BROADCAST ────
+  // ═════════════════════════════════════════════════════════════════════════
+
+  bot.callbackQuery('dash_features_manage', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final superAdminId = await FirebaseDb.getSuperAdmin();
+    if (userId != superAdminId) {
+      await ctx.answerCallbackQuery(text: 'هذه الميزة مخصصة للمالك (Super Admin) فقط.', showAlert: true);
+      return;
+    }
+    await ctx.answerCallbackQuery();
+    await _showFeaturesManagementScreen(ctx);
+  });
+
+  bot.callbackQuery(RegExp(r'^feat_tog:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final superAdminId = await FirebaseDb.getSuperAdmin();
+    if (userId != superAdminId) return;
+    await ctx.answerCallbackQuery();
+
+    final key = ctx.callbackQuery!.data!.replaceFirst('feat_tog:', '');
+    final currentConfig = await FirebaseDb.getFeaturesConfig();
+    final currentState = currentConfig[key] ?? true;
+    await FirebaseDb.toggleFeature(key, !currentState);
+
+    await _showFeaturesManagementScreen(ctx);
+  });
+
+  bot.callbackQuery('feat_broadcast_menu', (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final superAdminId = await FirebaseDb.getSuperAdmin();
+    if (userId != superAdminId) return;
+    await ctx.answerCallbackQuery();
+
+    final kb = InlineKeyboard();
+    FirebaseDb.featureDisplayNames.forEach((key, name) {
+      kb.row().add('📢 إرسال: $name', 'feat_send:$key');
+    });
+    kb.row().add('🔙 رجوع', 'dash_features_manage');
+
+    final msg = '📢 *إذاعة وتفعيل ميزة للمستخدمين:*\n\n'
+        'اختر الميزة التي ترغب في إرسال إشعار فوري بها لجميع مستخدمي البوت مع زر مباشر لفتحها:';
+    await ctx.editMessageText(msg, parseMode: ParseMode.markdown, replyMarkup: kb);
+  });
+
+  bot.callbackQuery(RegExp(r'^feat_send:(.+)'), (ctx) async {
+    final userId = ctx.from?.id;
+    if (userId == null) return;
+    final superAdminId = await FirebaseDb.getSuperAdmin();
+    if (userId != superAdminId) return;
+    await ctx.answerCallbackQuery(text: 'جاري إذاعة الميزة لجميع المستخدمين...', showAlert: false);
+
+    final key = ctx.callbackQuery!.data!.replaceFirst('feat_send:', '');
+    final featName = FirebaseDb.featureDisplayNames[key] ?? key;
+
+    String actionCallback = 'show_departments';
+    if (key == 'tables') actionCallback = 'table_dash';
+    if (key == 'miko') actionCallback = 'miko_coming_soon';
+    if (key == 'smart_search') actionCallback = 'smart_search_beta';
+    if (key == 'student_tools') actionCallback = 'student_tools_beta';
+    if (key == 'contribute') actionCallback = 'req_contribute';
+    if (key == 'contact_admin') actionCallback = 'contact_admin';
+
+    final userIds = await FirebaseDb.getAllUsers();
+    int count = 0;
+
+    final broadcastMsg = '🌟 *ميزة جديدة متاحة الآن في البوت!*\n\n'
+        'أهلاً بك عزيزي الطالب،\n'
+        'يسر إدارة الفريق إعلامك بتوفير ميزة:\n'
+        '👉 *$featName*\n\n'
+        'يمكنك الوصول إليها واستخدامها فوراً بالضغط على الزر أدناه:';
+
+    final userKb = InlineKeyboard().row().add('🚀 تجربة الميزة الآن', actionCallback);
+
+    for (final uid in userIds) {
+      try {
+        await bot.api.sendMessage(ChatID(uid), broadcastMsg, parseMode: ParseMode.markdown, replyMarkup: userKb);
+        count++;
+      } catch (_) {}
+    }
+
+    final kb = InlineKeyboard().row().add('🔙 رجوع لإدارة الميزات', 'dash_features_manage');
+    await ctx.editMessageText('✅ *تم إرسال وإذاعة الميزة بنجاح!*\n\nتم تسليم الإشعار إلى *$count* مستخدم.', parseMode: ParseMode.markdown, replyMarkup: kb);
   });
 }
 
@@ -1235,6 +1534,8 @@ Future<InlineKeyboard> _buildAdminKeyboard(int userId, String lang) async {
 
   if (isSuperAdmin) {
     keyboard.row()
+      .add('🎛 ميزات الطلاب في /start', 'dash_features_manage');
+    keyboard.row()
       .add('👑 إضافة أدمن جديد', 'dash_add_admin')
       .add('🚫 مسح مساهم', 'dash_rm_contrib');
     keyboard.row()
@@ -1243,6 +1544,65 @@ Future<InlineKeyboard> _buildAdminKeyboard(int userId, String lang) async {
       .add(S.get('btn_transfer_owner', lang), 'dash_transfer_owner');
   }
 
+  keyboard.row()
+    .add(S.get('btn_generate_code', lang), 'dash_gen_code')
+    .add(S.get('btn_edit_files', lang), 'edit_start');
   keyboard.row().add(S.get('btn_student_mode', lang), 'dash_student');
   return keyboard;
+}
+
+Future<void> _showFeaturesManagementScreen(Context ctx) async {
+  final current = await FirebaseDb.getFeaturesConfig();
+  final kb = InlineKeyboard();
+
+  final buffer = StringBuffer('🎛 *إدارة ظهور الميزات للمستخدمين في /start*\n\n');
+  buffer.writeln('يمكنك التحكم في الميزات التي تظهر للطلاب في القائمة الرئيسية عند الضغط على start:\n');
+
+  FirebaseDb.featureDisplayNames.forEach((key, name) {
+    final enabled = current[key] ?? true;
+    final statusIcon = enabled ? '✅ مفعّلة' : '❌ معطّلة';
+    final toggleLabel = enabled ? 'تعطيل 🔴' : 'تفعيل 🟢';
+    buffer.writeln('• $name: *$statusIcon*');
+    kb.row().add('$name [$toggleLabel]', 'feat_tog:$key');
+  });
+
+  kb.row().add('📢 إذاعة ميزة لجميع الطلاب (Broadcast)', 'feat_broadcast_menu');
+  kb.row().add('🔙 رجوع للوحة الإدارة', 'admin_dash');
+
+  await ctx.editMessageText(buffer.toString(), parseMode: ParseMode.markdown, replyMarkup: kb);
+}
+
+// ── Helper: generate & show authorization code ──────────────────────────
+
+Future<void> _generateAndShowAuthCode(
+    Context ctx, int userId, String lang, int uses, int minutes) async {
+  final code = (100000 + Random().nextInt(900000)).toString();
+  await FirebaseDb.setAuthCodeWithLimits(
+    code: code,
+    maxUses: uses,
+    validity: Duration(minutes: minutes),
+    createdBy: userId,
+  );
+
+  String durationStr = minutes < 60 ? '$minutes دقيقة' : '${minutes ~/ 60} ساعة';
+  if (lang == 'en') {
+    durationStr = minutes < 60 ? '$minutes minutes' : '${minutes ~/ 60} hours';
+  }
+
+  final kb = InlineKeyboard()
+    .row().add('🔄 توليد كود آخر', 'dash_gen_code')
+    .row().add(S.get('btn_revoke_code', lang), 'gen_code_revoke')
+    .row().add(S.get('btn_back_admin', lang), 'admin_dash');
+
+  final msg = S.get('gen_code_detailed_result', lang, {
+    'code': code,
+    'uses': '$uses',
+    'duration': durationStr,
+  });
+
+  if (ctx.callbackQuery != null) {
+    await ctx.editMessageText(msg, parseMode: ParseMode.markdown, replyMarkup: kb);
+  } else {
+    await ctx.reply(msg, parseMode: ParseMode.markdown, replyMarkup: kb);
+  }
 }

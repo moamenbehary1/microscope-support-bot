@@ -278,7 +278,15 @@ class S {
       'ar': '❌ فشل الحفظ في قاعدة البيانات.',
       'en': '❌ Failed to save to database.',
     },
-    'no_permission_upload': {
+        'not_contributor_prompt': {
+      'ar': '⚠️ *ليس لديك صلاحية مساهم حالياً.*\n\nهل ترغب بالانضمام إلى فريق المساهمين ورفع المواد والملخصات؟ اضغط على الزر أدناه لإرسال طلبك للإدارة:',
+      'en': '⚠️ *You do not have contributor permissions currently.*\n\nWould you like to join the contributors team and upload materials? Tap the button below to send your request:',
+    },
+    'btn_request_contribute': {
+      'ar': '🤝 طلب الانضمام كمساهم',
+      'en': '🤝 Request to Become a Contributor',
+    },
+'no_permission_upload': {
       'ar': '❌ ليس لديك صلاحية لرفع الملفات.',
       'en': '❌ You do not have permission to upload files.',
     },
@@ -518,7 +526,175 @@ class S {
       'ar': 'تم تسجيل الأدمن الأعلى.',
       'en': 'Super Admin registered.',
     },
-  };
+    // ── File Edit / Management ─────────────────────────────────────────
+    'btn_edit_files': {
+      'ar': '✏️ تعديل الملفات (Edit)',
+      'en': '✏️ Edit Files',
+    },
+    'edit_file_actions_title': {
+      'ar': '📄 *{name}*\n📂 {track} › {subject} › {type}\n\nاختر الإجراء المطلوب:',
+      'en': '📄 *{name}*\n📂 {track} › {subject} › {type}\n\nChoose an action:',
+    },
+    'edit_select_track': {
+      'ar': '✏️ *تعديل ملف*\n\nاختر القسم (المسار):',
+      'en': '✏️ *Edit File*\n\nSelect a Department (Track):',
+    },
+    'edit_select_subject': {
+      'ar': 'اختر المادة:',
+      'en': 'Select a Subject:',
+    },
+    'edit_select_type': {
+      'ar': 'اختر النوع (فئة الملفات):',
+      'en': 'Select a Category:',
+    },
+    'edit_select_file': {
+      'ar': 'اختر الملف المراد تعديله:',
+      'en': 'Select the file to edit:',
+    },
+    'edit_action_prompt': {
+      'ar': '📄 *الملف:* {name}\n\nاختر الإجراء المطلوب:',
+      'en': '📄 *File:* {name}\n\nChoose an action:',
+    },
+    'btn_rename': {
+      'ar': '✏️ تغيير الاسم (Rename)',
+      'en': '✏️ Rename',
+    },
+    'btn_delete_file': {
+      'ar': '🗑️ حذف (Delete)',
+      'en': '🗑️ Delete',
+    },
+    'btn_move_file': {
+      'ar': '📦 نقل (Move)',
+      'en': '📦 Move',
+    },
+    'edit_auth_prompt': {
+      'ar': '🔐 أدخل الكود المكون من 6 أرقام الذي أعطاك إياه الأدمن للمتابعة:',
+      'en': '🔐 Enter the 6-digit authorization code provided by the admin:',
+    },
+    'edit_auth_invalid': {
+      'ar': '❌ الكود غير صحيح. تأكد من الكود وحاول مرة أخرى.',
+      'en': '❌ Invalid code. Please check and try again.',
+    },
+    'edit_rename_prompt': {
+      'ar': 'اكتب الاسم الجديد للملف:',
+      'en': 'Type the new file name:',
+    },
+    'edit_rename_done': {
+      'ar': '✅ تم تغيير اسم الملف إلى *{name}* بنجاح.',
+      'en': '✅ File renamed to *{name}* successfully.',
+    },
+    'edit_delete_confirm': {
+      'ar': '⚠️ هل أنت متأكد من رغبتك في حذف الملف *{name}*؟\n\nلا يمكن التراجع عن هذا الإجراء.',
+      'en': '⚠️ Are you sure you want to delete *{name}*?\n\nThis action cannot be undone.',
+    },
+    'edit_delete_done': {
+      'ar': '✅ تم حذف الملف بنجاح.',
+      'en': '✅ File deleted successfully.',
+    },
+    'edit_move_select_track': {
+      'ar': '📦 *نقل الملف*\n\nاختر القسم (المسار) الجديد:',
+      'en': '📦 *Move File*\n\nSelect the new Department (Track):',
+    },
+    'edit_move_select_subject': {
+      'ar': 'اختر المادة الجديدة:',
+      'en': 'Select the new Subject:',
+    },
+    'edit_move_select_type': {
+      'ar': 'اختر النوع/الفئة الجديدة:',
+      'en': 'Select the new Category:',
+    },
+    'edit_move_name_prompt': {
+      'ar': '💡 هل تريد تغيير اسم الملف عند النقل؟\nاكتب الاسم الجديد أو اضغط "الاحتفاظ بالاسم الحالي":',
+      'en': '💡 Do you want to rename the file while moving?\nType a new name or tap "Keep Original Name":',
+    },
+    'btn_keep_name': {
+      'ar': '✔️ الاحتفاظ بالاسم الحالي',
+      'en': '✔️ Keep Original Name',
+    },
+    'edit_move_done': {
+      'ar': '✅ تم نقل الملف *{name}* إلى {track} ← {subject} ← {type} بنجاح.',
+      'en': '✅ File *{name}* moved to {track} → {subject} → {type} successfully.',
+    },
+    'edit_move_failed': {
+      'ar': '❌ فشل نقل الملف. يرجى المحاولة مرة أخرى.',
+      'en': '❌ Failed to move the file. Please try again.',
+    },
+    'btn_generate_code': {
+      'ar': '🔑 توليد كود تصريح للمساهمين',
+      'en': '🔑 Generate Auth Code',
+    },
+    'gen_code_result': {
+      'ar': '🔑 *كود تصريح المساهمين:*\n\n`{code}`\n\n⏳ شارك هذا الكود مع المساهم للسماح له بتعديل أو حذف أو نقل الملفات.\n_(الكود يُلغى وينتهي عند توليد كود جديد)_',
+      'en': '🔑 *Contributor Authorization Code:*\n\n`{code}`\n\n⏳ Share this code with the contributor to allow file edit/delete/move operations.\n_(Code is replaced when a new one is generated)_',
+    },
+    'gen_code_menu_title': {
+      'ar': '🔑 *توليد كود تصريح للمساهمين*\n\nاختر طريقة إنشاء الكود:',
+      'en': '🔑 *Generate Contributor Auth Code*\n\nChoose an option:',
+    },
+    'btn_gen_fast': {
+      'ar': '⚡ توليد سريع (مرة واحدة — 30 دقيقة)',
+      'en': '⚡ Quick (1 use — 30 min)',
+    },
+    'btn_gen_custom': {
+      'ar': '⚙️ تخصيص عدد المرات والوقت',
+      'en': '⚙️ Custom Uses & Time',
+    },
+    'btn_revoke_code': {
+      'ar': '❌ إبطال الكود الحالي فوراً',
+      'en': '❌ Revoke Current Code',
+    },
+    'code_revoked_success': {
+      'ar': '✅ تم إبطال كود التصريح الحالي بنجاح. لا يمكن لأحد استخدامه الآن.',
+      'en': '✅ Current authorization code has been revoked.',
+    },
+    'gen_custom_uses_prompt': {
+      'ar': '🎯 *اختر عدد مرات الاستخدام المسموح بها للكود:*',
+      'en': '🎯 *Select maximum allowed uses for the code:*',
+    },
+    'gen_custom_time_prompt': {
+      'ar': '⏳ *اختر مدة صلاحية الكود (الوقت المتبقي حتى ينتهي):*',
+      'en': '⏳ *Select code validity duration:*',
+    },
+    'gen_code_detailed_result': {
+      'ar': '🔑 *كود تصريح المساهمين الجديد:*\n\n`{code}`\n\n🎯 *مرات الاستخدام المتاحة:* {uses} مرة\n⏳ *صلاحية الكود:* {duration}\n\n💡 بمجرد استخدام الكود بعدد المرات المحددة أو انقضاء وقته سينتهي تلقائيًا.',
+      'en': '🔑 *New Contributor Auth Code:*\n\n`{code}`\n\n🎯 *Max Uses:* {uses}\n⏳ *Validity:* {duration}\n\n💡 Once consumed or expired, the code will be invalidated automatically.',
+    },
+    'edit_auth_expired_time': {
+      'ar': '⏳ انتهت صلاحية هذا الكود زمنيًا. اطلب كودًا جديدًا من الأدمن.',
+      'en': '⏳ This authorization code has expired. Please request a new code from the admin.',
+    },
+    'edit_auth_expired_uses': {
+      'ar': '❌ تم استهلاك هذا الكود بالكامل واستخدامه مسبقًا. اطلب كودًا جديدًا من الأدمن.',
+      'en': '❌ This authorization code has reached its maximum uses. Please request a new code from the admin.',
+    },
+    'edit_rename_confirm': {
+      'ar': '📝 *تأكيد تغيير اسم الملف*\n\n📄 الاسم الحالي: *{oldName}*\n✏️ الاسم الجديد: *{newName}*\n\nاضغط "حفظ" لتأكيد التغيير:',
+      'en': '📝 *Confirm Rename*\n\n📄 Current Name: *{oldName}*\n✏️ New Name: *{newName}*\n\nClick "Save" to confirm:',
+    },
+    'btn_save_done': {
+      'ar': '💾 حفظ (Done/Save)',
+      'en': '💾 Save / Done',
+    },
+    'edit_action_cancelled': {
+      'ar': '❌ تم إلغاء العملية.',
+      'en': '❌ Action cancelled.',
+    },
+    'edit_move_confirm': {
+      'ar': '📦 *تأكيد نقل الملف*\n\n📄 اسم الملف: *{name}*\n📁 المسار الأصلي: {oldTrack} ← {oldSubject} ← {oldType}\n📍 الوجهة الجديدة: {newTrack} ← {newSubject} ← {newType}\n\nاضغط "حفظ ونقل" لإتمام العملية:',
+      'en': '📦 *Confirm File Move*\n\n📄 File: *{name}*\n📁 Original: {oldTrack} → {oldSubject} → {oldType}\n📍 New: {newTrack} → {newSubject} → {newType}\n\nClick "Save & Move" to finish:',
+    },
+    'btn_save_move': {
+      'ar': '💾 حفظ ونقل (Done/Save)',
+      'en': '💾 Save & Move',
+    },
+    'btn_change_name': {
+      'ar': '✏️ كتابة اسم آخر',
+      'en': '✏️ Type Another Name',
+    },
+    'btn_back_admin': {
+      'ar': '🔙 لوحة الإدارة',
+      'en': '🔙 Admin Dashboard',
+    },  };
 
   /// Returns the localized string for [key] in [lang].
   /// Supports {placeholder} substitution via [params].

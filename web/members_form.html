@@ -1,30 +1,30 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MICROSCOPE TEAM — تسجيل بيانات الأعضاء</title>
+<title>MICROSCOPE TEAM — Member Registration</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Cairo:wght@600;800&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg-deep:#000000;
+  --bg-deep:#05070f;
   --bg:#070a14;
-  --surface:rgba(15,23,42,0.65);
+  --surface:rgba(15,23,42,0.75);
   --primary:#3b82f6;
   --accent:#0ea5e9;
-  --border-blue:rgba(59,130,246,0.3);
+  --border-blue:rgba(59,130,246,0.25);
   --text:#ffffff;
   --dim:#94a3b8;
-  --muted:#475569;
+  --muted:#64748b;
   --r:20px;
-  --font-ar:'Cairo',sans-serif;
-  --font-en:'Outfit',sans-serif;
+  --font-en:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-display:'Outfit',sans-serif;
 }
 html{scroll-behavior:smooth}
 body{
-  font-family:var(--font-ar);
+  font-family:var(--font-en);
   background:var(--bg-deep);
   color:var(--text);
   min-height:100vh;
@@ -32,9 +32,11 @@ body{
   flex-direction:column;
   align-items:center;
   position:relative;
-  padding: 60px 20px;
+  padding: 50px 20px;
   overflow-x:hidden;
 }
+
+/* Background canvas */
 .bg-canvas{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:var(--bg);}
 .bg-orb{position:absolute;border-radius:50%;filter:blur(140px);opacity:0.25;animation:floatOrb 18s ease-in-out infinite}
 .orb1{width:700px;height:700px;background:#3b82f6;top:-250px;right:-200px}
@@ -56,31 +58,30 @@ body{
   position: relative;
   z-index: 2;
   text-align: center;
-  margin-bottom: 50px;
-  animation: fadeInDown 1s ease-out;
+  margin-bottom: 40px;
+  animation: fadeInDown 0.8s ease-out;
 }
 @keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-30px); }
+  from { opacity: 0; transform: translateY(-24px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .brand-title {
-  font-family: var(--font-en);
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 800;
   letter-spacing: 2px;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   background: linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #38bdf8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-transform: uppercase;
-  filter: drop-shadow(0 0 30px rgba(59,130,246,0.5));
 }
 .subtitle {
   color: var(--dim);
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 500;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
 .form-card {
@@ -89,32 +90,32 @@ body{
   background:var(--surface);
   border:1px solid var(--border-blue);
   border-radius:var(--r);
-  padding:50px;
+  padding:42px;
   width:100%;
-  max-width:850px;
-  box-shadow:0 30px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.15);
-  backdrop-filter:blur(30px);
-  -webkit-backdrop-filter:blur(30px);
-  animation:fadeInUp 1s ease-out 0.2s both;
+  max-width:820px;
+  box-shadow:0 24px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  animation:fadeInUp 0.8s ease-out 0.15s both;
 }
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(40px); }
+  from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .form-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
   background:linear-gradient(90deg,transparent,var(--primary),var(--accent),transparent);
   border-radius: var(--r) var(--r) 0 0;
 }
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 25px;
+  gap: 22px;
 }
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 .form-group.full-width {
   grid-column: 1 / -1;
@@ -122,126 +123,68 @@ body{
 label {
   font-weight: 600;
   color: #e2e8f0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 label .req {
   color: #f43f5e;
   font-weight: bold;
 }
 input, select {
-  background:rgba(0,0,0,0.4);
-  border:1px solid rgba(255,255,255,0.1);
-  border-radius:16px;
-  padding:18px 22px;
+  background:rgba(0,0,0,0.45);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:14px;
+  padding:14px 18px;
   color:var(--text);
-  font-family:var(--font-ar);
-  font-size:1.1rem;
+  font-family:inherit;
+  font-size:1rem;
   outline:none;
-  transition:all 0.3s cubic-bezier(0.16,1,0.3,1);
-  box-shadow:inset 0 2px 4px rgba(0,0,0,0.3);
-}
-input[type="date"] {
-  font-family: var(--font-en);
-}
-input:focus, select:focus {
-  border-color:var(--accent);
-  background:rgba(0,0,0,0.6);
-  box-shadow:0 0 0 4px rgba(14,165,233,0.2), inset 0 2px 4px rgba(0,0,0,0.3);
-  transform:translateY(-2px);
+  transition:border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,0.25);
+  width: 100%;
 }
 select option {
   background: #0f172a;
   color: #ffffff;
 }
 input::placeholder {
-  color: var(--muted);
+  color: #64748b;
 }
-input[type="file"] {
-  padding: 12px;
-  cursor: pointer;
-}
-input[type="file"]::file-selector-button {
-  background: rgba(59,130,246,0.2);
-  border: 1px solid rgba(59,130,246,0.5);
-  color: #fff;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: var(--font-ar);
-  margin-left: 15px;
-}
-input[type="file"]::file-selector-button:hover {
-  background: rgba(59,130,246,0.4);
-}
-
-.btn-submit {
-  grid-column: 1 / -1;
-  margin-top: 30px;
-  padding:20px 32px;
-  border-radius:20px;
-  background:linear-gradient(135deg,var(--primary),var(--accent));
-  color:#fff;
-  border:none;
-  font-family:var(--font-ar);
-  font-size:1.3rem;
-  font-weight:900;
-  cursor:pointer;
-  transition:all 0.4s cubic-bezier(0.16,1,0.3,1);
-  box-shadow:0 15px 40px rgba(59,130,246,0.5), inset 0 2px 5px rgba(255,255,255,0.2);
-  position:relative;
-  overflow:hidden;
-  text-transform:uppercase;
-  letter-spacing:0.05em;
-}
-.btn-submit::after {
-  content: '';
-  position: absolute;
-  top: 0; left: -100%;
-  width: 50%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  transition: all 0.6s;
-}
-.btn-submit:hover {
-  transform:translateY(-5px) scale(1.02);
-  box-shadow:0 20px 50px rgba(14,165,233,0.6), inset 0 2px 5px rgba(255,255,255,0.3);
-}
-.btn-submit:hover::after {
-  left: 200%;
+input:focus, select:focus {
+  border-color:var(--accent);
+  background:rgba(0,0,0,0.65);
+  box-shadow:0 0 0 3px rgba(14,165,233,0.2), inset 0 2px 4px rgba(0,0,0,0.3);
 }
 
 /* File Dropzone */
 .file-dropzone {
-  border: 2px dashed rgba(59,130,246,0.4);
-  border-radius: 18px;
-  padding: 24px 16px;
+  border: 2px dashed rgba(59,130,246,0.35);
+  border-radius: 16px;
+  padding: 24px 20px;
   text-align: center;
-  background: rgba(15,23,42,0.4);
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
+  background: rgba(0,0,0,0.25);
+  transition: all 0.2s ease;
 }
 .file-dropzone:hover {
   border-color: var(--accent);
-  background: rgba(14,165,233,0.08);
+  background: rgba(14,165,233,0.06);
 }
 .upload-icon {
-  font-size: 2.4rem;
+  font-size: 2.2rem;
   display: block;
   margin-bottom: 8px;
-  filter: drop-shadow(0 0 10px rgba(14,165,233,0.5));
 }
 .upload-text {
-  font-weight: 700;
-  color: #e2e8f0;
+  font-weight: 600;
   font-size: 1rem;
+  color: #e2e8f0;
   margin-bottom: 4px;
 }
 .upload-hint {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--dim);
 }
 .upload-preview-box {
@@ -251,155 +194,214 @@ input[type="file"]::file-selector-button:hover {
   gap: 12px;
 }
 .upload-preview-box img {
-  width: 90px;
-  height: 90px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid var(--accent);
-  box-shadow: 0 0 20px rgba(14,165,233,0.5);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.5);
 }
 .btn-change-photo {
   background: rgba(255,255,255,0.08);
-  border: 1px solid var(--border-blue);
-  color: #e0f2fe;
-  padding: 6px 14px;
-  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 8px;
   font-size: 0.85rem;
-  font-family: var(--font-ar);
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-change-photo:hover {
+  background: rgba(255,255,255,0.16);
 }
 
-@media(max-width: 768px) {
-  body {
-    padding: 30px 12px 60px;
-  }
-  .form-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-  .form-card {
-    padding: 24px 16px;
-    border-radius: 18px;
-  }
-  .brand-title {
-    font-size: clamp(2rem, 7vw, 3rem);
-  }
-  .subtitle {
-    font-size: 1rem;
-  }
-  input, select {
-    font-size: 16px !important; /* Prevents auto zoom on iOS */
-    padding: 14px 16px;
-    border-radius: 12px;
-  }
-  .btn-submit {
-    padding: 16px 20px;
-    font-size: 1.15rem;
-    border-radius: 14px;
-  }
-  .toast-bar {
-    right: 12px;
-    left: 12px;
-    bottom: 20px;
-    justify-content: center;
-    font-size: 0.95rem;
-    padding: 12px 16px;
-  }
-}
-
-/* Toast */
-.toast-bar{
-  position:fixed;bottom:30px;right:30px;
-  background:rgba(15,23,42,0.95);
-  border:1px solid rgba(14,165,233,0.4);
-  backdrop-filter:blur(16px);
-  border-radius:16px;
-  padding:16px 24px;
-  color:#f8fafc;
-  font-weight:700;
-  font-size:1.05rem;
-  z-index:9999;
-  display:flex;align-items:center;gap:12px;
-  transform:translateY(100px);opacity:0;
-  transition:all 0.4s cubic-bezier(0.16,1,0.3,1);
-  box-shadow:0 20px 50px rgba(0,0,0,0.6);
-}
-.toast-bar.show{transform:translateY(0);opacity:1}
-
-/* ── Special Feature: National ID Intel Badge ── */
+/* National ID intel badge */
 .nid-intel-badge {
-  display: none; align-items: center; gap: 8px;
-  background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(14, 165, 233, 0.35);
-  border-radius: 12px; padding: 10px 14px; font-size: 0.85rem; color: #bae6fd;
-  margin-top: 6px; animation: fadeIn .3s ease;
+  display: none;
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(14,165,233,0.1);
+  border: 1px solid rgba(14,165,233,0.25);
+  color: #7dd3fc;
+  margin-top: 6px;
+  line-height: 1.4;
 }
-.nid-intel-badge.show { display: flex; }
 .nid-intel-badge.invalid {
-  background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.35); color: #fca5a5;
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.25);
+  color: #fca5a5;
 }
 
-/* ── Special Feature: Digital Membership ID Card ── */
+/* Submit button */
+.btn-submit {
+  grid-column: 1 / -1;
+  margin-top: 24px;
+  padding: 16px 28px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+  border: none;
+  font-family: inherit;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: 0 8px 24px rgba(14,165,233,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(14,165,233,0.5);
+}
+.btn-submit:active {
+  transform: translateY(0);
+}
+.btn-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Digital Membership ID Card Overlay ── */
 .digital-id-container {
-  perspective: 1000px; margin: 25px auto; max-width: 440px; width: 100%;
+  margin: 24px auto 16px auto;
+  max-width: 580px;
+  width: 100%;
 }
 .digital-id-card {
-  background: linear-gradient(135deg, #091322 0%, #0d1f38 60%, #152e4d 100%);
-  border: 2px solid rgba(56, 189, 248, 0.4); border-radius: 24px; padding: 24px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 35px rgba(14,165,233,0.25);
-  position: relative; overflow: hidden; text-align: right; direction: rtl;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2048 / 1144;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(14,165,233,0.25);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  user-select: none;
 }
-.digital-id-card::before {
-  content: ''; position: absolute; inset: 0;
-  background: radial-gradient(circle at 80% 20%, rgba(56, 189, 248, 0.15) 0%, transparent 60%);
+.digital-id-card .card-canvas-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+.digital-id-card .card-content-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   pointer-events: none;
 }
-.digital-id-card::after {
-  content: 'MICROSCOPE'; position: absolute; right: -20px; bottom: 10px;
-  font-family: var(--font-en); font-size: 54px; font-weight: 900;
-  color: rgba(255, 255, 255, 0.03); letter-spacing: 4px; pointer-events: none;
+/* QR Code Container (Left side) */
+.card-qr-box {
+  position: absolute;
+  top: 34.96%;
+  left: 5.66%;
+  width: 18.31%;
+  height: 32.78%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3%;
+  border-radius: 12px;
 }
-.id-card-top {
-  display: flex; align-items: center; justify-content: space-between;
-  border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px; margin-bottom: 16px;
+.card-qr-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
-.id-brand { display: flex; align-items: center; gap: 8px; }
-.id-logo { font-size: 26px; }
-.id-brand-title { font-family: var(--font-en); font-weight: 800; font-size: 15px; color: #fff; letter-spacing: 1px; }
-.id-brand-sub { font-size: 10px; color: #38bdf8; font-weight: 700; }
-.id-chip {
-  width: 36px; height: 28px; border-radius: 6px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  box-shadow: inset 0 1px 2px rgba(255,255,255,0.4);
+/* Center Member Information */
+.card-center-info {
+  position: absolute;
+  top: 36.5%;
+  left: 25.5%;
+  right: 27.5%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
-.id-card-body {
-  display: flex; gap: 16px; align-items: center; margin-bottom: 16px;
+.card-center-name-ar {
+  font-family: 'Cairo', sans-serif;
+  font-size: clamp(13px, 2.1vw, 22px);
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
-.id-avatar-wrap {
-  width: 90px; height: 90px; border-radius: 18px; border: 2px solid #38bdf8;
-  overflow: hidden; flex-shrink: 0; box-shadow: 0 0 20px rgba(56,189,248,0.4);
+.card-center-name-en {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(9px, 1.3vw, 14px);
+  font-weight: 700;
+  color: #cbd5e1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
-.id-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
-.id-member-info { flex: 1; }
-.id-name-ar { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 2px; }
-.id-name-en { font-family: var(--font-en); font-size: 13px; color: #94a3b8; font-weight: 600; margin-bottom: 8px; }
-.id-badge-row { display: flex; gap: 6px; flex-wrap: wrap; }
-.id-badge {
-  background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35);
-  color: #7dd3fc; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;
+.card-center-role-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 12px;
+  border-radius: 7px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fde047;
+  font-size: clamp(8px, 1.2vw, 13px);
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
 }
-.id-badge.role {
-  background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.35); color: #fde68a;
+/* Member Photo (Right side frame) */
+.card-photo-box {
+  position: absolute;
+  top: 34.7%;
+  left: 73.83%;
+  width: 20.36%;
+  height: 33.04%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  background: #0f172a;
 }
-.id-card-foot {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;
+.card-photo-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
-.id-code-lbl { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; }
-.id-code-val { font-family: monospace; font-size: 13px; color: #38bdf8; font-weight: 700; letter-spacing: 1px; }
-.id-barcode { display: flex; gap: 2px; height: 26px; align-items: flex-end; }
-.bar-line { width: 2px; height: 100%; background: #94a3b8; }
-.bar-line.thin { width: 1px; }
-.bar-line.thick { width: 3px; }
+/* Member Code (Bottom right under MEMBER CODE) */
+.card-bottom-code {
+  position: absolute;
+  top: 84.8%;
+  right: 6.2%;
+  font-family: monospace;
+  font-size: clamp(10px, 1.45vw, 15px);
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+}
+
+@media(max-width: 680px) {
+  .form-card { padding: 26px 20px; }
+  .form-grid { grid-template-columns: 1fr; gap: 18px; }
+  .brand-title { font-size: 2rem; }
+  .subtitle { font-size: 1rem; }
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -414,211 +416,188 @@ input[type="file"]::file-selector-button:hover {
 
 <div class="header-container">
   <h1 class="brand-title">MICROSCOPE TEAM</h1>
-  <p class="subtitle">استمارة تسجيل بيانات أعضاء الفريق</p>
+  <p class="subtitle">Official Member Registration Form</p>
 </div>
 
+<!-- ─── Member Registration Form ─── -->
 <form class="form-card form-grid" id="memberForm">
   
   <div class="form-group full-width">
-    <label for="picture">صورة شخصية (ارفع صورتك) <span class="req">*</span></label>
+    <label for="picture">Profile Photo <span class="req">*</span></label>
     <div class="file-dropzone" onclick="document.getElementById('picture').click()">
       <input type="file" id="picture" accept="image/*" required style="display:none" onchange="previewUpload(this)">
       <div id="upload-placeholder" class="upload-placeholder">
-        <span class="upload-icon">📸</span>
-        <div class="upload-text">اضغط هنا لاختيار صورة من جهازك أو التقاطها</div>
-        <div class="upload-hint">PNG, JPG, JPEG (صورة واضحة للوجه)</div>
+        <span class="upload-icon">📷</span>
+        <div class="upload-text">Click here to upload your profile photo</div>
+        <div class="upload-hint">PNG, JPG, JPEG (Clear front-facing photo)</div>
       </div>
       <div id="upload-preview-box" class="upload-preview-box" style="display:none">
-        <img id="upload-preview-img" src="" alt="معاينة الصورة">
-        <button type="button" class="btn-change-photo" onclick="event.stopPropagation();document.getElementById('picture').click()">تغيير الصورة 🔄</button>
+        <img id="upload-preview-img" src="" alt="Photo Preview">
+        <button type="button" class="btn-change-photo" onclick="event.stopPropagation();document.getElementById('picture').click()">Change Photo 🔄</button>
       </div>
     </div>
   </div>
 
   <div class="form-group full-width">
-    <label for="fullName">الاسم الرباعي (باللغة العربية) <span class="req">*</span></label>
-    <input type="text" id="fullName" placeholder="الاسم الرباعي باللغة العربية" required minlength="10">
+    <label for="fullName">Full Name (Arabic) <span class="req">*</span></label>
+    <input type="text" id="fullName" placeholder="Enter your full Arabic name" required minlength="10" dir="rtl" style="font-family:'Cairo',sans-serif">
   </div>
 
   <div class="form-group full-width">
-    <label for="fullNameEn">الاسم باللغة الإنجليزية (Full Name in English) <span class="req">*</span></label>
-    <input type="text" id="fullNameEn" placeholder="e.g. Ahmed Mohamed Ali" required minlength="5" style="direction: ltr; text-align: left;">
+    <label for="fullNameEn">Full Name (English) <span class="req">*</span></label>
+    <input type="text" id="fullNameEn" placeholder="e.g. Ahmed Mohamed Ali" required minlength="5">
   </div>
 
   <div class="form-group">
-    <label for="nationalId">الرقم القومي <span class="req">*</span></label>
-    <input type="text" id="nationalId" placeholder="14 رقم" pattern="[0-9]{14}" required oninput="onNationalIdInput(this.value)">
+    <label for="nationalId">Egyptian National ID <span class="req">*</span></label>
+    <input type="text" id="nationalId" placeholder="14 digits" pattern="[0-9]{14}" required oninput="onNationalIdInput(this.value)">
     <div id="nidIntelBox" class="nid-intel-badge"></div>
   </div>
   
   <div class="form-group">
-    <label for="birthDate">تاريخ الميلاد <span class="req">*</span></label>
+    <label for="birthDate">Birth Date <span class="req">*</span></label>
     <input type="date" id="birthDate" required>
   </div>
 
   <div class="form-group">
-    <label for="committee">اللجنة (Committee) <span class="req">*</span></label>
+    <label for="committee">Committee <span class="req">*</span></label>
     <select id="committee" required>
-      <option value="" disabled selected>اختر لجنتك...</option>
+      <option value="" disabled selected>Select your committee...</option>
       <option value="HR">HR</option>
       <option value="PR">PR</option>
       <option value="PM">PM</option>
       <option value="Scientific">Scientific</option>
       <option value="Social Media">Social Media</option>
-      <option value="Charity">خيرية (Charity)</option>
+      <option value="Charity">Charity</option>
     </select>
   </div>
 
   <div class="form-group">
-    <label for="role">المنصب في اللجنة <span class="req">*</span></label>
+    <label for="role">Role in Team / Committee <span class="req">*</span></label>
     <select id="role" required onchange="toggleHeadCode()">
-      <option value="Member" selected>عضو (Member)</option>
-      <option value="Head">رئيس لجنة (Head)</option>
+      <option value="Member" selected>Member</option>
+      <option value="CommitteeVice">Committee Vice</option>
+      <option value="CommitteeHead">Committee Head</option>
+      <option value="TeamVice">Team Vice</option>
+      <option value="TeamLeader">Team Leader</option>
     </select>
   </div>
 
-  <div class="form-group" id="headCodeGroup" style="display: none;">
-    <label for="headCode">كود التحقق (للمشرفين فقط) <span class="req">*</span></label>
-    <input type="password" id="headCode" placeholder="أدخل الكود">
+  <div class="form-group full-width" id="headCodeGroup" style="display: none;">
+    <label for="headCode">Security Passcode for Role <span class="req">*</span></label>
+    <input type="password" id="headCode" placeholder="Enter role security passcode" autocomplete="off">
+    <small id="headCodeHint" style="color:var(--dim);font-size:0.85rem;margin-top:2px"></small>
   </div>
   
-  <script>
-    function toggleHeadCode() {
-      const role = document.getElementById('role').value;
-      const codeGroup = document.getElementById('headCodeGroup');
-      const codeInput = document.getElementById('headCode');
-      if (role === 'Head') {
-        codeGroup.style.display = 'flex';
-        codeInput.required = true;
-      } else {
-        codeGroup.style.display = 'none';
-        codeInput.required = false;
-        codeInput.value = '';
-      }
-    }
-  </script>
-
   <div class="form-group">
-    <label for="collegeYear">الفرقة الدراسية <span class="req">*</span></label>
+    <label for="collegeYear">Academic Year <span class="req">*</span></label>
     <select id="collegeYear" required>
-      <option value="" disabled selected>اختر الفرقة...</option>
-      <option value="الفرقة الأولى">الفرقة الأولى</option>
-      <option value="الفرقة الثانية">الفرقة الثانية</option>
-      <option value="الفرقة الثالثة">الفرقة الثالثة</option>
-      <option value="الفرقة الرابعة">الفرقة الرابعة</option>
-      <option value="خريج">خريج</option>
+      <option value="" disabled selected>Select your academic year...</option>
+      <option value="First Year">First Year</option>
+      <option value="Second Year">Second Year</option>
+      <option value="Third Year">Third Year</option>
+      <option value="Fourth Year">Fourth Year</option>
+      <option value="Graduate">Graduate</option>
     </select>
   </div>
 
   <div class="form-group">
-    <label for="whatsapp">رقم الواتساب <span class="req">*</span></label>
+    <label for="whatsapp">WhatsApp Number <span class="req">*</span></label>
     <input type="tel" id="whatsapp" placeholder="01xxxxxxxxx" required>
   </div>
 
   <div class="form-group">
-    <label for="phone">رقم آخر إن وجد</label>
+    <label for="phone">Secondary Phone (Optional)</label>
     <input type="tel" id="phone" placeholder="01xxxxxxxxx">
   </div>
 
   <div class="form-group full-width">
-    <label for="address">العنوان بالتفصيل <span class="req">*</span></label>
-    <input type="text" id="address" placeholder="المحافظة - المركز - الشارع" required>
+    <label for="address">Detailed Address <span class="req">*</span></label>
+    <input type="text" id="address" placeholder="Governorate - City - Street" required>
   </div>
 
   <div class="form-group">
-    <label for="email">البريد الإلكتروني <span class="req">*</span></label>
+    <label for="email">Email Address <span class="req">*</span></label>
     <input type="email" id="email" placeholder="example@gmail.com" required>
   </div>
 
   <div class="form-group">
-    <label for="facebook">لينك صفحة الفيسبوك <span class="req">*</span></label>
+    <label for="facebook">Facebook Profile Link <span class="req">*</span></label>
     <input type="url" id="facebook" placeholder="https://facebook.com/..." required>
   </div>
 
-  <button type="submit" class="btn-submit">حفظ البيانات وإرسالها 🚀</button>
+  <button type="submit" class="btn-submit">
+    <span>Save & Submit Registration</span> 🚀
+  </button>
 
 </form>
 
-<!-- ── Closed Notice ── -->
+<!-- ─── Closed Notice ─── -->
 <div id="closedNotice" class="form-card" style="display: none; text-align: center; padding: 45px 25px; max-width: 520px; margin: 30px auto; border-radius: 20px; border: 1px solid rgba(239,68,68,0.4); background: rgba(239,68,68,0.08);">
-  <div style="font-size: 3.8rem; margin-bottom: 12px;">⏸️</div>
-  <h2 style="color: #ef4444; font-size: 1.85rem; margin-bottom: 8px; font-weight: 800;">باب التسجيل مغلق حالياً</h2>
-  <p style="color: var(--dim); font-size: 1.05rem; line-height: 1.6; margin: 0 0 20px 0;">نعتذر، لقد تم إيقاف استقبال طلبات تسجيل الأعضاء الجدد مؤقتاً من قِبل إدارة المنظومة.</p>
-  <div style="font-size: 0.9rem; color: #94a3b8;">يرجى مراجعة إدارة الفريق أو متابعة القناة الرسمية لمعرفة موعد فتح التسجيل القادم.</div>
+  <div style="font-size: 3.5rem; margin-bottom: 12px;">⏸️</div>
+  <h2 style="color: #ef4444; font-size: 1.8rem; margin-bottom: 8px; font-weight: 800;">Registration Currently Closed</h2>
+  <p style="color: var(--dim); font-size: 1.05rem; line-height: 1.6; margin: 0 0 18px 0;">New member registration is temporarily closed by the administration.</p>
+  <div style="font-size: 0.9rem; color: #94a3b8;">Please contact team leadership or stay tuned to official channels for future registration announcements.</div>
 </div>
 
-<!-- ── Success Message ───────────────────────────────────────────────────── -->
-<div id="successMessage" class="form-card" style="display: none; text-align: center; padding: 40px 24px; max-width: 540px; margin: 30px auto; border-radius: 24px;">
+<!-- ─── Success Message & Digital Card ─── -->
+<div id="successMessage" class="form-card" style="display: none; text-align: center; padding: 40px 24px; max-width: 620px; margin: 30px auto; border-radius: 24px;">
   <div style="font-size: 3.5rem; margin-bottom: 8px;">🎉</div>
-  <h2 style="color: #10b981; font-size: 1.85rem; margin-bottom: 6px; font-weight: 800;">تم تسجيل عضويتك بنجاح!</h2>
-  <p style="color: var(--dim); font-size: 1rem; line-height: 1.6; margin: 0 0 20px 0;">أهلاً بك في Microscope Team! تم إنشاء كارنيه العضوية الرقمي الرسمي الخاص بك:</p>
+  <h2 style="color: #10b981; font-size: 1.85rem; margin-bottom: 6px; font-weight: 800;">Registration Successful!</h2>
+  <p style="color: var(--dim); font-size: 1rem; line-height: 1.6; margin: 0 0 20px 0;">Welcome to Microscope Team! Your official digital membership ID card has been issued:</p>
 
-  <!-- Special Feature: 3D Holographic Member ID Card -->
+  <!-- Digital Membership ID Card -->
   <div class="digital-id-container">
     <div class="digital-id-card" id="digitalIdCard">
-      <div class="id-card-top">
-        <div class="id-brand">
-          <span class="id-logo">🔬</span>
-          <div>
-            <div class="id-brand-title">MICROSCOPE TEAM</div>
-            <div class="id-brand-sub">OFFICIAL MEMBER ID CARD</div>
-          </div>
+      <!-- High-res Template Background -->
+      <img id="cardTemplateImg" class="card-canvas-bg" src="/cards/card_5_hr_member.png" alt="ID Card Template">
+      
+      <div class="card-content-overlay">
+        <!-- QR Code (Left) -->
+        <div class="card-qr-box">
+          <img id="cardQrCode" src="" alt="QR">
         </div>
-        <div class="id-chip"></div>
-      </div>
-      <div class="id-card-body">
-        <div class="id-avatar-wrap">
+
+        <!-- Center Information -->
+        <div class="card-center-info">
+          <div class="card-center-name-ar" id="cardNameAr">—</div>
+          <div class="card-center-name-en" id="cardNameEn">—</div>
+          <div class="card-center-role-pill" id="cardRolePill">Member 🔷</div>
+        </div>
+
+        <!-- Member Photo (Right) -->
+        <div class="card-photo-box">
           <img id="cardAvatar" src="" alt="Member">
         </div>
-        <div class="id-member-info">
-          <div class="id-name-ar" id="cardNameAr">—</div>
-          <div class="id-name-en" id="cardNameEn">—</div>
-          <div class="id-badge-row">
-            <span class="id-badge" id="cardCommittee">Committee</span>
-            <span class="id-badge role" id="cardRole">Member</span>
-            <span class="id-badge" id="cardGov">Gov</span>
-          </div>
-        </div>
-      </div>
-      <div class="id-card-foot">
-        <div>
-          <div class="id-code-lbl">MEMBER CODE</div>
-          <div class="id-code-val" id="cardMemberCode">MIC-2026-0000</div>
-        </div>
-        <div class="id-barcode">
-          <div class="bar-line thick"></div><div class="bar-line thin"></div><div class="bar-line"></div>
-          <div class="bar-line thick"></div><div class="bar-line"></div><div class="bar-line thin"></div>
-          <div class="bar-line thick"></div><div class="bar-line"></div><div class="bar-line thin"></div>
-          <div class="bar-line thick"></div>
-        </div>
+
+        <!-- Member Code (Bottom Right) -->
+        <div class="card-bottom-code" id="cardMemberCode">MIC-2026-0000</div>
       </div>
     </div>
   </div>
 
-  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
-    <button type="button" class="btn-submit" onclick="downloadIdCard()" style="margin-top:0;padding:12px 24px;font-size:1.05rem;background:linear-gradient(135deg,#0284c7,#0ea5e9);box-shadow:0 8px 25px rgba(14,165,233,0.4)">
-      📥 تحميل كارنيه العضوية (PNG)
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px">
+    <button type="button" class="btn-submit" onclick="downloadIdCard()" style="margin-top:0;padding:12px 24px;font-size:1rem;background:linear-gradient(135deg,#0284c7,#0ea5e9);box-shadow:0 6px 20px rgba(14,165,233,0.35)">
+      📥 Download ID Card (PNG)
     </button>
-    <button type="button" id="addAnotherBtn" onclick="resetFormForAnother()" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:14px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);cursor:pointer;font-family:var(--font-ar);font-size:1rem;font-weight:700">
-      📝 تسجيل عضو آخر
+    <button type="button" id="addAnotherBtn" onclick="resetFormForAnother()" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:14px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);cursor:pointer;font-family:inherit;font-size:0.95rem;font-weight:600">
+      📝 Register Another Member
     </button>
   </div>
 </div>
 
-<div class="toast-bar" id="toast">✅ تم حفظ البيانات بنجاح!</div>
-
 <script>
 // ── Egyptian National ID Auto-Intelligence ──
 const GOV_CODES = {
-  '01': 'القاهرة', '02': 'الإسكندرية', '03': 'بورسعيد', '04': 'السويس',
-  '11': 'دمياط', '12': 'الدقهلية', '13': 'الشرقية', '14': 'القليوبية',
-  '15': 'كفر الشيخ', '16': 'الغربية', '17': 'المنوفية', '18': 'البحيرة',
-  '19': 'الإسماعيلية', '21': 'الجيزة', '22': 'بني سويف', '23': 'الفيوم',
-  '24': 'المنيا', '25': 'أسيوط', '26': 'سوهاج', '27': 'قنا',
-  '28': 'أسوان', '29': 'الأقصر', '31': 'البحر الأحمر', '32': 'الوادي الجديد',
-  '33': 'مطروح', '34': 'شمال سيناء', '35': 'جنوب سيناء', '88': 'خارج مصر'
+  '01': 'Cairo', '02': 'Alexandria', '03': 'Port Said', '04': 'Suez',
+  '11': 'Damietta', '12': 'Dakahlia', '13': 'Sharkia', '14': 'Qalyubia',
+  '15': 'Kafr El Sheikh', '16': 'Gharbia', '17': 'Monufia', '18': 'Beheira',
+  '19': 'Ismailia', '21': 'Giza', '22': 'Beni Suef', '23': 'Fayoum',
+  '24': 'Minya', '25': 'Asyut', '26': 'Sohag', '27': 'Qena',
+  '28': 'Aswan', '29': 'Luxor', '31': 'Red Sea', '32': 'New Valley',
+  '33': 'Matrouh', '34': 'North Sinai', '35': 'South Sinai', '88': 'Outside Egypt'
 };
-let currentMemberGov = 'مصر';
+let currentMemberGov = 'Egypt';
 
 function onNationalIdInput(val) {
   const clean = String(val).replace(/\D/g, '');
@@ -631,17 +610,17 @@ function onNationalIdInput(val) {
     return;
   }
   if (clean.length < 14) {
-    box.className = 'nid-intel-badge show';
+    box.className = 'nid-intel-badge';
     box.style.display = 'flex';
-    box.innerHTML = `<span>⏳ إدخال الرقم القومي (${clean.length}/14 رقم)...</span>`;
+    box.innerHTML = `<span>⏳ Entering National ID (${clean.length}/14 digits)...</span>`;
     return;
   }
   if (clean.length === 14) {
     const centuryDigit = parseInt(clean[0], 10);
     if (centuryDigit !== 2 && centuryDigit !== 3) {
-      box.className = 'nid-intel-badge show invalid';
+      box.className = 'nid-intel-badge invalid';
       box.style.display = 'flex';
-      box.innerHTML = '<span>❌ رقم قومي غير صالح (يجب أن يبدأ بـ 2 أو 3).</span>';
+      box.innerHTML = '<span>❌ Invalid National ID (must start with 2 or 3).</span>';
       return;
     }
     const yearPrefix = centuryDigit === 2 ? '19' : '20';
@@ -650,16 +629,16 @@ function onNationalIdInput(val) {
     const day = clean.substring(5, 7);
     const govCode = clean.substring(7, 9);
     const genderDigit = parseInt(clean[12], 10);
-    const gender = genderDigit % 2 !== 0 ? 'ذكر 👨' : 'أنثى 👩';
-    const govName = GOV_CODES[govCode] || 'محافظة مصرية';
+    const gender = genderDigit % 2 !== 0 ? 'Male 👨' : 'Female 👩';
+    const govName = GOV_CODES[govCode] || 'Egyptian Governorate';
     currentMemberGov = govName;
 
     const mNum = parseInt(month, 10);
     const dNum = parseInt(day, 10);
     if (mNum < 1 || mNum > 12 || dNum < 1 || dNum > 31) {
-      box.className = 'nid-intel-badge show invalid';
+      box.className = 'nid-intel-badge invalid';
       box.style.display = 'flex';
-      box.innerHTML = '<span>❌ تاريخ الميلاد في الرقم القومي غير سليم.</span>';
+      box.innerHTML = '<span>❌ Invalid birth date encoded in National ID.</span>';
       return;
     }
     const birthDateStr = `${year}-${month}-${day}`;
@@ -667,9 +646,28 @@ function onNationalIdInput(val) {
     if (birthDateInput) {
       birthDateInput.value = birthDateStr;
     }
-    box.className = 'nid-intel-badge show';
+    box.className = 'nid-intel-badge';
     box.style.display = 'flex';
-    box.innerHTML = `<span>✨ <strong>تم التحقق بنجاح:</strong> ${govName} • ${gender} • تاريخ الميلاد: ${birthDateStr}</span>`;
+    box.innerHTML = `<span>✨ <strong>Verified:</strong> ${govName} • ${gender} • Birth Date: ${birthDateStr}</span>`;
+  }
+}
+
+function toggleHeadCode() {
+  const role = document.getElementById('role').value;
+  const codeGroup = document.getElementById('headCodeGroup');
+  const codeInput = document.getElementById('headCode');
+  const hint = document.getElementById('headCodeHint');
+  if (role === 'Member') {
+    codeGroup.style.display = 'none';
+    codeInput.required = false;
+    codeInput.value = '';
+    if (hint) hint.textContent = '';
+  } else {
+    codeGroup.style.display = 'flex';
+    codeInput.required = true;
+    if (hint) {
+      hint.textContent = '🔒 This leadership role requires entering its security passcode.';
+    }
   }
 }
 
@@ -677,46 +675,97 @@ function onNationalIdInput(val) {
 async function downloadIdCard() {
   const card = document.getElementById('digitalIdCard');
   if (!card) return;
+  const dlBtn = event ? event.target.closest('button') : null;
+  const origBtnText = dlBtn ? dlBtn.innerHTML : '';
+  if (dlBtn) {
+    dlBtn.disabled = true;
+    dlBtn.innerHTML = '⏳ Generating high-res card...';
+  }
   try {
     const canvas = await html2canvas(card, {
-      scale: 3,
+      scale: 2,
       useCORS: true,
-      backgroundColor: '#091322'
+      allowTaint: true,
+      backgroundColor: null,
+      logging: false
     });
+    const memberName = document.getElementById('cardNameEn').textContent.trim() || 'Member';
     const link = document.createElement('a');
-    link.download = `Microscope_Member_${document.getElementById('cardNameAr').textContent.trim().replace(/\s+/g, '_')}.png`;
+    link.download = `Microscope_Card_${memberName.replace(/\s+/g, '_')}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   } catch (err) {
     console.error('Error downloading card:', err);
-    alert('حدث خطأ أثناء تحميل الكارنيه، يمكنك أخذ لقطة شاشة للبطاقة.');
+    alert('Could not download high-res image automatically. You can right-click / long-press the card to save it.');
+  } finally {
+    if (dlBtn) {
+      dlBtn.disabled = false;
+      dlBtn.innerHTML = origBtnText;
+    }
   }
 }
 
-// ── Reset / "Add Another Registration" ──────────────────────────────────────
+// ── Reset / Add Another Registration ──
 function resetFormForAnother() {
-  // Hide success, show form
   document.getElementById('successMessage').style.display = 'none';
   document.getElementById('memberForm').style.display = 'grid';
-  // Scroll to top
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  // Reset all form inputs
   document.getElementById('memberForm').reset();
-  // Reset upload dropzone
   const placeholder = document.getElementById('upload-placeholder');
   const previewBox = document.getElementById('upload-preview-box');
   const previewImg = document.getElementById('upload-preview-img');
   if (placeholder) placeholder.style.display = 'block';
   if (previewBox) previewBox.style.display = 'none';
   if (previewImg) previewImg.src = '';
-  // Reset role-dependent field visibility
   document.getElementById('headCodeGroup').style.display = 'none';
   document.getElementById('headCode').required = false;
-  // Re-enable submit button
   const submitBtn = document.querySelector('.btn-submit');
   submitBtn.disabled = false;
-  submitBtn.innerHTML = 'حفظ البيانات وإرسالها 🚀';
+  submitBtn.innerHTML = '<span>Save & Submit Registration</span> 🚀';
   submitBtn.style.opacity = '1';
+}
+
+// ── Firebase Configuration for Direct Client Sync ──
+const DEFAULT_FB_URL = 'https://dataforbot-bbd6b-default-rtdb.firebaseio.com';
+const DEFAULT_FB_SECRET = 'MSdHnbcYnC5TxucBtdUs7qHhVFd88l1CDOSKLr7g';
+
+function getFirebaseConfig() {
+  const url = localStorage.getItem('fb_url') || DEFAULT_FB_URL;
+  const secret = localStorage.getItem('fb_secret') || DEFAULT_FB_SECRET;
+  return { url: url.replace(/\/+$/, ''), secret };
+}
+
+// Client-side image compression to lightweight JPEG (~20-35 KB)
+function compressImage(file, maxDim = 320, quality = 0.8) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(e.target.result);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
 }
 
 function previewUpload(input) {
@@ -731,65 +780,118 @@ function previewUpload(input) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   if (localStorage.getItem('mm_form_open') === 'false') {
     const formEl = document.getElementById('memberForm');
     const noticeEl = document.getElementById('closedNotice');
     if (formEl) formEl.style.display = 'none';
     if (noticeEl) noticeEl.style.display = 'block';
   }
+
+  try {
+    const { url, secret } = getFirebaseConfig();
+    const res = await fetch(`${url}/settings/form_open.json?auth=${secret}`);
+    if (res.ok) {
+      const isOpen = await res.json();
+      const formEl = document.getElementById('memberForm');
+      const noticeEl = document.getElementById('closedNotice');
+      if (isOpen === false) {
+        localStorage.setItem('mm_form_open', 'false');
+        if (formEl) formEl.style.display = 'none';
+        if (noticeEl) noticeEl.style.display = 'block';
+      } else if (isOpen === true) {
+        localStorage.setItem('mm_form_open', 'true');
+        if (formEl) formEl.style.display = 'block';
+        if (noticeEl) noticeEl.style.display = 'none';
+      }
+    }
+  } catch(_) {}
 });
 
-document.getElementById('memberForm').addEventListener('submit', function(e) {
+async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    return res;
+  } catch (err) {
+    clearTimeout(id);
+    throw err;
+  }
+}
+
+document.getElementById('memberForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   
   const fileInput = document.getElementById('picture');
   if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-    alert('يرجى اختيار صورة');
+    alert('Please choose a profile photo.');
     return false;
   }
   const file = fileInput.files[0];
   
   const submitBtn = document.querySelector('.btn-submit');
+  const originalBtnText = submitBtn.innerHTML;
   submitBtn.disabled = true;
-  submitBtn.innerHTML = 'جاري الحفظ... ⏳';
+  submitBtn.innerHTML = '<span>Saving Registration...</span> ⏳';
   submitBtn.style.opacity = '0.7';
 
-  const reader = new FileReader();
-  reader.onload = async function(event) {
-    const base64String = event.target.result;
-    
+  try {
+    const thumbBase64 = await compressImage(file, 280, 0.8);
+    const photoBase64 = await compressImage(file, 800, 0.85);
+
     let roleVal = document.getElementById('role').value;
-    const headCode = document.getElementById('headCode').value;
-    if (roleVal === 'Head' && headCode !== '1111') {
-      roleVal = 'Member';
+    const inputPasscode = document.getElementById('headCode').value.trim();
+    
+    // Strict Passcode validation:
+    // TeamVice: 0000
+    // TeamLeader: 1111
+    // CommitteeVice: 2222
+    // CommitteeHead: 3333
+    // Member: no passcode
+    const passcodes = {
+      'TeamVice': '0000',
+      'TeamLeader': '1111',
+      'CommitteeVice': '2222',
+      'CommitteeHead': '3333'
+    };
+
+    if (passcodes[roleVal]) {
+      if (inputPasscode !== passcodes[roleVal]) {
+        alert('⚠️ Invalid security passcode for this role! Please check and try again.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+        submitBtn.style.opacity = '1';
+        document.getElementById('headCode').focus();
+        return;
+      }
     }
 
     const memberId = Date.now().toString();
     const photoFileName = `photo_${memberId}.jpg`;
-    let photoUrl = `${window.location.origin}/web/uploads/members/${photoFileName}?download=1`;
+    let photoUrl = thumbBase64 || photoBase64;
 
-    // Attempt to pre-upload photo to server so it is ready on disk
     try {
-      const pRes = await fetch('/api/upload_member_photo', {
+      const pRes = await fetchWithTimeout('/api/upload_member_photo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          photo_base64: base64String,
+          photo_base64: photoBase64,
           file_name: photoFileName
         })
-      });
+      }, 4000);
       const pData = await pRes.json();
       if (pData.success && pData.url) {
         photoUrl = `${window.location.origin}${pData.url}?download=1`;
       }
     } catch(err) {
-      console.warn('Pre-upload photo warning:', err);
+      console.warn('Backend photo upload skipped (running on static host or offline)');
     }
 
     const memberData = {
       id: memberId,
-      picture: base64String,
+      picture: thumbBase64 || photoBase64,
       photoUrl: photoUrl,
       fullName: document.getElementById('fullName').value.trim(),
       fullNameEn: document.getElementById('fullNameEn').value.trim(),
@@ -803,52 +905,99 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
       collegeYear: document.getElementById('collegeYear').value.trim(),
       email: document.getElementById('email').value.trim(),
       facebook: document.getElementById('facebook').value.trim(),
-      timestamp: new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' })
+      timestamp: new Date().toISOString()
     };
 
-    // ── Populate and Show Digital Member ID Card ──────────────────────────
+    // ── Role Card Configuration ──
+    const roleCardConfig = {
+      'TeamLeader': {
+        template: '/cards/card_3_team_leader.png',
+        badge: 'Team Leader 👑',
+        roleLabel: 'Team Leader'
+      },
+      'TeamVice': {
+        template: '/cards/card_4_team_vice.png',
+        badge: 'Team Vice ⭐',
+        roleLabel: 'Team Vice'
+      },
+      'CommitteeHead': {
+        template: '/cards/card_1_committee_head.png',
+        badge: `${memberData.committee || 'Team'} Head 👑`,
+        roleLabel: `${memberData.committee || ''} Head`
+      },
+      'CommitteeVice': {
+        template: '/cards/card_2_committee_vice.png',
+        badge: `${memberData.committee || 'Team'} Vice ⭐`,
+        roleLabel: `${memberData.committee || ''} Vice`
+      },
+      'Member': {
+        template: '/cards/card_5_hr_member.png',
+        badge: `${memberData.committee || 'Team'} Member 🔷`,
+        roleLabel: `${memberData.committee || ''} Member`
+      }
+    };
+
+    const currentConfig = roleCardConfig[memberData.role] || roleCardConfig['Member'];
+
+    // Update Card Template Image
+    const templateImg = document.getElementById('cardTemplateImg');
+    if (templateImg) templateImg.src = currentConfig.template;
+
+    // Update Avatar Photo
     const cardAv = document.getElementById('cardAvatar');
-    if (cardAv) cardAv.src = base64String;
+    if (cardAv) cardAv.src = photoBase64;
+
+    // Update Names & Pill
     const cAr = document.getElementById('cardNameAr');
     if (cAr) cAr.textContent = memberData.fullName;
     const cEn = document.getElementById('cardNameEn');
     if (cEn) cEn.textContent = memberData.fullNameEn || memberData.fullName;
-    const cCom = document.getElementById('cardCommittee');
-    if (cCom) cCom.textContent = memberData.committee;
-    const cRol = document.getElementById('cardRole');
-    if (cRol) cRol.textContent = memberData.role === 'Head' ? '👑 رئيس لجنة (Head)' : 'عضو (Member)';
-    const cGov = document.getElementById('cardGov');
-    if (cGov) cGov.textContent = currentMemberGov || 'عضو معتمد';
+    const cPill = document.getElementById('cardRolePill');
+    if (cPill) cPill.textContent = currentConfig.badge;
+
+    // Dynamic QR Code generation
+    const qrData = encodeURIComponent(`https://t.me/Microscope_Support_bot?start=mem_${memberId}`);
+    const qrImg = document.getElementById('cardQrCode');
+    if (qrImg) {
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrData}`;
+    }
+
     const cCode = document.getElementById('cardMemberCode');
     if (cCode) cCode.textContent = `MIC-2026-${memberId.slice(-4)}`;
 
-    // ── Show success message immediately ──────────────────────────────────
+    // Show success message immediately
     document.getElementById('memberForm').style.display = 'none';
     document.getElementById('successMessage').style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // ── STEP 1: SAVE TO FIREBASE IMMEDIATELY ──────────────────────────────
-    // This happens BEFORE PDF generation so data is ALWAYS saved even if
-    // the PDF generation or Drive upload fails for any reason.
-    const memberDataForServer = { ...memberData };
-    delete memberDataForServer.picture; // strip large base64 — photoUrl is kept
+    // ── STEP 1: Direct Save to Firebase ──
     try {
-      const quickSave = await fetch('/api/register_member', {
+      const fbConfig = getFirebaseConfig();
+      if (fbConfig.url && !fbConfig.url.startsWith('{{')) {
+        const directPayload = { ...memberData };
+        const directEndpoint = `${fbConfig.url}/members/${memberId}.json?auth=${fbConfig.secret}`;
+        await fetchWithTimeout(directEndpoint, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(directPayload)
+        }, 5000);
+      }
+    } catch (directErr) {
+      console.warn('Firebase save note:', directErr);
+    }
+
+    // ── STEP 1.1: Local Server Dispatch ──
+    try {
+      const memberDataForServer = { ...memberData };
+      delete memberDataForServer.picture;
+      await fetchWithTimeout('/api/register_member', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ member_data: memberDataForServer })
-      });
-      const quickSaveData = await quickSave.json();
-      if (quickSaveData.success) {
-        console.log('✅ Saved to Firebase instantly. ID:', quickSaveData.firebase_id);
-      } else {
-        console.error('❌ Firebase save error:', quickSaveData.error);
-      }
-    } catch(saveErr) {
-      console.error('❌ Firebase save API failed:', saveErr);
-    }
+      }, 5000);
+    } catch (_) {}
 
-    // Format URLs for clickable PDF links
+    // URLs for PDF links
     let fbUrl = memberData.facebook ? memberData.facebook.trim() : '';
     if (fbUrl && !fbUrl.startsWith('http://') && !fbUrl.startsWith('https://')) {
       fbUrl = 'https://' + fbUrl;
@@ -858,7 +1007,7 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
     if (waNum.startsWith('01')) waNum = '2' + waNum;
     const waUrl = waNum ? `https://wa.me/${waNum}` : '';
 
-    // Render card in offscreen container for Backup Channel PDF
+    // ── STEP 2: Background PDF Generation ──
     const offscreen = document.createElement('div');
     offscreen.style.position = 'fixed';
     offscreen.style.top = '0';
@@ -868,152 +1017,126 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
     offscreen.style.background = '#ffffff';
     offscreen.style.color = '#0f172a';
     offscreen.style.padding = '30px 25px';
-    offscreen.style.fontFamily = 'Cairo, sans-serif';
-    offscreen.style.direction = 'rtl';
+    offscreen.style.fontFamily = 'Inter, sans-serif';
+    offscreen.style.direction = 'ltr';
     offscreen.style.boxSizing = 'border-box';
     offscreen.innerHTML = `
       <div style="text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 18px; margin-bottom: 18px;">
-        <div style="font-size: 1.3rem; font-weight: 900; color: #1e3a8a;">🔬 MICROSCOPE TEAM</div>
-        <div style="font-size: 0.85rem; color: #64748b; font-weight: bold; margin-top: 2px;">بيانات عضو الفريق الرسمية</div>
+        <div style="font-size: 1.3rem; font-weight: 800; color: #1e3a8a;">🔬 MICROSCOPE TEAM</div>
+        <div style="font-size: 0.85rem; color: #64748b; font-weight: bold; margin-top: 2px;">Official Member Profile Record</div>
         <div style="margin: 15px 0;">
           <a id="pdfAvatarLink" href="${photoUrl}" target="_blank" style="display: inline-block;">
-            <img src="${memberData.picture}" alt="Profile" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 4px solid #3b82f6; display: inline-block;">
+            <img src="${photoBase64}" alt="Profile" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid #3b82f6; display: inline-block;">
           </a>
         </div>
-        <h1 style="color: #0f172a; font-size: 1.6rem; margin: 0 0 2px 0; font-weight: 800;">${memberData.fullName}</h1>
-        <div style="color: #64748b; font-size: 1.05rem; margin: 0 0 6px 0; font-weight: 600; font-family: sans-serif;">${memberData.fullNameEn || ''}</div>
-        <h3 style="color: #2563eb; font-size: 1.2rem; margin: 0; font-weight: 700;">${(memberData.role === 'Head' ? 'Head ' : '') + memberData.committee + ' Commit'}</h3>
+        <h1 style="color: #0f172a; font-size: 1.5rem; margin: 0 0 2px 0; font-weight: 800;">${memberData.fullNameEn}</h1>
+        <div style="color: #64748b; font-size: 1.05rem; margin: 0 0 6px 0; font-weight: 600;">${memberData.fullName}</div>
+        <h3 style="color: #2563eb; font-size: 1.15rem; margin: 0; font-weight: 700;">${currentConfig.badge}</h3>
       </div>
 
       <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; width: 35%; background: #f8fafc;">الاسم بالإنجليزية</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a; font-family: sans-serif;">${memberData.fullNameEn || '-'}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">الرقم القومي</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.nationalId}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">تاريخ الميلاد</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.birthDate || '-'}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">المنصب</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.role === 'Head' ? 'رئيس لجنة (Head)' : 'عضو (Member)'}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">اللجنة</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.committee}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">الفرقة الدراسية</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.collegeYear}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">رقم الواتساب</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;"><a id="pdfWaLink" href="${waUrl || '#'}" target="_blank" style="color: #0f172a; text-decoration: none;">${memberData.whatsapp}</a></td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">الهاتف / رقم آخر</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.phone || '-'}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">البريد الإلكتروني</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a; word-break: break-all;">${memberData.email || '-'}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">العنوان</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.address || '-'}</td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">حساب الفيسبوك</th><td style="padding: 9px 12px; color: #2563eb; word-break: break-all;"><a id="pdfFbLink" href="${fbUrl || '#'}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: bold; display: inline-block;">${memberData.facebook || '-'}</a></td></tr>
-        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">رابط الصورة الشخصية</th><td style="padding: 9px 12px; color: #2563eb; word-break: break-all;"><a id="pdfPhotoLink" href="${photoUrl}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: bold; display: inline-block;">📥 عرض وتحميل الصورة الأصلية</a><div style="font-size: 0.72rem; color: #64748b; margin-top: 3px; font-family: monospace; word-break: break-all;">${photoUrl}</div></td></tr>
-        <tr><th style="text-align: right; padding: 9px 12px; color: #475569; background: #f8fafc;">تاريخ التسجيل</th><td style="padding: 9px 12px; color: #64748b; font-size: 0.85rem;">${memberData.timestamp}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 9px 12px; color: #475569; width: 35%; background: #f8fafc;">Full Name (English)</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.fullNameEn || '-'}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 9px 12px; color: #475569; background: #f8fafc;">Full Name (Arabic)</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a; font-family: 'Cairo', sans-serif;" dir="rtl">${memberData.fullName}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 9px 12px; color: #475569; background: #f8fafc;">National ID</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.nationalId}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 9px 12px; color: #475569; background: #f8fafc;">Birth Date</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.birthDate || '-'}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 9px 12px; color: #475569; background: #f8fafc;">Role</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${currentConfig.roleLabel}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 9px 12px; color: #475569; background: #f8fafc;">Committee</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.committee}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 9px 12px; color: #475569; background: #f8fafc;">Academic Year</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.collegeYear}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 9px 12px; color: #475569; background: #f8fafc;">WhatsApp Number</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;"><a id="pdfWaLink" href="${waUrl || '#'}" target="_blank" style="color: #0f172a; text-decoration: none;">${memberData.whatsapp}</a></td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 9px 12px; color: #475569; background: #f8fafc;">Secondary Phone</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.phone || '-'}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 9px 12px; color: #475569; background: #f8fafc;">Email Address</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a; word-break: break-all;">${memberData.email || '-'}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 9px 12px; color: #475569; background: #f8fafc;">Detailed Address</th><td style="padding: 9px 12px; font-weight: bold; color: #0f172a;">${memberData.address || '-'}</td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 9px 12px; color: #475569; background: #f8fafc;">Facebook Profile</th><td style="padding: 9px 12px; color: #2563eb; word-break: break-all;"><a id="pdfFbLink" href="${fbUrl || '#'}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: bold;">${memberData.facebook || '-'}</a></td></tr>
+        <tr style="border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 9px 12px; color: #475569; background: #f8fafc;">Profile Photo Link</th><td style="padding: 9px 12px; color: #2563eb; word-break: break-all;"><a id="pdfPhotoLink" href="${photoUrl}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: bold;">📥 View Original Photo</a></td></tr>
       </table>
 
       <div style="text-align: center; margin-top: 18px; padding-top: 10px; border-top: 1px dashed #cbd5e1; color: #94a3b8; font-size: 0.8rem;">
-        Microscope Team Official Record • تم تسجيل وحفظ البيانات بنجاح
+        Microscope Team Official Record • Data registered and verified successfully
       </div>
     `;
 
     document.body.appendChild(offscreen);
-
-    // Wait for profile picture to load
-    const imgEl = offscreen.querySelector('img');
-    if (imgEl) {
-      if (!imgEl.complete) {
-        await new Promise(r => { imgEl.onload = r; imgEl.onerror = r; });
-      }
-      if (imgEl.decode) {
-        try { await imgEl.decode(); } catch(e) {}
-      }
-    }
-
-    // Delay to guarantee font rendering and layout calculation
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 400));
 
     try {
-      const canvas = await html2canvas(offscreen, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        width: 700,
-        windowWidth: 700,
-        scrollY: 0,
-        scrollX: 0
-      });
-
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgMarginX = 10;
-      const imgMarginY = 10;
-      const imgWidth = pageWidth - (imgMarginX * 2);
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', imgMarginX, imgMarginY, imgWidth, Math.min(imgHeight, pageHeight - (imgMarginY * 2)));
-
-      // Calculate interactive links inside the PDF
-      const offscreenRect = offscreen.getBoundingClientRect();
-      const pdfScale = imgWidth / offscreen.offsetWidth;
-
-      function attachPdfLink(elementId, targetUrl) {
-        if (!targetUrl || targetUrl === '-' || targetUrl === '#') return;
-        const targetEl = offscreen.querySelector('#' + elementId);
-        if (!targetEl) return;
-        const targetRect = targetEl.getBoundingClientRect();
-        const linkX = imgMarginX + ((targetRect.left - offscreenRect.left) * pdfScale);
-        const linkY = imgMarginY + ((targetRect.top - offscreenRect.top) * pdfScale);
-        const linkW = targetRect.width * pdfScale;
-        const linkH = targetRect.height * pdfScale;
-        if (linkW > 0 && linkH > 0) {
-          pdf.link(linkX, linkY, linkW, linkH, { url: targetUrl });
-        }
-      }
-
-      attachPdfLink('pdfFbLink', fbUrl);
-      attachPdfLink('pdfPhotoLink', photoUrl);
-      attachPdfLink('pdfAvatarLink', photoUrl);
-      if (waUrl) attachPdfLink('pdfWaLink', waUrl);
-
-      if (offscreen.parentNode) {
-        document.body.removeChild(offscreen);
-      }
-
-      const pdfBase64 = pdf.output('datauristring');
-
-      // ── STEP 2: Upload PDF to Google Drive ────────────────────────────────
-      // Firebase was already saved above (before PDF generation).
-      // This call uploads the PDF to Drive only. The server skips Firebase
-      // if member_data is sent again (PUT is idempotent with the same ID).
-      try {
-        const regRes = await fetch('/api/register_member', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            file_name: `Member_${memberData.fullName.replace(/\s+/g, '_')}.pdf`,
-            file_base64: pdfBase64
-            // Note: member_data intentionally omitted here to avoid re-saving
-          })
+      if (typeof html2canvas !== 'undefined' && typeof window.jspdf !== 'undefined') {
+        const canvas = await html2canvas(offscreen, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          width: 700,
+          windowWidth: 700,
+          scrollY: 0,
+          scrollX: 0
         });
-        const regData = await regRes.json();
-        if (regData.success) {
-          console.log('✅ PDF uploaded to Google Drive. Drive ID:', regData.drive_file_id);
-        } else {
-          console.error('⚠️ Drive upload error (data already saved to Firebase):', regData.error);
-        }
-      } catch(apiErr) {
-        console.error('⚠️ Drive upload failed (data already saved to Firebase):', apiErr);
-      }
 
-    } catch(err) {
-      console.error('PDF Generation Error:', err);
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imgMarginX = 10;
+        const imgMarginY = 10;
+        const imgWidth = pageWidth - (imgMarginX * 2);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', imgMarginX, imgMarginY, imgWidth, Math.min(imgHeight, pageHeight - (imgMarginY * 2)));
+
+        const offscreenRect = offscreen.getBoundingClientRect();
+        const pdfScale = imgWidth / offscreen.offsetWidth;
+
+        function attachPdfLink(elementId, targetUrl) {
+          if (!targetUrl || targetUrl === '-' || targetUrl === '#') return;
+          const targetEl = offscreen.querySelector('#' + elementId);
+          if (!targetEl) return;
+          const targetRect = targetEl.getBoundingClientRect();
+          const linkX = imgMarginX + ((targetRect.left - offscreenRect.left) * pdfScale);
+          const linkY = imgMarginY + ((targetRect.top - offscreenRect.top) * pdfScale);
+          const linkW = targetRect.width * pdfScale;
+          const linkH = targetRect.height * pdfScale;
+          if (linkW > 0 && linkH > 0) {
+            pdf.link(linkX, linkY, linkW, linkH, { url: targetUrl });
+          }
+        }
+
+        attachPdfLink('pdfFbLink', fbUrl);
+        attachPdfLink('pdfPhotoLink', photoUrl);
+        attachPdfLink('pdfAvatarLink', photoUrl);
+        if (waUrl) attachPdfLink('pdfWaLink', waUrl);
+
+        const pdfBase64 = pdf.output('datauristring');
+
+        try {
+          await fetchWithTimeout('/api/register_member', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              file_name: `Member_${(memberData.fullNameEn || memberData.fullName).replace(/\s+/g, '_')}.pdf`,
+              file_base64: pdfBase64
+            })
+          }, 8000);
+        } catch (_) {}
+      }
+    } catch(pdfErr) {
+      console.warn('PDF Generation note:', pdfErr);
+    } finally {
       if (offscreen.parentNode) {
         document.body.removeChild(offscreen);
       }
     }
 
-    return false;
-  };
-
-  reader.readAsDataURL(file);
+  } catch (err) {
+    console.error('Submission error:', err);
+    alert('An error occurred while saving registration. Please try again.');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalBtnText;
+    submitBtn.style.opacity = '1';
+  }
 });
 </script>
 

@@ -100,7 +100,7 @@ void registerStudentHandlers(Bot bot) {
         ..row().add(S.get('no_tracks', lang), 'ignore')
         ..row().add('🔙 Back', 'back:main');
     } else {
-      keyboard = Utils.paginateKeyboard(tracks, page: 0, prefix: 'track:', backData: 'back:main');
+      keyboard = Utils.paginateKeyboard(tracks, page: 0, prefix: 'track:', backData: 'back:main', lang: lang);
     }
 
     await ctx.editMessageText(S.get('departments', lang), replyMarkup: keyboard);
@@ -136,7 +136,7 @@ void registerStudentHandlers(Bot bot) {
     if (trackRaw.startsWith('page_')) {
       final page = int.parse(trackRaw.split('_')[1]);
       final tracks = await FirebaseDb.getTracks();
-      final keyboard = Utils.paginateKeyboard(tracks, page: page, prefix: 'track:', backData: 'back:main');
+      final keyboard = Utils.paginateKeyboard(tracks, page: page, prefix: 'track:', backData: 'back:main', lang: lang);
       await ctx.editMessageText(S.get('departments', lang), replyMarkup: keyboard);
       return;
     }
@@ -148,6 +148,7 @@ void registerStudentHandlers(Bot bot) {
       page: 0,
       prefix: 'subj:${Utils.shorten(track)}:',
       backData: 'show_departments',
+      lang: lang,
     );
 
     await ctx.editMessageText(
@@ -171,7 +172,7 @@ void registerStudentHandlers(Bot bot) {
     if (subjectRaw.startsWith('page_')) {
       final page = int.parse(subjectRaw.split('_')[1]);
       final subjects = await FirebaseDb.getSubjects(track);
-      final keyboard = Utils.paginateKeyboard(subjects, page: page, prefix: 'subj:${Utils.shorten(track)}:', backData: 'show_departments');
+      final keyboard = Utils.paginateKeyboard(subjects, page: page, prefix: 'subj:${Utils.shorten(track)}:', backData: 'show_departments', lang: lang);
       await ctx.editMessageText(S.get('selected_track', lang, {'track': track}), replyMarkup: keyboard);
       return;
     }
@@ -183,6 +184,7 @@ void registerStudentHandlers(Bot bot) {
       page: 0,
       prefix: 'type:${Utils.shorten(track)}:${Utils.shorten(subject)}:',
       backData: 'track:${Utils.shorten(track)}',
+      lang: lang,
     );
 
     await ctx.editMessageText(
@@ -213,6 +215,7 @@ void registerStudentHandlers(Bot bot) {
           page: page,
           prefix: 'type:${Utils.shorten(track)}:${Utils.shorten(subject)}:',
           backData: 'track:${Utils.shorten(track)}',
+          lang: lang,
         );
         await ctx.editMessageText(S.get('selected_subject', lang, {'subject': subject}), replyMarkup: keyboard);
         return;
@@ -221,7 +224,7 @@ void registerStudentHandlers(Bot bot) {
       final type = Utils.lengthen(typeRaw);
       final materials = await FirebaseDb.getMaterials(track, subject, type);
       if (materials.isEmpty) {
-        final kb = InlineKeyboard().row().add('🔙 Back', 'subj:${Utils.shorten(track)}:${Utils.shorten(subject)}');
+        final kb = InlineKeyboard().row().add(lang == 'en' ? '🔙 Back' : '🔙 رجوع', 'subj:${Utils.shorten(track)}:${Utils.shorten(subject)}');
         await ctx.editMessageText(
           '${S.get('materials_list', lang, {'type': type})}\n\n${S.get('no_files_found', lang)}',
           replyMarkup: kb,
@@ -239,6 +242,7 @@ void registerStudentHandlers(Bot bot) {
         page: 0,
         prefix: 'mat:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}:',
         backData: 'subj:${Utils.shorten(track)}:${Utils.shorten(subject)}',
+        lang: lang,
       );
 
       await ctx.editMessageText(
@@ -280,6 +284,7 @@ void registerStudentHandlers(Bot bot) {
           page: page,
           prefix: 'mat:${Utils.shorten(track)}:${Utils.shorten(subject)}:${Utils.shorten(type)}:',
           backData: 'subj:${Utils.shorten(track)}:${Utils.shorten(subject)}',
+          lang: lang,
         );
         await ctx.editMessageText(S.get('materials_list', lang, {'type': type}), replyMarkup: keyboard);
         return;
@@ -772,24 +777,42 @@ Future<void> _sendMainMenuNew(Bot bot, Context ctx, int userId, {bool isEdit = f
   final lang = Utils.getUserLanguage(userId);
   final keyboard = InlineKeyboard();
 
-  keyboard.row().add(S.get('btn_departments', lang), 'show_departments');
+  final features = await FirebaseDb.getFeaturesConfig();
+
+  if (features['departments'] ?? true) {
+    keyboard.row().add(S.get('btn_departments', lang), 'show_departments');
+  }
 
   // Schedules / Tables direct button
-  keyboard.row().add(S.get('btn_my_tables', lang), 'table_dash');
+  if (features['tables'] ?? true) {
+    keyboard.row().add(S.get('btn_my_tables', lang), 'table_dash');
+  }
 
   // Miko AI Assistant Bot
-  keyboard.row().add(S.get('btn_chat_miko', lang), 'miko_coming_soon');
+  if (features['miko'] ?? true) {
+    keyboard.row().add(S.get('btn_chat_miko', lang), 'miko_coming_soon');
+  }
 
   // New experimental features labeled [BETA 🧪]
-  keyboard.row().add(S.get('btn_smart_search_beta', lang), 'smart_search_beta');
-  keyboard.row().add(S.get('btn_student_tools_beta', lang), 'student_tools_beta');
+  if (features['smart_search'] ?? true) {
+    keyboard.row().add(S.get('btn_smart_search_beta', lang), 'smart_search_beta');
+  }
+  if (features['student_tools'] ?? true) {
+    keyboard.row().add(S.get('btn_student_tools_beta', lang), 'student_tools_beta');
+  }
 
   final isContrib = await FirebaseDb.isContributor(userId);
   if (isContrib) {
     keyboard.row().add(S.get('btn_my_dashboard', lang), 'contrib_dash');
   }
-  keyboard.row().add(S.get('btn_contribute', lang), 'req_contribute');
-  keyboard.row().add(S.get('btn_contact_admin', lang), 'contact_admin');
+
+  if (features['contribute'] ?? true) {
+    keyboard.row().add(S.get('btn_contribute', lang), 'req_contribute');
+  }
+
+  if (features['contact_admin'] ?? true) {
+    keyboard.row().add(S.get('btn_contact_admin', lang), 'contact_admin');
+  }
   
   if (Config.whatsappSupportNumber.isNotEmpty) {
     keyboard.row().addUrl(S.get('btn_whatsapp_support', lang), 'https://wa.me/${Config.whatsappSupportNumber}');

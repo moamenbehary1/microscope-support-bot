@@ -956,7 +956,7 @@ document.getElementById('memberForm').addEventListener('submit', async function(
     if (cPill) cPill.textContent = currentConfig.badge;
 
     // Dynamic QR Code generation
-    const qrData = encodeURIComponent(`https://t.me/Microscope_Support_bot?start=mem_${memberId}`);
+    const qrData = encodeURIComponent(`https://linktr.ee/qr/f1b365d4-eac8-4fdc-8f9c-c0ea860a319f`);
     const qrImg = document.getElementById('cardQrCode');
     if (qrImg) {
       qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrData}`;

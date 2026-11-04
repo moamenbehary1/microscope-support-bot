@@ -853,16 +853,7 @@ input::placeholder{color:var(--muted)}
     <div class="nav-item" data-s="settings"><span class="icon">⚙️</span><span data-i18n="Settings">Settings</span></div>
   </div>
   <div class="sidebar-foot">
-    <!-- HR Evaluation System Button (Admin only) -->
-    <a href="/hr.html" target="_blank" class="btn btn-ghost" id="hr-system-btn"
-       style="width:100%;justify-content:center;text-decoration:none;margin-bottom:8px;
-              background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.15));
-              border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;font-weight:600;
-              display:none">
-      🏢 نظام تقييم HR
-    </a>
     <a href="/team.html" target="_blank" class="btn btn-ghost" style="width:100%;justify-content:center;text-decoration:none;margin-bottom:8px;background:linear-gradient(135deg,#102250,#1e40af);border:1px solid #00d2ff;color:#ffffff;box-shadow:0 4px 16px rgba(0,210,255,0.35);font-weight:700;">🌐 صفحة التيم</a>
-    <a href="mission-admin.html" target="_blank" class="btn btn-ghost" style="width:100%;justify-content:center;text-decoration:none;margin-bottom:8px;background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(2,132,199,0.1));border:1px solid rgba(6,182,212,0.3);color:#67e8f9;font-weight:600;">🎯 إدارة المهام (Mission)</a>
     <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="App.setSection('settings')">⚙️ <span data-i18n="Master Settings">Master Settings</span></button>
   </div>
 </nav>
@@ -882,7 +873,6 @@ input::placeholder{color:var(--muted)}
       <button class="btn btn-sm" onclick="App.setSection('portal')" style="background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff;text-decoration:none;box-shadow:0 4px 18px rgba(139,92,246,0.45);font-weight:700;display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer">🚀 مركز الصفحات</button>
       <a href="members_form.html" target="_blank" class="btn btn-sm" style="background:linear-gradient(135deg,#10b981,#3b82f6);color:#fff;text-decoration:none;box-shadow:0 4px 16px rgba(16,185,129,0.4);">📝 Form</a>
       <a href="team.html" target="_blank" class="btn btn-sm" style="background:linear-gradient(135deg,#102250,#1e40af);color:#ffffff;border:1px solid #00d2ff;text-decoration:none;box-shadow:0 4px 16px rgba(0,210,255,0.35);font-weight:700;">🌐 صفحة التيم</a>
-      <a href="mission-admin.html" target="_blank" class="btn btn-sm" style="background:linear-gradient(135deg,#06b6d4,#0284c7);color:#fff;text-decoration:none;box-shadow:0 4px 16px rgba(6,182,212,0.4);font-weight:600;">🎯 إدارة المهام</a>
       <button class="btn btn-primary btn-sm" onclick="App.openFullBotConfigModal()">🤖 Bot Config</button>
       <button class="btn btn-ghost btn-sm" onclick="App.toggleTheme()" id="theme-btn">🌙 Dark</button>
       <button class="btn btn-ghost btn-sm" onclick="App.toggleLang()" id="lang-btn">🌐 <span data-i18n="EN">EN</span></button>
@@ -1668,15 +1658,6 @@ const S = {
           </div>`).join('')}
         </div>
         <div style="height:20px"></div>
-        <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(236,72,153,0.05)); border: 1px solid rgba(99,102,241,0.2);">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-            <div>
-              <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">🏢 نظام تقييم HR (HR Evaluation System)</h2>
-              <p style="color: var(--dim); font-size: 0.85rem;">وصول سريع إلى نظام التقييم الخاص بأعضاء فريق الـ HR.</p>
-            </div>
-            <a href="/hr.html" target="_blank" class="btn btn-primary" style="text-decoration: none;">🚀 فتح نظام HR ←</a>
-          </div>
-        </div>
         <div class="grid grid-2">
           <div class="card">
             <div class="sec-head" style="margin-bottom:12px">
@@ -4000,11 +3981,8 @@ const S = {
 
       // Base URL for links
       const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
-      const missionAdminUrl = baseUrl + 'mission-admin.html';
-      const missionViewUrl = baseUrl + 'mission-view.html';
       const teamUrl = baseUrl + 'team.html';
       const formUrl = baseUrl + 'members_form.html';
-      const hrUrl = baseUrl + 'hr.html';
 
       pg.innerHTML = `
         <!-- Hero Header -->
@@ -4016,11 +3994,11 @@ const S = {
                 🚀 مركز المنظومة واستعراض الصفحات
               </h1>
               <p style="color:var(--dim);font-size:.95rem;max-width:750px;line-height:1.6">
-                لوحة تحكم موحدة لاستعراض، إدارة، ومراقبة جميع صفحات ومنصات المنظومة: بورد المهام، استمارة التسجيل، صفحة التيم، سجل الأعضاء، ونظام تقييم الـ HR مع معاينة حية ومولد QR فوري.
+                لوحة تحكم موحدة لاستعراض، إدارة، ومراقبة صفحات ومنصات المنظومة: استمارة التسجيل، صفحة التيم، وسجل الأعضاء مع معاينة حية ومولد QR فوري.
               </p>
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <button class="btn btn-primary" onclick="S.portal.openPreview('${missionViewUrl}', '🎯 شاشة عرض مهام اللجان', 'MISSION BOARD')" style="box-shadow:0 4px 20px rgba(59,130,246,0.4)">
+              <button class="btn btn-primary" onclick="S.portal.openPreview('${teamUrl}', '🌐 صفحة التيم الرسمية', 'TEAM SHOWCASE')" style="box-shadow:0 4px 20px rgba(59,130,246,0.4)">
                 👁️ تشغيل المعاينة المباشرة
               </button>
               <button class="btn btn-ghost" onclick="S.portal.load()" title="تحديث البيانات">
@@ -4031,10 +4009,6 @@ const S = {
 
           <!-- Quick Metrics Ribbon -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:24px;position:relative;z-index:1">
-            <div style="background:rgba(0,0,0,0.35);padding:12px 16px;border-radius:14px;border:1px solid rgba(255,255,255,0.08)">
-              <div style="font-size:11px;color:var(--dim);font-weight:600">🎯 مهام اللجان</div>
-              <div style="font-size:1.35rem;font-weight:900;color:#38bdf8">${mTotal} <small style="font-size:.8rem;color:var(--text-muted)">(${mActive} جارية / ${mDone} مكتملة)</small></div>
-            </div>
             <div style="background:rgba(0,0,0,0.35);padding:12px 16px;border-radius:14px;border:1px solid rgba(255,255,255,0.08)">
               <div style="font-size:11px;color:var(--dim);font-weight:600">📝 طلبات التسجيل</div>
               <div style="font-size:1.35rem;font-weight:900;color:#34d399">${totalMembers} <small style="font-size:.8rem;color:var(--text-muted)">عضو مسجل</small></div>
@@ -4054,43 +4028,8 @@ const S = {
           </div>
         </div>
 
-        <!-- 5 Interactive Ecosystem Cards -->
+        <!-- Interactive Ecosystem Cards -->
         <div class="portal-grid">
-
-          <!-- Card 1: Microscope Mission -->
-          <div class="portal-card" style="border-top:3px solid #06b6d4">
-            <div>
-              <div class="portal-card-header">
-                <div style="display:flex;align-items:center;gap:12px">
-                  <div class="portal-card-icon" style="color:#06b6d4;background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.3)">🎯</div>
-                  <div>
-                    <div class="portal-card-title">منظومة المهام (Mission)</div>
-                    <span class="preview-badge" style="background:rgba(6,182,212,0.2);color:#67e8f9;border:1px solid rgba(6,182,212,0.4)">لوحة الإدارة + شاشة العرض</span>
-                  </div>
-                </div>
-                <span class="badge badge-s" style="background:rgba(6,182,212,0.15);color:#38bdf8">🔒 محمي برمز مرور</span>
-              </div>
-              <p class="portal-card-desc">
-                منظومة إسناد ومتابعة مهام اللجان بالتايم لاين التفصيلي، وإمكانية تفعيل/إيقاف المهام، مع رابط عام وشاشة عرض مخصصة لأعضاء اللجان.
-              </p>
-              <div class="portal-meta-box">
-                <div style="font-size:12px;color:var(--dim)">
-                  📊 الإحصائيات: <strong style="color:#fff">${mTotal}</strong> مهمة | <span style="color:#f59e0b">⚡ ${mActive} جارية</span> | <span style="color:#10b981">✅ ${mDone} مكتملة</span>
-                </div>
-                <span style="font-size:11px;color:var(--dim)">🔐 للمسؤولين فقط</span>
-              </div>
-            </div>
-
-            <div class="portal-actions-row">
-              <button class="btn btn-primary btn-sm" onclick="S.portal.openPreview('${missionAdminUrl}', '🎯 لوحة إدارة المهام (Mission Admin)', 'MISSION ADMIN')">
-                👁️ معاينة حية
-              </button>
-              <a href="${missionAdminUrl}" target="_blank" class="btn btn-ghost btn-sm">⚙️ لوحة الإدارة</a>
-              <a href="${missionViewUrl}" target="_blank" class="btn btn-ghost btn-sm">📋 بورد العرض</a>
-              <button class="btn btn-ghost btn-sm" onclick="S.portal.copyLink('${missionViewUrl}', 'رابط شاشة عرض المهام')">📋 نسخ الرابط</button>
-              <button class="btn btn-ghost btn-sm" onclick="S.portal.openQr('${missionViewUrl}', 'شاشة عرض المهام (Mission View)')">📱 QR</button>
-            </div>
-          </div>
 
           <!-- Card 2: 3D Team Showcase -->
           <div class="portal-card" style="border-top:3px solid #6366f1">
@@ -4127,7 +4066,6 @@ const S = {
                 </div>
                 <div style="display:flex;gap:6px">
                   <button class="btn btn-ghost btn-sm" onclick="S.portal.openQr('${teamUrl}', 'صفحة التيم الرسمية (Team 3D)')" style="font-size:11px;color:#a5b4fc">📱 رمز QR</button>
-                  <a href="/hr.html" target="_blank" class="btn btn-ghost btn-sm" style="font-size:11px">🖼️ تعديل البانر</a>
                 </div>
               </div>
             </div>
@@ -4215,40 +4153,6 @@ const S = {
               <button class="btn btn-ghost btn-sm" onclick="MembersApp.loadMembers();UI.toast('تم تحديث بيانات الأعضاء','success')">
                 🔄 تحديث السجلات
               </button>
-            </div>
-          </div>
-
-          <!-- Card 5: HR Evaluation System -->
-          <div class="portal-card" style="border-top:3px solid #ec4899">
-            <div>
-              <div class="portal-card-header">
-                <div style="display:flex;align-items:center;gap:12px">
-                  <div class="portal-card-icon" style="color:#f472b6;background:rgba(236,72,153,0.1);border-color:rgba(236,72,153,0.3)">🏢</div>
-                  <div>
-                    <div class="portal-card-title">نظام تقييم HR (Evaluation System)</div>
-                    <span class="preview-badge" style="background:rgba(236,72,153,0.2);color:#fbcfe8;border:1px solid rgba(236,72,153,0.4)">منظومة الموارد البشرية</span>
-                  </div>
-                </div>
-                <span class="badge badge-p">🔒 محمي برمز مرور</span>
-              </div>
-              <p class="portal-card-desc">
-                النظام المتقدم الخاص بفريق الموارد البشرية لتقييم أداء رؤساء وأعضاء اللجان شهرين وفصلياً ورفع تقارير الأداء ومتابعة الحضور.
-              </p>
-              <div class="portal-meta-box">
-                <div style="font-size:12px;color:var(--dim)">
-                  👑 صلاحية الدخول: <strong style="color:#fff">Super Admin & Heads</strong>
-                </div>
-                <span style="font-size:11px;color:var(--dim)">🔐 محمي برمز الأدمن</span>
-              </div>
-            </div>
-
-            <div class="portal-actions-row">
-              <button class="btn btn-primary btn-sm" onclick="S.portal.openPreview('${hrUrl}', '🏢 نظام تقييم الموارد البشرية (HR System)', 'HR SYSTEM')">
-                👁️ معاينة حية
-              </button>
-              <a href="${hrUrl}" target="_blank" class="btn btn-ghost btn-sm">🚀 فتح منصة HR</a>
-              <button class="btn btn-ghost btn-sm" onclick="S.portal.copyLink('${hrUrl}', 'رابط نظام تقييم HR')">📋 نسخ الرابط</button>
-              <button class="btn btn-ghost btn-sm" onclick="S.portal.openQr('${hrUrl}', 'نظام تقييم HR (HR System)')">📱 QR</button>
             </div>
           </div>
 
@@ -4721,9 +4625,6 @@ const CommandPalette = {
     { label: 'Audit Logs — سجل النشاطات', icon: '📜', badge: 'Section', action: () => App.setSection('logs') },
     { label: 'Analytics — الإحصائيات المتقدمة', icon: '📊', badge: 'Section', action: () => App.setSection('analytics') },
     { label: 'Master Settings — الإعدادات العامة', icon: '⚙️', badge: 'Section', action: () => App.setSection('settings') },
-    { label: '🏢 نظام تقييم HR — HR System', icon: '🏢', badge: 'External Page', action: () => window.open('hr.html', '_blank') },
-    { label: '🎯 إدارة المهام — Mission Control Board', icon: '🎯', badge: 'External Page', action: () => window.open('mission-admin.html', '_blank') },
-    { label: '👁️ عرض المهام المباشرة — Mission Live View', icon: '👁️', badge: 'External Page', action: () => window.open('mission-view.html', '_blank') },
     { label: '📝 استمارة تسجيل الأعضاء — Member Form', icon: '📝', badge: 'External Page', action: () => window.open('members_form.html', '_blank') },
     { label: '🌐 صفحة الفريق التفاعلية — Team Showcase', icon: '🌐', badge: 'External Page', action: () => window.open('team.html', '_blank') },
     { label: 'تصدير بيانات الأعضاء — Export to Excel', icon: '📊', badge: 'Action', action: () => MembersApp.exportToExcel() },

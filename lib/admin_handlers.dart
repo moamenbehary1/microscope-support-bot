@@ -1402,12 +1402,10 @@ void registerAdminHandlers(Bot bot) {
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('🖥️ *لوحة التحكم الرئيسية (Web CMS):*');
     buffer.writeln('`http://localhost:5000/`\n');
-    buffer.writeln('🔬 *لوحة إدارة المهام المتقدمة (Mission Admin):*');
-    buffer.writeln('`http://localhost:5000/mission-admin.html`\n');
-    buffer.writeln('📺 *شاشة العرض المباشر للمهام (Live Missions Screen):*');
-    buffer.writeln('`http://localhost:5000/mission-view.html`');
+    buffer.writeln('👥 *استمارة تسجيل الأعضاء (Members Form):*');
+    buffer.writeln('`http://localhost:5000/members_form.html`');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
-    buffer.writeln('💡 يمكنك فتح أي رابط مباشرة لمتابعة الشاشات المباشرة ومصفوفة كانبان.');
+    buffer.writeln('💡 يمكنك فتح أي رابط مباشرة لإدارة المنظومة واستعراض السجلات.');
 
     final kb = InlineKeyboard().row().add('🔙 رجوع للوحة الإدارة', 'admin_dash');
     await ctx.editMessageText(buffer.toString(), parseMode: ParseMode.markdown, replyMarkup: kb);

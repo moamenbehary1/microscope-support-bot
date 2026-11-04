@@ -883,12 +883,6 @@ input::placeholder{color:#9ca3af}
     <div class="status-dot" id="sdot"></div>
     <span id="status-lbl">Checking...</span>
     <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
-      <button class="btn btn-sm" onclick="CommandPalette.toggle()" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);font-weight:600;display:inline-flex;align-items:center;gap:6px">⚡ بحث وأوامر <kbd style="background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.15);padding:1px 6px;border-radius:4px;font-size:11px">Ctrl+K</kbd></button>
-      <button class="btn btn-sm" onclick="App.setSection('portal')" style="background:rgba(255,255,255,0.08);border:1px solid var(--border);color:var(--text);text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer">🚀 مركز الصفحات</button>
-      <a href="members_form.html" target="_blank" class="btn btn-sm" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.35);color:#93c5fd;text-decoration:none;font-weight:600;">📝 Form</a>
-      <button class="btn btn-primary btn-sm" onclick="App.openFullBotConfigModal()">🤖 Bot Config</button>
-      <button class="btn btn-ghost btn-sm" onclick="App.toggleTheme()" id="theme-btn">🌙 Dark</button>
-      <button class="btn btn-ghost btn-sm" onclick="App.toggleLang()" id="lang-btn">🌐 <span data-i18n="EN">EN</span></button>
       <span class="live-pill">⚡ Live Sync</span>
     </div>
   </div>
@@ -1360,7 +1354,7 @@ const App = {
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('cms_theme', next);
-    document.getElementById('theme-btn').textContent = next === 'dark' ? '🌙 Dark' : '☀️ Light';
+    const _tb = document.getElementById('theme-btn'); if (_tb) _tb.textContent = next === 'dark' ? '🌙 Dark' : '☀️ Light';
     UI.toast(`Switched to ${next} theme`, 'info');
   },
 
@@ -1368,7 +1362,7 @@ const App = {
     I18n.lang = I18n.lang === 'en' ? 'ar' : 'en';
     localStorage.setItem('cms_lang', I18n.lang);
     I18n.apply();
-    document.getElementById('lang-btn').textContent = I18n.lang === 'ar' ? '🌐 English' : '🌐 العربية';
+    const _lb = document.getElementById('lang-btn'); if (_lb) _lb.textContent = I18n.lang === 'ar' ? '🌐 English' : '🌐 العربية';
     UI.toast(I18n.lang === 'ar' ? 'تم تغيير اللغة إلى العربية' : 'Language set to English', 'info');
   },
 

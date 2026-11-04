@@ -297,43 +297,43 @@ input:focus, select:focus {
   z-index: 2;
   pointer-events: none;
 }
+/* QR Code Container (Left side) */
 .card-qr-box {
   position: absolute;
-  top: 35.8%;
-  left: 6.2%;
-  width: 17%;
-  aspect-ratio: 1 / 1;
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 5px;
+  top: 34.96%;
+  left: 5.66%;
+  width: 18.31%;
+  height: 32.78%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  padding: 3%;
+  border-radius: 12px;
 }
 .card-qr-box img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
+/* Center Member Information */
 .card-center-info {
   position: absolute;
-  top: 36%;
-  left: 26%;
-  right: 28%;
+  top: 36.5%;
+  left: 25.5%;
+  right: 27.5%;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
 }
 .card-center-name-ar {
   font-family: 'Cairo', sans-serif;
-  font-size: clamp(14px, 2.2vw, 22px);
+  font-size: clamp(13px, 2.1vw, 22px);
   font-weight: 800;
   color: #ffffff;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.85);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -341,12 +341,12 @@ input:focus, select:focus {
 }
 .card-center-name-en {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(10px, 1.4vw, 15px);
+  font-size: clamp(9px, 1.3vw, 14px);
   font-weight: 700;
-  color: #94a3b8;
+  color: #cbd5e1;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.85);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -355,27 +355,27 @@ input:focus, select:focus {
 .card-center-role-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 14px;
-  border-radius: 8px;
-  background: rgba(15, 23, 42, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  gap: 5px;
+  padding: 3px 12px;
+  border-radius: 7px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #fde047;
-  font-size: clamp(9px, 1.3vw, 14px);
+  font-size: clamp(8px, 1.2vw, 13px);
   font-weight: 700;
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   backdrop-filter: blur(4px);
 }
+/* Member Photo (Right side frame) */
 .card-photo-box {
   position: absolute;
-  top: 35.5%;
-  right: 6.2%;
-  width: 19%;
-  aspect-ratio: 1 / 1;
+  top: 34.7%;
+  left: 73.83%;
+  width: 20.36%;
+  height: 33.04%;
   border-radius: 16px;
   overflow: hidden;
-  border: 2px solid rgba(56, 189, 248, 0.5);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
   background: #0f172a;
 }
 .card-photo-box img {
@@ -383,16 +383,17 @@ input:focus, select:focus {
   height: 100%;
   object-fit: cover;
 }
+/* Member Code (Bottom right under MEMBER CODE) */
 .card-bottom-code {
   position: absolute;
-  bottom: 11%;
+  top: 84.8%;
   right: 6.2%;
   font-family: monospace;
-  font-size: clamp(10px, 1.5vw, 14px);
+  font-size: clamp(10px, 1.45vw, 15px);
   font-weight: 700;
   color: #38bdf8;
   letter-spacing: 0.08em;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.9);
 }
 
 @media(max-width: 680px) {

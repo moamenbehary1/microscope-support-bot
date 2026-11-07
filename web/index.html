@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>🔬 Microscope Bot — Admin Panel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -16,19 +16,38 @@ html{font-size:14px;scroll-behavior:smooth}
 
 /* ── Tokens ── */
 :root{
-  --bg:#09090b; --surface:rgba(24,24,27,0.72); --surface2:rgba(39,39,42,0.85); --border:rgba(255,255,255,0.09);
-  --primary:#3b82f6; --primary-d:#2563eb; --primary-glow:rgba(59,130,246,0.35);
-  --accent:#8b5cf6; --accent-glow:rgba(139,92,246,0.35);
-  --success:#10b981; --danger:#ef4444; --warning:#f59e0b;
-  --text:#f4f4f5; --dim:#a1a1aa; --muted:#8e8e98;
-  --r:16px; --sidebar:264px; --hdr:68px;
-  /* craft-floor: browser surfaces */
-  --sel-bg:rgba(59,130,246,0.35); --sel-fg:#e0efff;
-  --caret:var(--primary);
-  --focus-ring:rgba(59,130,246,0.55);
-  --scrollbar-track:rgba(255,255,255,0.03);
-  --scrollbar-thumb:rgba(255,255,255,0.14);
-  --scrollbar-thumb-h:rgba(255,255,255,0.26);
+  /* ── Official Microscope Brand Palette (Visual Identity) ── */
+  --navy-primary: #0F2351;
+  --blue-secondary: #015487;
+  --red-accent: #D70606;
+  --pure-white: #FFFFFF;
+  
+  --bg: #060d1f;
+  --surface: rgba(15, 35, 81, 0.65);
+  --surface2: rgba(15, 35, 81, 0.85);
+  --border: rgba(1, 84, 135, 0.28);
+  
+  /* Dynamic Button Accent Color (Default #015487) */
+  --btn-accent: #015487;
+  --primary: var(--btn-accent, #015487);
+  --primary-d: #0c3e66;
+  --primary-glow: rgba(1, 84, 135, 0.45);
+  
+  --accent: #0F2351;
+  --accent-glow: rgba(15, 35, 81, 0.45);
+  --brand-red: #D70606;
+  --brand-red-glow: rgba(215, 6, 6, 0.4);
+  
+  --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+  --text: #ffffff; --dim: #cbd5e1; --muted: #94a3b8;
+  --r: 16px; --sidebar: 264px; --hdr: 68px;
+  --font-brand: 'Alexandria', 'Inter', 'Cairo', sans-serif;
+  --sel-bg: rgba(1, 84, 135, 0.4); --sel-fg: #ffffff;
+  --caret: var(--btn-accent);
+  --focus-ring: rgba(1, 84, 135, 0.55);
+  --scrollbar-track: rgba(6, 13, 31, 0.8);
+  --scrollbar-thumb: rgba(1, 84, 135, 0.45);
+  --scrollbar-thumb-h: rgba(1, 84, 135, 0.75);
 }
 
 [data-theme="light"] {
@@ -42,19 +61,46 @@ html{font-size:14px;scroll-behavior:smooth}
 
 /* ── Global Glassmorphism & Animations ── */
 body{
-  font-family:'Inter','Cairo',sans-serif;
+  font-family:var(--font-brand);
   background:var(--bg);color:var(--text);
   display:flex;min-height:100vh;overflow:hidden;
   transition:background 0.4s ease, color 0.4s ease;
 }
 
 body::before{
-  content:'';position:fixed;inset:0;z-index:-1;
+  content:'';position:fixed;inset:0;z-index:-2;
   background:
-    radial-gradient(circle at 15% 50%, rgba(59,130,246,0.12) 0%, transparent 50%),
-    radial-gradient(circle at 85% 20%, rgba(139,92,246,0.12) 0%, transparent 50%),
+    radial-gradient(circle at 10% 20%, rgba(1, 84, 135, 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 90% 80%, rgba(15, 35, 81, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(215, 6, 6, 0.08) 0%, transparent 60%),
     var(--bg);
-  animation:bgPulse 15s ease-in-out infinite alternate;
+  animation:bgPulse 18s ease-in-out infinite alternate;
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:
+    repeating-radial-gradient(circle at 18% 25%, transparent 0, transparent 40px, rgba(1, 84, 135, 0.045) 41px, rgba(1, 84, 135, 0.045) 42px),
+    repeating-radial-gradient(circle at 82% 75%, transparent 0, transparent 55px, rgba(15, 35, 81, 0.07) 56px, rgba(15, 35, 81, 0.07) 57px);
+  opacity:0.9;
+}
+.brand-logo-wrap{
+  display:flex;align-items:center;gap:12px;
+}
+.brand-logo-img{
+  width:42px;height:42px;border-radius:50%;object-fit:cover;
+  border:2px solid var(--btn-accent, #015487);
+  box-shadow:0 0 14px rgba(1, 84, 135, 0.5);
+  animation:logoPulse 4s ease-in-out infinite;
+}
+.login-logo-img{
+  width:96px;height:96px;border-radius:50%;object-fit:cover;
+  border:3px solid var(--btn-accent, #015487);
+  box-shadow:0 0 25px rgba(1, 84, 135, 0.65);
+  animation:logoPulse 3s ease-in-out infinite;
+}
+@keyframes logoPulse{
+  0%,100%{box-shadow:0 0 12px rgba(1, 84, 135, 0.45);border-color:var(--btn-accent, #015487);}
+  50%{box-shadow:0 0 24px rgba(1, 84, 135, 0.85), 0 0 35px rgba(215, 6, 6, 0.25);border-color:#0284c7;}
 }
 @keyframes bgPulse{0%{transform:scale(1)}100%{transform:scale(1.05)}}
 
@@ -180,7 +226,17 @@ input,textarea{caret-color:var(--caret)}
   box-shadow:0 2px 8px rgba(0,0,0,0.2)
 }
 .btn:active{transform:scale(.96)}
-.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.btn-primary{
+  background:linear-gradient(135deg, var(--btn-accent, #015487) 0%, #0c3e66 100%);
+  color:#fff;border:1px solid rgba(255,255,255,0.18);
+  box-shadow:0 3px 12px rgba(1, 84, 135, 0.35);
+  transition:all .2s cubic-bezier(0.16,1,0.3,1);
+}
+.btn-primary:hover{
+  background:linear-gradient(135deg, #026cae 0%, var(--btn-accent, #015487) 100%);
+  box-shadow:0 6px 20px rgba(1, 84, 135, 0.55);
+  transform:translateY(-1px);
+}
 .btn-primary:hover{background:linear-gradient(135deg,var(--primary-d),#7c3aed);box-shadow:0 4px 12px rgba(0,0,0,0.35);transform:translateY(-1px)}
 .btn-danger{background:rgba(239,68,68,.1);color:#fca5a5;border-color:rgba(239,68,68,.2)}
 .btn-danger:hover{background:var(--danger);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);border-color:var(--danger);transform:translateY(-1px)}
@@ -845,9 +901,14 @@ input::placeholder{color:#9ca3af}
 <!-- ─── Sidebar ─── -->
 <nav id="sidebar">
   <div class="brand" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap">
-    <h1>🔬 <span data-i18n="Bot Panel">Bot Panel</span></h1>
+    <div class="brand-logo-wrap">
+      <img src="/microscope_logo.jpg" alt="Microscope Team" class="brand-logo-img">
+      <div>
+        <h1 style="font-family:'Alexandria',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:0.5px;color:#fff;">MICROSCOPE</h1>
+        <small style="font-family:'Alexandria',sans-serif;color:var(--dim);font-size:0.68rem;letter-spacing:1px;font-weight:600;display:block;">UNIVERSITY TEAM</small>
+      </div>
+    </div>
     <button id="sidebar-close-btn" class="sidebar-close-btn" onclick="toggleMobileSidebar(false)" aria-label="Close menu">✕</button>
-    <small data-i18n="Admin Dashboard" style="width:100%">Admin Dashboard</small>
   </div>
   <div class="nav-items" id="nav-menu">
     <div class="nav-item active" data-s="overview"><span class="icon">🏠</span><span data-i18n="Overview">Overview</span></div>
@@ -956,7 +1017,7 @@ input::placeholder{color:#9ca3af}
 <!-- ─── Login Screen ─── -->
 <div id="login-screen">
   <div class="login-box">
-    <div class="login-logo">🔬</div>
+    <div class="login-logo" style="display:flex;justify-content:center;margin-bottom:14px;"><img src="/microscope_logo.jpg" alt="Microscope Logo" class="login-logo-img"></div>
     <h2 data-i18n="Admin Access">Admin Access</h2>
     <p data-i18n="Enter your Telegram ID to access the dashboard.">Enter your Telegram ID to access the dashboard.</p>
     <div class="form-group">
@@ -1295,6 +1356,11 @@ const App = {
   timer:null,
 
   async init(){
+    // Apply Brand Button Accent Color
+    const savedBtnColor = localStorage.getItem('cms_btn_color') || '#015487';
+    document.documentElement.style.setProperty('--btn-accent', savedBtnColor);
+    document.documentElement.style.setProperty('--primary', savedBtnColor);
+
     // Try server-injected credentials first
     const injUrl='{{FB_URL}}';
     const injSec='{{FB_SECRET}}';
@@ -1323,6 +1389,15 @@ const App = {
   },
 
   async initAfterAuth(){
+    try {
+      const remoteBtnColor = await FB.get('/settings/theme_button_color');
+      if(remoteBtnColor && typeof remoteBtnColor === 'string') {
+        document.documentElement.style.setProperty('--btn-accent', remoteBtnColor);
+        document.documentElement.style.setProperty('--primary', remoteBtnColor);
+        localStorage.setItem('cms_btn_color', remoteBtnColor);
+      }
+    } catch(e) {}
+
     await I18n.init();
     I18n.apply();
     // Show HR system button (all logged-in users here are admins)
@@ -3737,6 +3812,7 @@ const S = {
             <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;justify-content:center" onclick="S.settings.saveBotConfig()">🚀 Save Bot Settings</button>
           </div>
           
+          
           <!-- Appearance & Interface Studio -->
           <div class="card">
             <h3 style="font-size:1rem;margin-bottom:12px;display:flex;align-items:center;gap:8px">🎨 Appearance & Interface Studio</h3>
@@ -3755,6 +3831,39 @@ const S = {
               </select>
             </div>
           </div>
+        </div>
+
+        <!-- Brand Theme & Button Accent Color (Visual Identity) -->
+        <div class="card" style="margin-bottom:20px;">
+          <h3 style="font-size:1.05rem;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-family:'Alexandria',sans-serif;font-weight:700;">
+            🎨 <span>Brand Theme & Button Accent Color (Visual Identity)</span>
+          </h3>
+          <p style="color:var(--dim);font-size:0.85rem;margin-bottom:14px;line-height:1.5;">
+            Super Admin feature: Dynamically customize the primary button and accent color across the bot dashboard and web portals according to Microscope Team brand guidelines.
+          </p>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:0.85rem;color:var(--dim);font-weight:600;">Presets:</span>
+              <button type="button" class="btn-color-swatch" onclick="S.settings.setBtnColor('#015487')" style="background:#015487;width:32px;height:32px;border-radius:8px;border:2px solid rgba(255,255,255,0.25);cursor:pointer;" title="Secondary Blue (Default #015487)"></button>
+              <button type="button" class="btn-color-swatch" onclick="S.settings.setBtnColor('#0F2351')" style="background:#0F2351;width:32px;height:32px;border-radius:8px;border:2px solid rgba(255,255,255,0.25);cursor:pointer;" title="Deep Primary Navy (#0F2351)"></button>
+              <button type="button" class="btn-color-swatch" onclick="S.settings.setBtnColor('#D70606')" style="background:#D70606;width:32px;height:32px;border-radius:8px;border:2px solid rgba(255,255,255,0.25);cursor:pointer;" title="Accent Red (#D70606)"></button>
+              <button type="button" class="btn-color-swatch" onclick="S.settings.setBtnColor('#0284c7')" style="background:#0284c7;width:32px;height:32px;border-radius:8px;border:2px solid rgba(255,255,255,0.25);cursor:pointer;" title="Electric Sky Blue (#0284c7)"></button>
+              <button type="button" class="btn-color-swatch" onclick="S.settings.setBtnColor('#10b981')" style="background:#10b981;width:32px;height:32px;border-radius:8px;border:2px solid rgba(255,255,255,0.25);cursor:pointer;" title="Emerald Green (#10b981)"></button>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:0.85rem;color:var(--dim);font-weight:600;">Custom Picker:</span>
+              <input type="color" id="theme-btn-color-picker" value="${localStorage.getItem('cms_btn_color') || botSettings.theme_button_color || '#015487'}" oninput="S.settings.setBtnColor(this.value)" style="width:40px;height:36px;border:none;border-radius:8px;cursor:pointer;background:transparent;">
+              <input type="text" id="theme-btn-color-hex" value="${localStorage.getItem('cms_btn_color') || botSettings.theme_button_color || '#015487'}" onchange="S.settings.setBtnColor(this.value)" style="width:95px;font-family:monospace;font-size:0.85rem;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:#fff;">
+            </div>
+            <button class="btn btn-primary btn-sm" id="btn-theme-preview" style="pointer-events:none;">
+              ✨ Live Button Preview
+            </button>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-primary btn-sm" onclick="S.settings.saveBtnColor()">💾 Save & Sync Button Color</button>
+            <button class="btn btn-ghost btn-sm" onclick="S.settings.resetBtnColor()">🔄 Reset to Brand Default (#015487)</button>
+          </div>
+        </div>
         </div>
 
         <div class="grid grid-2" style="margin-bottom:20px">
@@ -3800,6 +3909,36 @@ const S = {
       localStorage.setItem('fb_secret', s);
       FB.init(u, s);
       UI.toast('Firebase Credentials Updated Successfully! ✓', 'success');
+    },
+
+        setBtnColor(color){
+      if(!color) return;
+      document.documentElement.style.setProperty('--btn-accent', color);
+      document.documentElement.style.setProperty('--primary', color);
+      const p = document.getElementById('theme-btn-color-picker'); if(p) p.value = color;
+      const h = document.getElementById('theme-btn-color-hex'); if(h) h.value = color;
+    },
+
+    async saveBtnColor(){
+      try {
+        const color = document.getElementById('theme-btn-color-hex')?.value || '#015487';
+        localStorage.setItem('cms_btn_color', color);
+        this.setBtnColor(color);
+        await FB.put('/settings/theme_button_color', color);
+        UI.toast('Brand button color saved & synced to Firebase! 🎨', 'success');
+      } catch(e) {
+        UI.toast('Saved locally: '+e.message, 'info');
+      }
+    },
+
+    async resetBtnColor(){
+      const def = '#015487';
+      this.setBtnColor(def);
+      localStorage.setItem('cms_btn_color', def);
+      try {
+        await FB.put('/settings/theme_button_color', def);
+      } catch(e) {}
+      UI.toast('Reset to Microscope brand blue (#015487)', 'info');
     },
 
     async saveBotConfig(){
